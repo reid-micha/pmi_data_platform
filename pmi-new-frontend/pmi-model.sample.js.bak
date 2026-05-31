@@ -1,0 +1,108 @@
+/* PMI Model — the canonical data shape for the Research Desk variants.
+   Each contract is a Yes/No prediction. PMI = weighted blend of contracts
+   with a conditional-impact adjustment: when contract A resolves YES,
+   it shifts P(B=Yes) by cond[A][B] (in percentage points). */
+
+window.PMI_MODEL = (function () {
+  const contracts = [
+    // sym, plain-language question, P(Yes), 24h $ vol, weight in PMI (basis pts), category, lifetime brier
+    { sym: 'TX-GOV-26',  q: 'Will Republicans win the Texas Governor race in 2026?',         yes: 0.82, vol: 1.84e6, w: 18, cat: 'Politics',    brier: 0.092 },
+    { sym: 'FL-GOV-26',  q: 'Will Republicans win the Florida Governor race in 2026?',      yes: 0.78, vol: 2.40e6, w: 14, cat: 'Politics',    brier: 0.084 },
+    { sym: 'MI-GOV-26',  q: 'Will Democrats win the Michigan Governor race in 2026?',       yes: 0.58, vol: 0.89e6, w:  8, cat: 'Politics',    brier: 0.110 },
+    { sym: 'GA-3P-26',   q: 'Will a third-party candidate exceed 5% in Georgia in 2026?',    yes: 0.18, vol: 0.72e6, w:  3, cat: 'Politics',    brier: 0.131 },
+    { sym: 'GOP-HOUSE',  q: 'Will the GOP retain control of the US House in 2026?',         yes: 0.61, vol: 4.20e6, w: 22, cat: 'Politics',    brier: 0.075 },
+    { sym: 'MAGA-EO',    q: 'Will the major immigration EO survive court challenge?',       yes: 0.69, vol: 1.50e6, w: 12, cat: 'Politics',    brier: 0.094 },
+    { sym: 'REC-Q4-26',  q: 'Will the US enter recession by Q4 2026?',                       yes: 0.42, vol: 3.12e6, w:  5, cat: 'Macro',       brier: 0.140 },
+    { sym: 'FED-50-OCT', q: 'Will the Fed cut rates by at least 50bp by October?',          yes: 0.31, vol: 1.40e6, w:  4, cat: 'Macro',       brier: 0.120 },
+    { sym: 'BTC-100K',   q: 'Will Bitcoin close above $100k at end of 2026?',                yes: 0.67, vol: 2.10e6, w:  6, cat: 'Crypto',      brier: 0.130 },
+    { sym: 'WTI-90',     q: 'Will WTI crude close above $90 at end of 2026?',                yes: 0.32, vol: 0.85e6, w:  3, cat: 'Macro',       brier: 0.150 },
+    { sym: 'CN-TARIFF',  q: 'Will new China tariffs land by Q3 2026?',                       yes: 0.71, vol: 0.95e6, w:  5, cat: 'Geopolitics', brier: 0.110 },
+  ];
+  const bySym = Object.fromEntries(contracts.map(c => [c.sym, c]));
+  const W = contracts.reduce((s, c) => s + c.w, 0);
+
+  /* Conditional impact matrix.
+     cond[A][B] = shift in P(B=Yes), in absolute prob units, IF A resolves YES.
+     Sparse — only meaningful pairs filled in. */
+  const cond = {
+    'TX-GOV-26':  { 'FL-GOV-26': +0.07, 'GOP-HOUSE': +0.05, 'CN-TARIFF': +0.02, 'MAGA-EO': +0.04, 'MI-GOV-26': -0.05 },
+    'FL-GOV-26':  { 'TX-GOV-26': +0.06, 'GOP-HOUSE': +0.06, 'GA-3P-26': -0.03, 'MAGA-EO': +0.03 },
+    'GOP-HOUSE':  { 'CN-TARIFF': +0.10, 'FED-50-OCT': -0.04, 'BTC-100K': +0.05, 'MAGA-EO': +0.09, 'WTI-90': +0.03, 'TX-GOV-26': +0.04 },
+    'MAGA-EO':    { 'GOP-HOUSE': +0.06, 'CN-TARIFF': +0.07, 'TX-GOV-26': +0.03, 'FL-GOV-26': +0.03 },
+    'MI-GOV-26':  { 'GOP-HOUSE': -0.07, 'TX-GOV-26': -0.04, 'BTC-100K': -0.02, 'MAGA-EO': -0.05 },
+    'GA-3P-26':   { 'GOP-HOUSE': -0.05, 'TX-GOV-26': -0.02 },
+    'REC-Q4-26':  { 'FED-50-OCT': +0.22, 'BTC-100K': -0.10, 'WTI-90': -0.06, 'GOP-HOUSE': -0.04 },
+    'FED-50-OCT': { 'BTC-100K': +0.06, 'REC-Q4-26': +0.05 },
+    'BTC-100K':   { 'REC-Q4-26': -0.05, 'GOP-HOUSE': +0.02 },
+    'WTI-90':     { 'REC-Q4-26': +0.03, 'CN-TARIFF': +0.02 },
+    'CN-TARIFF':  { 'GOP-HOUSE': +0.04, 'WTI-90': +0.03, 'FED-50-OCT': -0.02 },
+  };
+
+  // Naive PMI Yes prob = weighted avg of component Yes probs.
+  const pmiYesNaive = contracts.reduce((s, c) => s + c.yes * c.w, 0) / W;
+
+  /* Conditional adjustment.
+     For every directed link cond[i][j] = δ, the expected contribution
+     to PMI Yes from the link is (w_j / W) × P(i=Yes) × δ.
+     We sum these across all links to get the conditional bump. */
+  let condAdjust = 0;
+  for (const c of contracts) {
+    const m = cond[c.sym] || {};
+    for (const [j, delta] of Object.entries(m)) {
+      const wj = bySym[j]?.w || 0;
+      condAdjust += (wj / W) * c.yes * delta;
+    }
+  }
+  const pmiYesAdj = pmiYesNaive + condAdjust;
+  const pmiScore = +(pmiYesAdj * 100).toFixed(2);
+
+  /* For a given contract, decompose its contribution to the PMI:
+       raw  = (w_i / W) × P(yes_i)            — direct weighted share
+       cond = Σ_j (w_j / W) × P(yes_i) × cond[i][j]  — induced via dependencies
+     Also: PMI SWING if this contract were to RESOLVE Yes vs No (counterfactual). */
+  function contribTo(sym) {
+    const c = bySym[sym];
+    if (!c) return null;
+    const wShare = c.w / W;
+    const raw = wShare * c.yes;
+    const m = cond[sym] || {};
+    let condC = 0;
+    for (const [j, delta] of Object.entries(m)) {
+      const wj = bySym[j]?.w || 0;
+      condC += (wj / W) * c.yes * delta;
+    }
+    // Swing: PMI delta if this contract resolves YES (P → 1) vs NO (P → 0).
+    let swingYes = wShare * (1 - c.yes);
+    let swingNo  = -wShare * c.yes;
+    for (const [j, delta] of Object.entries(m)) {
+      const wj = bySym[j]?.w || 0;
+      swingYes += (wj / W) * delta * (1 - c.yes);
+      swingNo  -= (wj / W) * delta *      c.yes;
+    }
+    return { wShare, raw, cond: condC, total: raw + condC, swingYes, swingNo };
+  }
+
+  /* Reverse cond: cond[*][j] — who shifts contract j when they resolve Yes. */
+  function influencersOf(sym) {
+    const out = [];
+    for (const [a, links] of Object.entries(cond)) {
+      if (links[sym] !== undefined) out.push({ from: a, delta: links[sym], pYes: bySym[a]?.yes ?? 0 });
+    }
+    return out.sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta));
+  }
+
+  /* Forward cond: cond[sym][*] — who this contract shifts. */
+  function influenceesOf(sym) {
+    const m = cond[sym] || {};
+    return Object.entries(m)
+      .map(([to, delta]) => ({ to, delta, pYes: bySym[to]?.yes ?? 0 }))
+      .sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta));
+  }
+
+  return {
+    contracts, bySym, cond, W,
+    pmiYesNaive, condAdjust, pmiYesAdj, pmiScore,
+    contribTo, influencersOf, influenceesOf,
+    pmiName: 'MAGA Composite Index',
+  };
+})();

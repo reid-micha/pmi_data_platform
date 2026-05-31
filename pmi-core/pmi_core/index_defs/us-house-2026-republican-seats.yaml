@@ -1,0 +1,54 @@
+# US House 2026 — projected Republican seat *count* (#).
+#
+# P0 status: parses + persists, but `formula: seat_projection_sum` is NOT YET
+# implemented in pmi_core/engine/aggregator.py. See the senate-seats variant
+# header for the full caveat; same TODO (CORR-2.x).
+
+id: us-house-2026-republican-seats
+version: 2  # v2 (CORR-1.2): added aggregation.seat_projection chamber geometry
+title: "US House 2026 — Projected Republican Seats (#)"
+owner: reid
+
+selectors:
+  - type: keyword
+    terms:
+      - "House"
+      - "Representative"
+      - "Congress"
+      - "2026 House"
+      - "U.S. House"
+  - type: category
+    polymarket_tag: "politics"
+
+factors:
+  - id: is_house_race_2026
+    type: binary
+    prompt_ref: prompts/factors/is-house-race-2026-v1
+    weight: 60
+  - id: republican_on_yes
+    type: binary
+    prompt_ref: prompts/factors/republican-on-yes-v1
+    weight: 40
+
+weighting:
+  liquidity:
+    method: none
+
+aggregation:
+  collapse:
+    enabled: true
+    max_spread_days: 30
+    representative: max_probability
+  min_components: 1
+  formula: seat_projection_sum
+  # CORR-1.2 — the House is the natural zero-holdover case: all 435 seats are
+  # up every cycle, so there is no holdover and the whole chamber is contested.
+  seat_projection:
+    total_seats: 435
+    majority_threshold: 218
+    holdover_r: 0
+    holdover_d: 0
+
+publish:
+  cadence: every_2h
+  channels: [api]

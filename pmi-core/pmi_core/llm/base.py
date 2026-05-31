@@ -1,0 +1,272 @@
+"""LLM provider abstraction — protocol + dispatcher + prompt renderer + parser.
+
+Design notes
+------------
+* `LLMResponse` is **structured** — every provider populates the same fields so
+  `factor_evaluator` writes a single shape into `audit_evaluations` regardless
+  of vendor. The raw provider payload survives as `LLMResponse.raw_response`.
+* `get_provider(model_id)` dispatches by prefix (cheaper than registry lookup
+  per evaluation). Real-LLM model ids match `gpt-*`, `claude-*`, etc.; the
+  `stub-*` family is intentionally NOT routed here — `factor_evaluator` keeps
+  its in-process deterministic stub for `stub-*` to avoid construction cost.
+* `parse_factor_response` enforces the prompt-as-JSON contract centrally;
+  every prompt under `pmi_core/prompts/factors/` returns the same JSON shape
+  (`{value, confidence, reasoning}`), so this helper is shared.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass, field
+from typing import Any, Protocol
+
+from pmi_core.dsl.ir import FactorSpec
+
+
+# ─── Errors ────────────────────────────────────────────────────────────────
+
+
+class UnknownModelError(ValueError):
+    """Raised when no provider can be matched for a model id."""
+
+
+class ParseError(ValueError):
+    """Raised when the LLM response can't be parsed into a factor value.
+
+    Carries the raw text for debugging so the caller can decide whether to
+    log+skip, retry with a different prompt, or escalate.
+    """
+
+    def __init__(self, message: str, *, raw_text: str | None = None) -> None:
+        super().__init__(message)
+        self.raw_text = raw_text
+
+
+# ─── Response envelope ─────────────────────────────────────────────────────
+
+
+@dataclass(slots=True)
+class LLMResponse:
+    """Provider-agnostic factor evaluation result.
+
+    `value_numeric` / `value_label` already follow the factor-type conventions:
+
+    | factor.type | value_numeric | value_label             |
+    |-------------|---------------|-------------------------|
+    | binary      | 0.0 or 1.0    | None                    |
+    | ternary     | -1.0, 0.0, 1.0| "-", "0", "+"           |
+    | score       | 0.0..1.0      | None                    |
+    """
+
+    model_id: str
+    value_numeric: float
+    value_label: str | None
+    confidence: float
+    rationale: str | None
+    raw_text: str
+    raw_response: dict[str, Any]
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    cost_usd: float = 0.0
+    latency_ms: int = 0
+    extras: dict[str, Any] = field(default_factory=dict)
+
+
+# ─── Provider protocol ─────────────────────────────────────────────────────
+
+
+class LLMProvider(Protocol):
+    """Single-method protocol every LLM client implements."""
+
+    model_id: str
+
+    async def evaluate(
+        self,
+        *,
+        rendered_prompt: str,
+        factor: FactorSpec,
+        temperature: float | None = None,
+    ) -> LLMResponse:
+        """Run the rendered prompt through the LLM and return a normalised result.
+
+        Implementations MUST:
+          - obey `temperature` when not None
+          - parse the JSON envelope via `parse_factor_response`
+          - populate token counts + `cost_usd` from the provider's billing meter
+          - raise `ParseError` if the response can't be coerced into the expected shape
+        """
+        ...
+
+
+# ─── Prompt rendering ──────────────────────────────────────────────────────
+
+_PLACEHOLDER_RE = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
+
+
+def render_prompt(template: str, market: Any) -> str:
+    """Substitute `{market_*}` placeholders from a `CoreMarket` (or any dict-like).
+
+    Uses a regex pass instead of `str.format` so unknown placeholders (e.g.
+    `{value}` inside JSON shape examples in the prompt body) survive untouched.
+    The variables exposed mirror what factor prompts actually use today:
+
+      - `market_title`        ← `market.title`
+      - `market_description`  ← `market.description`
+      - `market_category`     ← `market.category`
+      - `market_tags`         ← comma-joined `market.tags`
+      - `market_venue`        ← `market.venue`
+      - `market_slug`         ← `market.slug`
+      - `market_external_id`  ← `market.external_id`
+
+    Anything else is left as-is. To add a placeholder, just extend the
+    `provided` dict — no prompt change required.
+    """
+
+    def _get(name: str) -> Any:
+        return getattr(market, name, None) if not isinstance(market, dict) else market.get(name)
+
+    tags = _get("tags")
+    if isinstance(tags, (list, tuple)):
+        tags_str = ", ".join(str(t) for t in tags)
+    elif tags is None:
+        tags_str = ""
+    else:
+        tags_str = str(tags)
+
+    provided: dict[str, str] = {
+        "market_title": str(_get("title") or ""),
+        "market_description": str(_get("description") or ""),
+        "market_category": str(_get("category") or ""),
+        "market_tags": tags_str,
+        "market_venue": str(_get("venue") or ""),
+        "market_slug": str(_get("slug") or ""),
+        "market_external_id": str(_get("external_id") or ""),
+    }
+
+    def _sub(match: re.Match[str]) -> str:
+        key = match.group(1)
+        if key in provided:
+            return provided[key]
+        return match.group(0)  # leave unknown placeholders alone
+
+    return _PLACEHOLDER_RE.sub(_sub, template)
+
+
+# ─── Response parsing ──────────────────────────────────────────────────────
+
+_JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL | re.IGNORECASE)
+
+
+def _extract_json(text: str) -> dict[str, Any]:
+    """Best-effort JSON extraction from an LLM response.
+
+    Accepts:
+      1. Pure JSON object
+      2. Object wrapped in ```json fences```
+      3. Object embedded mid-text (greedy first {...} match)
+    """
+    text = text.strip()
+    if text.startswith("{") and text.endswith("}"):
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+
+    fence_match = _JSON_FENCE_RE.search(text)
+    if fence_match:
+        try:
+            return json.loads(fence_match.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    first = text.find("{")
+    last = text.rfind("}")
+    if first != -1 and last > first:
+        candidate = text[first : last + 1]
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+
+    raise ParseError("response is not JSON", raw_text=text)
+
+
+def parse_factor_response(
+    text: str, factor: FactorSpec
+) -> tuple[float, str | None, float, str | None]:
+    """Validate LLM JSON against the factor.type contract.
+
+    Returns ``(value_numeric, value_label, confidence, rationale)``.
+    Raises ``ParseError`` on shape violation so the caller can retry.
+    """
+    payload = _extract_json(text)
+
+    if "value" not in payload:
+        raise ParseError(f"missing 'value' key in {payload}", raw_text=text)
+
+    raw_value = payload["value"]
+    rationale = payload.get("reasoning") or payload.get("rationale")
+    confidence_raw = payload.get("confidence")
+    try:
+        confidence = float(confidence_raw) if confidence_raw is not None else 0.7
+    except (TypeError, ValueError):
+        confidence = 0.7
+    confidence = max(0.0, min(1.0, confidence))
+
+    if factor.type == "binary":
+        try:
+            v = float(raw_value)
+        except (TypeError, ValueError) as e:
+            raise ParseError(f"binary factor expects 0/1, got {raw_value!r}", raw_text=text) from e
+        if v not in (0.0, 1.0):
+            v = 1.0 if v >= 0.5 else 0.0
+        return v, None, confidence, rationale
+
+    if factor.type == "ternary":
+        try:
+            v = float(raw_value)
+        except (TypeError, ValueError) as e:
+            raise ParseError(f"ternary factor expects -1/0/1, got {raw_value!r}", raw_text=text) from e
+        if v >= 0.5:
+            v_int = 1.0
+        elif v <= -0.5:
+            v_int = -1.0
+        else:
+            v_int = 0.0
+        label = {-1.0: "-", 0.0: "0", 1.0: "+"}[v_int]
+        return v_int, label, confidence, rationale
+
+    # score
+    try:
+        v = float(raw_value)
+    except (TypeError, ValueError) as e:
+        raise ParseError(f"score factor expects 0..1, got {raw_value!r}", raw_text=text) from e
+    return max(0.0, min(1.0, v)), None, confidence, rationale
+
+
+# ─── Provider dispatch ─────────────────────────────────────────────────────
+
+
+def get_provider(model_id: str) -> LLMProvider:
+    """Return an LLMProvider for `model_id`.
+
+    Currently dispatches by prefix. Each provider implementation is imported
+    lazily so an environment without (e.g.) the openai SDK installed can still
+    import this module for type checking.
+
+    Raises `UnknownModelError` if no provider matches — callers should let
+    this bubble up so misconfigured CoreFactorModel rows fail loudly instead
+    of silently falling back to the stub.
+    """
+    if not model_id:
+        raise UnknownModelError("model_id is empty")
+    if model_id.startswith(("gpt-", "openai/")):
+        from pmi_core.llm.openai_client import OpenAIProvider
+
+        return OpenAIProvider(model_id=model_id)
+    raise UnknownModelError(
+        f"no provider registered for model_id={model_id!r}. "
+        f"Known prefixes: gpt-*, openai/*. "
+        f"(stub-* is handled in-evaluator, not via get_provider.)"
+    )

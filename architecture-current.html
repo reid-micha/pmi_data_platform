@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PMI Platform — Current Architecture (2026-05-29)</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --dim: #484f58; --muted: #8b949e;
+    --green: #3fb950; --green-bg: #0d1f0d; --green-border: #238636;
+    --blue: #58a6ff; --blue-bg: #0d1926; --blue-border: #1f6feb;
+    --purple: #a78bfa; --purple-bg: #1a0d26; --purple-border: #8b5cf6;
+    --orange: #e3b341; --orange-bg: #261a0d; --orange-border: #d29922;
+    --cyan: #39d2c0; --cyan-bg: #0d2626; --cyan-border: #1a8a7e;
+    --red: #f85149; --red-bg: #260d0d; --red-border: #da3633;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 28px 32px; }
+
+  .header { text-align: center; margin-bottom: 28px; }
+  .header h1 { font-size: 20px; font-weight: 600; color: #f0f6fc; }
+  .header p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .card { border-radius: 8px; padding: 12px 16px; border: 1px solid; font-size: 12px; line-height: 1.55; }
+  .card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .card .sub { font-size: 11px; color: var(--muted); line-height: 1.65; }
+  .badge { font-size: 9px; font-weight: 600; padding: 1px 7px; border-radius: 8px; margin-left: auto; flex-shrink: 0; }
+
+  .c-green  { background: var(--green-bg); border-color: var(--green-border); }
+  .c-green h3 { color: var(--green); }
+  .c-green .badge { background: var(--green-border); color: #fff; }
+
+  .c-blue   { background: var(--blue-bg); border-color: var(--blue-border); }
+  .c-blue h3 { color: var(--blue); }
+  .c-blue .badge { background: var(--blue-border); color: #fff; }
+
+  .c-purple { background: var(--purple-bg); border-color: var(--purple-border); }
+  .c-purple h3 { color: var(--purple); }
+
+  .c-orange { background: var(--orange-bg); border-color: var(--orange-border); }
+  .c-orange h3 { color: var(--orange); }
+  .c-orange .badge { background: var(--orange-border); color: #000; }
+
+  .c-cyan { background: var(--cyan-bg); border-color: var(--cyan-border); }
+  .c-cyan h3 { color: var(--cyan); }
+  .c-cyan .badge { background: var(--cyan-border); color: #fff; }
+
+  .c-gray   { background: var(--card); border-color: var(--border); border-style: dashed; opacity: 0.55; }
+  .c-gray h3 { color: var(--muted); }
+
+  .arrow { display: flex; justify-content: center; align-items: center; padding: 4px 0; }
+  .arrow span { color: var(--dim); font-size: 10px; }
+  .arrow::before { content: ''; display: block; width: 0; height: 0;
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 6px solid var(--green); margin-right: 8px; }
+
+  .arrow-bi { display: flex; justify-content: center; align-items: center; padding: 4px 0; }
+  .arrow-bi span { color: var(--dim); font-size: 10px; margin: 0 6px; }
+  .arrow-bi::before { content: '\2191'; font-size: 12px; color: var(--cyan); }
+  .arrow-bi::after  { content: '\2193'; font-size: 12px; color: var(--cyan); }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: 1120px;
+    margin: 0 auto;
+    gap: 0;
+  }
+
+  .docker-boundary {
+    border: 1px dashed #21262d;
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+  }
+  .docker-boundary::before {
+    content: 'DOCKER COMPOSE (profile: pmi + mlflow) — 6 services, e2e verified 2026-05-28';
+    position: absolute; top: -9px; left: 20px;
+    background: var(--bg); padding: 0 8px;
+    font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #21262d;
+  }
+
+  .engine-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 16px; margin-top: 6px; }
+  .engine-grid > div b { color: var(--blue); }
+
+  .db-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 2px 12px; margin-top: 4px; }
+  .db-grid b { color: var(--green); }
+
+  .placeholder-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  .flow-summary {
+    max-width: 1120px; margin: 16px auto 0;
+    padding: 14px 18px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 12px; line-height: 1.8;
+  }
+
+  .legend {
+    display: flex; gap: 18px; margin: 16px auto 0;
+    justify-content: center; max-width: 1120px; flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; border: 1.5px solid; }
+
+  .row-3col { display: grid; grid-template-columns: 1fr 260px; gap: 16px; align-items: start; }
+  .side-stack { display: flex; flex-direction: column; gap: 10px; }
+
+  .bottom-2col { display: grid; grid-template-columns: 1fr 320px; gap: 12px; align-items: start; }
+  .storage-row { display: grid; grid-template-columns: 1fr 1fr 320px; gap: 12px; align-items: start; }
+  .surface-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+
+  code { font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 10px; color: var(--muted); }
+
+  .stub-tag { color: var(--orange); font-weight: 600; }
+  .real-tag { color: var(--green); font-weight: 600; }
+  .partial-tag { color: var(--orange); font-weight: 600; }
+
+  .section-label {
+    text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+    color: #21262d; padding: 10px 0 4px; text-transform: uppercase;
+  }
+
+  .gap-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+  .gap-item { font-size: 10px; padding: 6px 10px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--muted); }
+  .gap-item b { color: var(--orange); font-weight: 600; }
+  .gap-item.crit { background: var(--red-bg); border-color: var(--red-border); color: var(--text); }
+  .gap-item.crit b { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>PMI Platform &mdash; Current Implementation Architecture</h1>
+  <p>Snapshot 2026-05-29 &middot; Alembic head: 0003 &middot; 13 tables &middot; 7 packages (6 runnable + pmi-mcp stub) &middot; Tier-1 real LLM live &middot; MLflow mirror live</p>
+  <p style="font-size:11px; color:var(--green); margin-top:6px;">P0 e2e <strong>verified</strong> 2026-05-28 &mdash; <code>docker compose --profile pmi</code>: migrate &rarr; seed (13 markets + 5 index defs) &rarr; <code>run-job score-all</code> (5/5 success, 96 evals w/ mlflow_run_id) &rarr; <code>pmi-api /score</code> 200 &rarr; <code>pmi-web</code> SSR. Cloud deploy = same images + same env, new host.</p>
+  <p style="font-size:11px; color:var(--orange); margin-top:4px;">Status maps to <code>TODO-跑出來.md</code> (ship / deploy / DX = SHIP-*) + <code>TODO-跑得對.md</code> (correctness / LLM / schema / audit = CORR-*). <strong style="color:var(--red);">R5</strong> (cloud platform decision) blocks all SHIP-1.x.</p>
+</div>
+
+<div class="main-grid">
+  <div class="docker-boundary">
+
+    <!-- ========== EXTERNAL ========== -->
+    <div class="section-label">&#9312; Upstream Data Sources</div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; max-width:760px; margin:0 auto;">
+      <div class="card c-orange">
+        <h3>Polymarket Gamma REST <span class="badge">partial</span></h3>
+        <div class="sub">
+          GET /markets &middot; keyset paging <span style="color:var(--orange);">(offset cap fix &#10003; CORR-3.8; keyset &#10007; CORR-3.9)</span><br>
+          <span class="real-tag">Connected</span> &mdash; title, category, <code>lastTradePrice</code>, <code>volumeNum</code>, tags, dates<br>
+          <span style="color:var(--orange);">&#9888; reid laptop: HiNet DNS hijacks gamma-api &rarr; mock mode</span>
+        </div>
+      </div>
+      <div class="card c-gray" style="opacity:0.7;">
+        <h3>Deep signals — not connected</h3>
+        <div class="sub">
+          WebSocket trades <code>CORR-4.1</code> &middot; CLOB orderbook <code>CORR-4.3</code><br>
+          Polygon RPC (cohort / UMA) <code>CORR-4.2/4.4</code><br>
+          Subgraph backfill <code>SHIP-4.5 / CORR-8.3</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><span>httpx async &middot; 5-min poll loop &middot; max_pages=1000 safety valve (SHIP-4.4)</span></div>
+
+    <!-- ========== INGEST ========== -->
+    <div class="section-label">&#9313; Ingest Layer</div>
+
+    <div style="max-width: 720px; margin: 0 auto;">
+      <div class="card c-green">
+        <h3>pmi-ingest <span class="badge">P0 running</span></h3>
+        <div class="sub">
+          <strong>polymarket_rest.py</strong> (asyncio + httpx + tenacity) &middot; <strong>mock_polymarket.py</strong> <span class="real-tag">SHIP-0.5</span> &mdash; <code>POLYMARKET_USE_MOCK=true</code> reads fixtures, keeps source name <code>polymarket-rest</code> so observability shape is identical<br>
+          &rarr; <code>_upsert_market</code> <span class="real-tag">atomic ON CONFLICT &#10003; CORR-3.1</span> &middot; APPEND <code>ts_price_snapshots</code> (last / volume)<br>
+          &rarr; <code>record_poll</code> &rarr; UPSERT <code>audit_source_health</code> <span style="color:var(--orange);">(p95 latency &amp; expected_records still heuristic — CORR-6.3/6.4)</span><br>
+          CLI: <code>pmi-ingest run [--once]</code> &middot; Docker long-lived daemon
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><span>SQLAlchemy async + asyncpg</span></div>
+
+    <!-- ========== STORAGE (center of data flow) ========== -->
+    <div class="section-label">&#9314; Storage Layer (single Postgres)</div>
+
+    <div class="storage-row">
+      <div class="card c-green">
+        <h3>PostgreSQL 16 + pgvector <span class="badge">running :5432</span></h3>
+        <div class="sub">
+          <b style="color:var(--green);">core_*</b> markets, index_defs (SCD2 + yaml_sha256), prompts (sha256, append), api_keys, factor_models<br>
+          <span style="color:var(--orange);">&#9888; no <code>condition_id</code> (CORR-1.3) &middot; no <code>owner_id/tenant_id</code> (CORR-2.2)</span><br>
+          <b style="color:var(--green);">ts_*</b> price_snapshots, index_scores (component_audit_ids[]) <span style="color:var(--orange);">(no hypertable — CORR-4.5; no unique cstr — CORR-2.5)</span><br>
+          <span style="color:var(--dim);"><code>ts_trades</code> / <code>ts_orderbook_depth</code> not present (CORR-2.4)</span><br>
+          <b style="color:var(--green);">audit_*</b> evaluations (APPEND-ONLY), pipeline_runs, source_poll_log, source_health <span style="color:var(--orange);">(DB-level REVOKE not enforced — CORR-6.2)</span><br>
+          <b style="color:var(--green);">vec_*</b> market_embeddings <span style="color:var(--orange);">(schema only, never written — CORR-3.6)</span><br>
+          <span style="color:var(--dim);">13 tables &middot; Alembic head: 0003 &middot; pgvector/pgvector:pg16</span>
+        </div>
+      </div>
+      <div class="card c-cyan">
+        <h3>MLflow Server <span class="badge">running :5500</span></h3>
+        <div class="sub">
+          <span class="real-tag">Implemented</span> &mdash; graceful degradation<br>
+          Prompt Registry mirror &middot; Experiments<br>
+          Parent/child runs (cost + tokens metrics)<br>
+          Model Registry (factor_models)<br>
+          Backend: postgresql (mlflow DB)<br>
+          <span style="color:var(--dim);">Postgres is truth; pipeline never blocks if down</span>
+        </div>
+      </div>
+      <div class="card c-gray">
+        <h3>Not present</h3>
+        <div class="sub">
+          Redis (cache / Arq queue) <code>CORR-4.6</code><br>
+          Cloudflare R2 / S3 (blob) <code>SHIP-1.4</code><br>
+          TimescaleDB hypertable <code>CORR-4.5</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-bi"><span>read (compute) + write (scores / audit) &middot; async</span></div>
+
+    <!-- ========== WORKERS + CORE ENGINE ========== -->
+    <div class="section-label">&#9315; Compute — Workers + Core Engine</div>
+
+    <div class="row-3col">
+      <div class="card c-blue">
+        <h3>pmi-core <span style="font-weight:400; color:var(--muted); font-size:11px;">(shared library + CLI + engine)</span> <span class="badge">P0 implemented</span></h3>
+        <div class="engine-grid sub">
+          <div>
+            <b>DSL / IR</b><br>
+            YAML &rarr; Pydantic <code>IndexDef</code><br>
+            5 index defs registered<br>
+            <span style="color:var(--orange);">formula = string label only;<br>only weighted_average runs (CORR-1.1/1.2)</span>
+          </div>
+          <div>
+            <b>Selector</b><br>
+            ILIKE title + category eq<br>
+            <span style="color:var(--dim);">semantic: ignored (CORR-3.6)</span><br>
+            <span style="color:var(--orange);">limit 500 hardcoded (CORR-2.6)</span>
+          </div>
+          <div>
+            <b>Factor Resolver</b><br>
+            DB lookup <code>CoreFactorModel</code><br>
+            (active + production) &rarr; use<br>
+            fallback &rarr; YAML + stub model
+          </div>
+          <div>
+            <b>Factor Evaluator</b> <span class="real-tag" style="font-size:9px;">SHIP-0.6</span><br>
+            <code>stub-*</code> &rarr; SHA256 hash score<br>
+            <code>gpt-*</code> &rarr; <span class="real-tag">real OpenAI (Tier 1)</span><br>
+            retry &#10003; cost &#10003; fallback-to-stub &#10003;<br>
+            <span style="color:var(--orange);">Tier 0/2/3 &#10007; (CORR-5.x)</span>
+          </div>
+          <div>
+            <b>Aggregator</b><br>
+            relevancy &times; direction &times; price<br>
+            &rarr; 0..100 score<br>
+            <span style="color:var(--orange);">collapse = naive 3-token (CORR-1.4)</span><br>
+            <span style="color:var(--orange);">liquidity weight never read (CORR-3.4)</span>
+          </div>
+          <div>
+            <b>Pipeline / dry-run</b><br>
+            ensure_def (SCD2) &rarr; ensure_prompt<br>
+            &rarr; select &rarr; resolve &rarr; eval &rarr; agg<br>
+            &rarr; write score + audit + MLflow<br>
+            <code>dry_run.py</code> <span class="real-tag">0-DB SHIP-3.1</span>
+          </div>
+        </div>
+        <div style="margin-top:8px; border-top:1px solid #1f6feb33; padding-top:6px;">
+          <div style="font-size:11px; color:var(--blue);">
+            <b>CLI</b>: migrate &middot; seed &middot; score &middot; score-all &middot; history &middot; list-defs &middot; <span class="real-tag">dry-run</span> &middot; <span class="real-tag">schema dump</span> &middot; mlflow-init &middot; prompts list &middot; models list/register/promote
+          </div>
+        </div>
+      </div>
+      <div class="side-stack">
+        <div class="card c-green">
+          <h3>pmi-workers <span class="badge">P0 running</span></h3>
+          <div class="sub">
+            <strong>supercronic</strong> + <code>run-job</code> runner<br>
+            crontab: <code>hourly</code> / <code>daily</code><br>
+            jobs: score / score-all<br>
+            <span style="color:var(--orange);">Arq+Redis &#10007; CORR-4.6 &middot; Temporal &#10007; CORR-8.1</span>
+          </div>
+        </div>
+        <div class="card c-purple">
+          <h3>Index &amp; Prompt Config</h3>
+          <div class="sub">
+            <strong>5 index defs</strong>: war-index v1 (7+1 factor) + senate/house 2026 &times;{seats, share}<br>
+            7 prompt <code>.md</code> (SHA256 &rarr; core_prompts + MLflow)<br>
+            fixtures: 13 synthetic markets
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><span>reads ts_index_scores + audit_* (read-only)</span></div>
+
+    <!-- ========== API + SURFACE ========== -->
+    <div class="section-label">&#9316; Serving — API &amp; User-facing Surface</div>
+
+    <div class="surface-row">
+      <div class="card c-green">
+        <h3>pmi-api (FastAPI) <span class="badge">running :8001</span></h3>
+        <div class="sub">
+          GET /health &middot; /sources/health<br>
+          GET /indexes &middot; /indexes/{id}<br>
+          GET /indexes/{id}/score &middot; /score/history<br>
+          GET /indexes/{id}/explain <span style="color:var(--red);">&#128027; relevancy/direction/last_price = 0 (CORR-3.3)</span><br>
+          <span style="color:var(--orange);">Read-only &middot; auth written but 0 routes wired (CORR-0.6/0.7/0.8)</span><br>
+          <span style="color:var(--dim);">GraphQL &amp; WebSocket not present</span>
+        </div>
+      </div>
+      <div class="card c-green">
+        <h3>pmi-web (Next.js 15) <span class="badge">P0 running :3030</span></h3>
+        <div class="sub">
+          SSR landing (5 index cards) &middot; <code>/indexes/[id]</code> dashboard (score + history chart + def metadata)<br>
+          <span style="color:var(--orange);">/groups/[slug] &#10007; SHIP-2.1 &middot; explain breakdown &#10007; SHIP-2.2 &middot; error boundary &#10007; SHIP-2.4</span><br>
+          <span style="color:var(--dim);">SSR fetches pmi-api over docker network</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="height: 12px;"></div>
+
+    <!-- ========== MCP STUB ========== -->
+    <div class="section-label">Planned Surface (stub only)</div>
+
+    <div style="max-width: 720px; margin: 0 auto;">
+      <div class="card c-gray">
+        <h3>pmi-mcp <span class="badge">README only</span></h3>
+        <div class="sub">
+          MCP server &mdash; Tier A/B/C tools (P3). <strong>SHIP-2.3</strong>: first Tier-A reads (<code>list_indexes / get_index / get_score / get_history / get_group</code>) &mdash; the "AI native" demo lever.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- docker-boundary -->
+
+  <div style="height: 14px;"></div>
+
+  <!-- ========== INFRA NOT PRESENT ========== -->
+  <div class="card c-gray" style="opacity:0.45;">
+    <h3>Infrastructure not yet present</h3>
+    <div class="sub" style="display:flex; gap:16px; flex-wrap:wrap;">
+      <span>Redis (cache / Arq queue)</span>
+      <span>Cloudflare R2 (blob)</span>
+      <span>OTel / Grafana (observability)</span>
+      <span>Sentry (errors)</span>
+      <span>Temporal (durable workflow)</span>
+      <span>TimescaleDB (hypertable)</span>
+      <span>Cloud deploy (Render / Fly.io — R5)</span>
+      <span>CI/CD (GitHub Actions — SHIP-1.3)</span>
+    </div>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green-bg); border-color:var(--green-border);"></div>Running (P0)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--blue-bg); border-color:var(--blue-border);"></div>Implemented (library)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--cyan-bg); border-color:var(--cyan-border);"></div>MLflow (mirror layer)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--orange-bg); border-color:var(--orange-border);"></div>Partial / external</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--purple-bg); border-color:var(--purple-border);"></div>Config / data</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--card); border-color:var(--border); border-style:dashed;"></div>Stub / not present</div>
+</div>
+
+<!-- Data flow -->
+<div class="flow-summary">
+  <strong style="color:#f0f6fc;">End-to-End Data Flow (working today)</strong>
+  <div style="color:var(--muted); margin-top:6px;">
+    <span style="color:var(--orange);">Polymarket Gamma REST</span> <span style="color:var(--dim);">(or mock fixtures)</span>
+    <span style="color:var(--dim);"> &#10132; </span>
+    <span style="color:var(--green);">pmi-ingest</span> (poll 5min)
+    <span style="color:var(--dim);"> &#10132; </span>
+    <span style="color:var(--green);">PostgreSQL</span> (core_markets + ts_price_snapshots + audit_source_*)
+    <span style="color:var(--dim);"> &#10132; </span>
+    <span style="color:var(--green);">pmi-workers</span> (supercronic <code>run-job</code>)
+    <span style="color:var(--dim);"> &#10132; </span>
+    <span style="color:var(--blue);">pmi-core pipeline</span> (select &rarr; resolve &rarr; <span style="color:var(--orange);">stub / real-LLM eval</span> &rarr; aggregate)
+    <span style="color:var(--dim);"> &#10132; </span>
+    <span style="color:var(--green);">PostgreSQL</span> (audit_evaluations + ts_index_scores + audit_pipeline_runs)
+    <span style="color:var(--dim);"> &#10132; </span>
+    <span style="color:var(--cyan);">MLflow</span> (mirror runs + prompts + cost)
+    <span style="color:var(--dim);"> &#10132; </span>
+    <span style="color:var(--green);">pmi-api</span> (:8001) <span style="color:var(--dim);"> &#10132; </span> <span style="color:var(--green);">pmi-web</span> (:3030 SSR)
+  </div>
+
+  <div style="margin-top:8px; padding-top:8px; border-top:1px solid #21262d;">
+    <strong style="color:#f0f6fc;">Score Lineage Chain</strong>
+    <div style="color:var(--dim); font-size:11px; margin-top:2px;">
+      <code>ts_index_scores.component_audit_ids[]</code>
+      &rarr; <code>audit_evaluations</code> (market_id + index_def_id + prompt_sha256 + model_id + cost_usd + model_source)
+      &rarr; <code>core_prompts</code> (template + sha256)
+      &rarr; <code>core_index_definitions</code> (SCD2 version + yaml_sha256)
+    </div>
+  </div>
+
+  <div style="margin-top:8px; padding-top:8px; border-top:1px solid #21262d;">
+    <strong style="color:#f0f6fc;">Factor Model Resolution &amp; LLM Dispatch</strong>
+    <div style="color:var(--dim); font-size:11px; margin-top:2px;">
+      <code>core_factor_models</code> (factor + stage=production + is_active) &rarr; <span style="color:var(--green);">HIT</span>: registered (prompt, llm_model_id, temperature) / <span style="color:var(--orange);">MISS</span>: YAML prompt_ref + stub model.
+      Then evaluator dispatch: <code>stub-*</code> &rarr; hash score &middot; <code>gpt-*</code> &rarr; <span style="color:var(--green);">real OpenAI</span> (tenacity 3x, cost tracked, <span style="color:var(--orange);">fallback-to-stub on error</span>).
+    </div>
+  </div>
+</div>
+
+<!-- Critical path / next moves -->
+<div class="flow-summary" style="margin-top:12px; border-color:var(--red-border);">
+  <strong style="color:#f0f6fc;">Critical Path &mdash; unblocks everything</strong>
+  <div class="gap-row">
+    <div class="gap-item crit"><b>R5</b> Cloud platform decision (Render / Fly.io / Modal / DIY) &mdash; blocks all SHIP-1.x</div>
+    <div class="gap-item crit"><b>R1</b> Polymarket ToS — commercial redistribution allowed? Must resolve before public demo</div>
+    <div class="gap-item"><b>SHIP-2.3</b> pmi-mcp Tier-A reads — the "AI native" demo surface</div>
+  </div>
+</div>
+
+<!-- Ship-it gaps -->
+<div class="flow-summary" style="margin-top:12px;">
+  <strong style="color:#f0f6fc;">跑出來 (Ship-it) &mdash; <span style="font-weight:400; color:var(--muted);">TODO-跑出來.md</span></strong>
+  <div class="gap-row">
+    <div class="gap-item"><b>SHIP-1.1&ndash;1.7</b> render.yaml / GHCR images / pgvector ext / secrets / DNS+TLS <span style="color:var(--red);">(blocked on R5)</span></div>
+    <div class="gap-item"><b>SHIP-2.1/2.2/2.4</b> web group view / explain breakdown / error boundary</div>
+    <div class="gap-item"><b>SHIP-3.2</b> <code>diff</code> CLI (v1 vs v2 per-market)</div>
+    <div class="gap-item"><b>SHIP-3.4</b> backtest CLI (replay 90d &rarr; CSV)</div>
+    <div class="gap-item"><b>SHIP-3.5</b> 2&ndash;3 more baseline indexes (fed-rate / crypto)</div>
+    <div class="gap-item"><b>SHIP-4.5</b> historical price backfill (backtest prereq)</div>
+    <div class="gap-item"><b>SHIP-5.1/5.2</b> log drain (Logflare) + Sentry SDK</div>
+  </div>
+</div>
+
+<!-- Correctness gaps -->
+<div class="flow-summary" style="margin-top:12px; border-color:var(--orange-border);">
+  <strong style="color:#f0f6fc;">跑得對 (Correctness) &mdash; <span style="font-weight:400; color:var(--muted);">TODO-跑得對.md</span></strong>
+  <div class="gap-row">
+    <div class="gap-item crit"><b>CORR-0.6/0.7/0.8</b> API auth wired + key CLI + fix deps.py double-commit bug</div>
+    <div class="gap-item"><b>CORR-0.1/0.4/0.5</b> Anthropic provider + structured output + cost roll-up + circuit breaker</div>
+    <div class="gap-item crit"><b>CORR-3.3</b> /explain endpoint — relevancy/direction/last_price always 0</div>
+    <div class="gap-item"><b>CORR-1.1/1.2</b> formula expression evaluator + baseline/total_seats (Senate 67 fixed seats)</div>
+    <div class="gap-item"><b>CORR-1.3/1.4</b> condition_id column + Micah bucket-collapse algorithm</div>
+    <div class="gap-item"><b>CORR-2.2/2.5/2.6</b> multi-tenant cols + snapshot unique cstr + selector cursor</div>
+    <div class="gap-item"><b>CORR-3.4/3.6</b> liquidity weighting + embedding write &amp; semantic selector</div>
+    <div class="gap-item"><b>CORR-7.1</b> engine unit tests (currently 0 on selector/aggregator/evaluator)</div>
+    <div class="gap-item"><b>CORR-7.2&ndash;7.5</b> OTel &rarr; Grafana + 3 dashboards + Slack alerts</div>
+  </div>
+</div>
+
+<!-- AI tier ladder -->
+<div class="flow-summary" style="margin-top:12px; border-color:var(--cyan-border);">
+  <strong style="color:#f0f6fc;">AI Algorithm Ladder (CLAUDE.md §6) &mdash; <span style="font-weight:400; color:var(--muted);">CORR-5.x</span></strong>
+  <div class="gap-row">
+    <div class="gap-item"><b>Tier 0</b> Embedding pre-filter &mdash; schema only, never written (CORR-5.1)</div>
+    <div class="gap-item" style="background:var(--green-bg); border-color:var(--green-border); color:var(--text);"><b>Tier 1</b> Cheap factor eval &mdash; <span style="color:var(--green);">real OpenAI live</span> (gpt-4o-mini, SHIP-0.6)</div>
+    <div class="gap-item"><b>Tier 2</b> Deep agentic eval &mdash; no orchestrator (CORR-5.6/5.7)</div>
+    <div class="gap-item"><b>Tier 3</b> Periodic re-eval trigger (price drift) — absent (CORR-5.2)</div>
+    <div class="gap-item"><b>CORR-5.3</b> Batch API nightly recompute (Micah has portable code)</div>
+    <div class="gap-item"><b>CORR-5.5/5.8/5.9</b> A/B shadow mode &middot; disagreement detection &middot; multi-model ensemble</div>
+  </div>
+</div>
+
+</body>
+</html>

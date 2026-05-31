@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed 's|.*\\\\.solar_system_position/||' /tmp/filelist.txt | sort | tr '\\\\n' '|')",
+      "Read(//Users/reid/micah/.cursor/skills/**)",
+      "Read(//Users/reid/micah/.cursor/**)",
+      "Bash(docker compose *)",
+      "Bash(just pmi-test *)",
+      "Bash(awk '/pmi-core:/,/^  [a-z]/' docker-compose.yml)",
+      "Bash(grep -n \"§5 Polymarket\\\\|§8 MCP\\\\|§4 PMI\\\\|§4 audit\\\\|Senate 2026 PoC\\\\|partition_sum\\\\|seat-count\\\\|event-first\\\\|CLOB\" /Users/reid/micah/CLAUDE.md)",
+      "Bash(sed -n '148,176p' docker-compose.yml)",
+      "Bash(sed -n '148,176p' ../docker-compose.yml)",
+      "Bash(echo \"RC=$?\")",
+      "Bash(sed -n '1,40p' pyproject.toml)",
+      "Bash(cat Dockerfile)",
+      "Bash(cat requirements*.txt)",
+      "Bash(sed -n '16,60p' pyproject.toml)",
+      "Bash(: token-detail *)",
+      "Bash(: t1 *)",
+      "Bash(: t2 *)",
+      "Bash(curl -s \"http://localhost:8001/indexes/us-senate-2026-republican-seats/senate-board\")",
+      "Bash(curl -s -o /dev/null -w \"web=%{http_code}\\\\n\" \"http://localhost:3000/indexes/us-senate-2026-republican-seats\")",
+      "Bash(echo \"SEED=$?\")",
+      "Bash(echo \"SCORE=$?\")",
+      "Bash(curl -s \"http://localhost:8001/indexes/us-senate-2026-republican-seats/senate-board\" -o /tmp/b.json -w \"http=%{http_code}\\\\n\")",
+      "Bash(python3 -)",
+      "Bash(echo \"restarted=$?\")",
+      "Bash(curl -s \"http://localhost:8001/indexes/us-senate-2026-republican-seats/senate-board\" -o /tmp/bv3.json -w \"http=%{http_code}\\\\n\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\)['data']; print\\('holdover',d['holdover_r'],d['holdover_d'],'| E',d['expected_r_seats'],'| pR',d['p_r_majority'],'| n',d['n_contested'],'| sum',sum\\(d['counts'].values\\(\\)\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\)['data']; print\\('holdover',d['holdover_r'],d['holdover_d'],'E',d['expected_r_seats'],'pR',d['p_r_majority'],'n',d['n_contested'],'sum',sum\\(d['counts'].values\\(\\)\\)\\)\")",
+      "Bash(echo \"curl_rc=$? bytes=$\\(wc -c < /tmp/bv4.json\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(grep -v \"^ *$\")"
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+# US Senate 2026 — projected Republican seat *share* (%).
+#
+# P0 status: runs on the current aggregator; score ≈ average P(R wins YES) over
+# single-seat senate 2026 markets that match both gating factors. Numerically
+# the score is mapped to 0..100 by the existing `weighted_average_x_100` path.
+#
+# Open gap (tracked as CORR-2.x in TODO-跑得對.md):
+# - polarity-aware aggregator that subtracts P(YES) when republican_on_yes=0
+#   (i.e. "Democrat wins on YES" markets).
+# - bucket collapse for same-state markets across multiple Polymarket conditions.
+#
+# Pair with `us-senate-2026-republican-seats.yaml` for the count variant.
+
+id: us-senate-2026-republican-share
+version: 1
+title: "US Senate 2026 — Republican Seat Share (%)"
+owner: reid
+
+selectors:
+  - type: keyword
+    terms:
+      - "Senate"
+      - "Senator"
+      - "2026 Senate"
+      - "U.S. Senate"
+  - type: category
+    polymarket_tag: "politics"
+
+factors:
+  - id: is_senate_race_2026
+    type: binary
+    prompt_ref: prompts/factors/is-senate-race-2026-v1
+    weight: 60
+  - id: republican_on_yes
+    type: binary
+    prompt_ref: prompts/factors/republican-on-yes-v1
+    weight: 40
+
+weighting:
+  liquidity:
+    method: quantile
+
+aggregation:
+  collapse:
+    enabled: true
+    max_spread_days: 30
+    representative: max_probability
+  min_components: 1
+  formula: weighted_average_x_100
+
+publish:
+  cadence: every_2h
+  channels: [api]

@@ -1,0 +1,48 @@
+# US House 2026 — projected Republican seat *share* (%).
+#
+# P0 status: runs on the current aggregator; score ≈ average P(R wins YES) over
+# single-district 2026 house markets that match both gating factors. See the
+# senate-share variant for the same notes about CORR-2.x polarity-aware
+# aggregation.
+
+id: us-house-2026-republican-share
+version: 1
+title: "US House 2026 — Republican Seat Share (%)"
+owner: reid
+
+selectors:
+  - type: keyword
+    terms:
+      - "House"
+      - "Representative"
+      - "Congress"
+      - "2026 House"
+      - "U.S. House"
+  - type: category
+    polymarket_tag: "politics"
+
+factors:
+  - id: is_house_race_2026
+    type: binary
+    prompt_ref: prompts/factors/is-house-race-2026-v1
+    weight: 60
+  - id: republican_on_yes
+    type: binary
+    prompt_ref: prompts/factors/republican-on-yes-v1
+    weight: 40
+
+weighting:
+  liquidity:
+    method: quantile
+
+aggregation:
+  collapse:
+    enabled: true
+    max_spread_days: 30
+    representative: max_probability
+  min_components: 1
+  formula: weighted_average_x_100
+
+publish:
+  cadence: every_2h
+  channels: [api]

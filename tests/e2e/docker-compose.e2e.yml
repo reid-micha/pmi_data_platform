@@ -1,0 +1,38 @@
+# Compose override applied on top of the workspace `docker-compose.yml` so the
+# e2e harness can target an isolated `pmi_e2e_test` Postgres database without
+# disturbing Reid's dev `pmi` database.
+#
+# Use: `docker compose -f docker-compose.yml -f pmi_data_platform/tests/e2e/docker-compose.e2e.yml ...`
+# (the harness in `conftest.py` wires this automatically).
+#
+# Notes
+# -----
+# - PMI_MLFLOW_ENABLED=false skips the MLflow mirror so we don't need to wait
+#   for the mlflow container to come healthy (it can take 15-30s on a cold
+#   cache). The pipeline degrades gracefully and the audit_evaluations table
+#   stays the authoritative record.
+# - PMI_API_PORT remaps to 8099 to avoid colliding with a dev pmi-api that
+#   may already be on the conventional 8001.
+
+services:
+  pmi-core:
+    environment:
+      PMI_DB_NAME: pmi_e2e_test
+      PMI_MLFLOW_ENABLED: "false"
+
+  pmi-api:
+    environment:
+      PMI_DB_NAME: pmi_e2e_test
+      PMI_MLFLOW_ENABLED: "false"
+    ports:
+      - "8099:8000"
+
+  pmi-workers:
+    environment:
+      PMI_DB_NAME: pmi_e2e_test
+      PMI_MLFLOW_ENABLED: "false"
+
+  pmi-ingest:
+    environment:
+      PMI_DB_NAME: pmi_e2e_test
+      PMI_MLFLOW_ENABLED: "false"

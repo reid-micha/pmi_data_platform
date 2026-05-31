@@ -1,0 +1,67 @@
+# US Senate 2026 — projected Republican seat *count* (#).
+#
+# P0 status: parses + persists, but `formula: seat_projection_sum` is NOT YET
+# implemented in pmi_core/engine/aggregator.py — the aggregator falls through
+# to the default `weighted_average_x_100` branch, so today's score is the same
+# shape as the *_share variant. The semantic-correct sum-of-probabilities
+# aggregator is tracked as CORR-2.x in TODO-跑得對.md.
+#
+# Why ship the YAML before the aggregator: lets us validate selector matching,
+# factor evaluation lineage, MLflow runs, and API plumbing using the existing
+# pipeline; only the final aggregation arithmetic needs swapping later.
+#
+# Pair with `us-senate-2026-republican-share.yaml` for the share variant.
+
+id: us-senate-2026-republican-seats
+version: 2  # v2 (CORR-1.2): added aggregation.seat_projection chamber geometry
+title: "US Senate 2026 — Projected Republican Seats (#)"
+owner: reid
+
+selectors:
+  - type: keyword
+    terms:
+      - "Senate"
+      - "Senator"
+      - "2026 Senate"
+      - "U.S. Senate"
+  - type: category
+    polymarket_tag: "politics"
+
+factors:
+  - id: is_senate_race_2026
+    type: binary
+    prompt_ref: prompts/factors/is-senate-race-2026-v1
+    weight: 60
+  - id: republican_on_yes
+    type: binary
+    prompt_ref: prompts/factors/republican-on-yes-v1
+    weight: 40
+
+weighting:
+  liquidity:
+    method: none   # seat *count* doesn't get liquidity-weighted: each seat counts once
+
+aggregation:
+  collapse:
+    enabled: true
+    max_spread_days: 30
+    representative: max_probability
+  min_components: 1
+  formula: seat_projection_sum
+  # CORR-1.2 — chamber geometry for the balance-of-power board.
+  # Senate = 100 seats = 33 contested (Class II, on the 2026 ballot) +
+  # 67 holdover (Class I + III, not up). The holdover split below is an
+  # APPROXIMATION of the current roster and should be verified against the
+  # actual Class I/III seat holders before this index is published.
+  # NOTE: the demo market fixtures contain only a handful of the ~33 Class II
+  # races, so E[R seats] from a dev seed will read low until real ingest
+  # (CORR-1.3) supplies the full contested set.
+  seat_projection:
+    total_seats: 100
+    majority_threshold: 51
+    holdover_r: 30
+    holdover_d: 37
+
+publish:
+  cadence: every_2h
+  channels: [api]

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PMI Pipeline:現況 vs Typed Multigraph Scoring</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --ink:#e7eaf0; --muted:#9aa3b2;
+    --line:#2a2f3a; --accent:#5b8cff;
+    --unchanged:#2b3140; --unchanged-b:#3a4252;
+    --new:#1d7a4d; --new-b:#2fd089;
+    --changed:#9a6b18; --changed-b:#f0b429;
+    --removed:#7a2b2b;
+    --loopA:#13313a; --loopB:#1a2233;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang TC","Microsoft JhengHei",sans-serif;}
+  header{padding:28px 32px 8px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;padding:14px 32px;color:var(--muted);font-size:12.5px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .chip{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid #0006}
+  .c-un{background:var(--unchanged)} .c-new{background:var(--new)} .c-ch{background:var(--changed)}
+  .wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:8px 32px 48px;align-items:start}
+  @media(max-width:920px){.wrap{grid-template-columns:1fr}}
+  .col{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .col h2{font-size:15px;margin:0 0 2px;letter-spacing:.3px}
+  .col .tag{font-size:11.5px;color:var(--muted);margin-bottom:16px}
+  .flow{display:flex;flex-direction:column;align-items:stretch;gap:0}
+  .node{border-radius:10px;padding:11px 13px;border:1px solid var(--line);background:var(--unchanged);position:relative}
+  .node .t{font-weight:600;font-size:13px}
+  .node .d{color:var(--muted);font-size:11.5px;margin-top:3px}
+  .node code{background:#0006;padding:1px 5px;border-radius:4px;font-size:11px;color:#cdd6e6}
+  .node.new{background:linear-gradient(180deg,#16352440,#11221b);border-color:var(--new-b)}
+  .node.changed{background:linear-gradient(180deg,#3a2a0e40,#241a08);border-color:var(--changed-b)}
+  .badge{position:absolute;top:-9px;right:10px;font-size:10px;font-weight:700;
+         padding:2px 7px;border-radius:20px;letter-spacing:.4px}
+  .badge.new{background:var(--new-b);color:#04150c}
+  .badge.changed{background:var(--changed-b);color:#231803}
+  .arrow{height:22px;width:2px;background:var(--line);margin:0 auto;position:relative}
+  .arrow:after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);
+               border:5px solid transparent;border-top-color:var(--line)}
+  .store{border-style:dashed;background:#10131a}
+  .loop{border:1px dashed #3a4458;border-radius:12px;padding:14px 14px 16px;margin-bottom:4px}
+  .loop.A{background:#12222840}
+  .loop.B{background:#161d2b40}
+  .loop .lh{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;display:flex;justify-content:space-between}
+  .loop .lh em{font-style:normal;color:var(--muted);font-weight:500}
+  .qty{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+  .qty b{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px}
+  .q-p{background:#26406a;color:#bcd3ff} .q-v{background:#4a3a16;color:#ffd98a} .q-s{background:#2c4a36;color:#aef0c4}
+  footer{color:var(--muted);font-size:12px;padding:0 32px 40px;max-width:980px}
+  footer b{color:var(--ink)}
+  .midnote{text-align:center;color:var(--muted);font-size:11px;margin:6px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>PMI Pipeline 架構對比</h1>
+  <div class="sub">現況「單迴圈 score」　vs　Typed Multigraph Scoring「雙迴圈」</div>
+</header>
+
+<div class="legend">
+  <span><i class="chip c-un"></i>不變(機制沿用)</span>
+  <span><i class="chip c-new"></i>全新 stage</span>
+  <span><i class="chip c-ch"></i>改動(語意升級)</span>
+  <span style="margin-left:8px">量:</span>
+  <span><b class="q-p" style="font-size:10.5px;padding:2px 6px;border-radius:5px">機率=值</b></span>
+  <span><b class="q-v" style="font-size:10.5px;padding:2px 6px;border-radius:5px">volume=權重</b></span>
+  <span><b class="q-s" style="font-size:10.5px;padding:2px 6px;border-radius:5px">佔比=family衍生</b></span>
+</div>
+
+<div class="wrap">
+
+  <!-- ============ BEFORE ============ -->
+  <div class="col">
+    <h2>現況 — 單迴圈</h2>
+    <div class="tag">supercronic <code>score-all</code>,per-index per-tick</div>
+    <div class="flow">
+
+      <div class="node">
+        <div class="t">ingest(REST poller)</div>
+        <div class="d">Polymarket Gamma API → 寫入</div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="node store">
+        <div class="t">core_markets + ts_price_snapshots</div>
+        <div class="d">title / category / tags / last_price / volume</div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="node">
+        <div class="t">selector.select_markets</div>
+        <div class="d">keyword(<code>\m..\M</code>)/ category → <b>扁平 list</b></div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="node">
+        <div class="t">factor_evaluator(Tier 1)</div>
+        <div class="d">gpt-4o-mini → <code>audit_evaluations</code></div>
+        <div class="qty"><b class="q-p">機率</b></div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="node">
+        <div class="t">bucket_collapser</div>
+        <div class="d"><b>日期 / 名稱啟發式</b>收斂</div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="node">
+        <div class="t">aggregator</div>
+        <div class="d"><b>寫死</b> <code>weighted_average_x_100</code></div>
+        <div class="qty"><b class="q-p">機率</b><b class="q-v">volume</b></div>
+      </div>
+      <div class="arrow"></div>
+
+      <div class="node store">
+        <div class="t">ts_index_scores</div>
+        <div class="d">score + <code>component_audit_ids[]</code></div>
+      </div>
+
+    </div>
+    <div class="midnote" style="margin-top:14px">互斥 / 翻轉 / partition：寫死在 senate regex + <code>ROLE_FLIPS</code>,出不了 engine</div>
+  </div>
+
+  <!-- ============ AFTER ============ -->
+  <div class="col">
+    <h2>新架構 — 雙迴圈(edge 全域共用)</h2>
+    <div class="tag">迴圈 A 維護圖、迴圈 B 只讀圖算分</div>
+
+    <!-- shared ingest -->
+    <div class="flow" style="margin-bottom:12px">
+      <div class="node">
+        <div class="t">ingest(REST poller)</div>
+        <div class="d">Polymarket Gamma API</div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node store">
+        <div class="t">core_markets + ts_price_snapshots</div>
+      </div>
+    </div>
+
+    <!-- LOOP A -->
+    <div class="loop A">
+      <div class="lh"><span>迴圈 A · edge 維護</span><em>market 全域 · ingest 觸發 · 非每 tick</em></div>
+      <div class="flow">
+        <div class="node new"><span class="badge new">NEW</span>
+          <div class="t">candidate generation(blocking)</div>
+          <div class="d">同 event/category + title 詞重疊 → 候選對(砍 O(n²))</div>
+        </div>
+        <div class="arrow"></div>
+        <div class="node new"><span class="badge new">NEW</span>
+          <div class="t">edge-proposer agent</div>
+          <div class="d">逐對判 relation/direction/confidence</div>
+        </div>
+        <div class="arrow"></div>
+        <div class="node new store"><span class="badge new">NEW</span>
+          <div class="t">core_market_edges</div>
+          <div class="d">typed:equivalent / complement / mutually_exclusive / implies / same_event<br>append-only + <code>sha256</code> lineage,prompt/model 沒換就 reuse</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="midnote">▲ 算一次,所有 index 共用　│　▼ 每 tick 只讀邊</div>
+
+    <!-- LOOP B -->
+    <div class="loop B">
+      <div class="lh"><span>迴圈 B · scoring</span><em>per-index per-tick</em></div>
+      <div class="flow">
+
+        <div class="node changed"><span class="badge changed">改</span>
+          <div class="t">selector → seed 節點集</div>
+          <div class="d">同 selector,輸出當圖的種子(不再是終點)</div>
+        </div>
+        <div class="arrow"></div>
+
+        <div class="node new"><span class="badge new">NEW</span>
+          <div class="t">market_graph.build + 推結構</div>
+          <div class="d">撈 seed+1-hop 邊 → networkx。純圖演算無 LLM:<br>
+            • <code>equivalent</code> 連通分量 → collapse<br>
+            • <code>mutually_exclusive</code> 分量 → partition 家族<br>
+            • <code>complement</code> → 翻轉旗標(取代 ROLE_FLIPS)</div>
+          <div class="qty"><b class="q-s">佔比</b></div>
+        </div>
+        <div class="arrow"></div>
+
+        <div class="node">
+          <div class="t">factor_evaluator(Tier 1)</div>
+          <div class="d">機制不變 → <code>audit_evaluations</code></div>
+          <div class="qty"><b class="q-p">機率</b></div>
+        </div>
+        <div class="arrow"></div>
+
+        <div class="node new"><span class="badge new">NEW · 選用</span>
+          <div class="t">coherence 投影</div>
+          <div class="d"><code>implies</code> DAG 上 isotonic 投影;違反量當套利信號</div>
+        </div>
+        <div class="arrow"></div>
+
+        <div class="node changed"><span class="badge changed">改</span>
+          <div class="t">aggregator · formula registry</div>
+          <div class="d">dispatch:<code>weighted_average_x_100</code> / <code>partition_sum</code> / <code>expectation</code></div>
+          <div class="qty"><b class="q-p">機率</b><b class="q-v">volume</b><b class="q-s">佔比</b></div>
+        </div>
+        <div class="arrow"></div>
+
+        <div class="node changed store"><span class="badge changed">改</span>
+          <div class="t">ts_index_scores</div>
+          <div class="d">score + <code>component_audit_ids[]</code><br>+ <code>formula</code> / <code>unit</code> / <code>detail</code> + edge lineage</div>
+        </div>
+
+      </div>
+    </div>
+    <div class="midnote" style="margin-top:10px">edge 表空 → 迴圈 B 退化成現況扁平行為(graceful degradation)</div>
+  </div>
+
+</div>
+
+<footer>
+  <b>三個架構後果:</b>
+  ① <b>成本不增反降</b> — 最貴的 LLM 關係判斷在迴圈 A 攤平、全 index 共用、增量更新;迴圈 B 每 tick 只讀邊(便宜)。
+  ② <b>觸發模型變了</b> — 邊由「ingest 新 market / resolution 變更」觸發,非每個 score tick;先掛 supercronic,上 Arq 後成 fire-and-forget。
+  ③ <b>血緣更完整</b> — 一筆 score 可還原當時圖結構(哪些被 collapse、哪些家族、哪條 implies 生效),直接是 §9 機構審計賣點。
+</footer>
+
+</body>
+</html>

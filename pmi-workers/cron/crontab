@@ -1,0 +1,14 @@
+# pmi-workers supercronic crontab.
+#
+# Each line: <min> <hour> <dom> <month> <dow> <command>
+# Trailing `&` keeps supercronic from blocking the schedule on a long-running
+# job — same pattern as micah-job-executor/cron/crontab.
+#
+# Jobs are resolved via the `run-job` console script (see pyproject.toml
+# [project.scripts]) which dispatches through `pmi_workers.registry`.
+
+# Hourly: re-score every current PMI definition.
+0 * * * * run-job hourly &
+
+# Daily 10:00 UTC: heavier maintenance (placeholder — currently same as hourly).
+0 10 * * * run-job daily &

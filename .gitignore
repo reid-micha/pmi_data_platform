@@ -1,0 +1,12 @@
+# Single-source-of-truth env file (`/Users/reid/micah/pmi_data_platform/.env`)
+# Per-service .env files have been retired — only .env.example is committed.
+.env
+.env.local
+.env.*.local
+
+# Python caches that occasionally show up at the platform root.
+__pycache__/
+*.pyc
+
+# Transient venv created by `just pmi-e2e` when host lacks pytest + httpx.
+.e2e-venv/

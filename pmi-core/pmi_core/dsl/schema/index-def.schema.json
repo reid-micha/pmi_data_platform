@@ -1,0 +1,296 @@
+{
+  "$defs": {
+    "AggregationSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "collapse": {
+          "$ref": "#/$defs/CollapseSpec"
+        },
+        "formula": {
+          "default": "weighted_average_x_100",
+          "title": "Formula",
+          "type": "string"
+        },
+        "min_components": {
+          "default": 1,
+          "title": "Min Components",
+          "type": "integer"
+        }
+      },
+      "title": "AggregationSpec",
+      "type": "object"
+    },
+    "CategorySelector": {
+      "additionalProperties": false,
+      "properties": {
+        "polymarket_tag": {
+          "title": "Polymarket Tag",
+          "type": "string"
+        },
+        "type": {
+          "const": "category",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "polymarket_tag"
+      ],
+      "title": "CategorySelector",
+      "type": "object"
+    },
+    "CollapseSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "max_spread_days": {
+          "default": 30,
+          "title": "Max Spread Days",
+          "type": "integer"
+        },
+        "representative": {
+          "default": "max_probability",
+          "enum": [
+            "max_probability",
+            "highest_liquidity",
+            "newest"
+          ],
+          "title": "Representative",
+          "type": "string"
+        }
+      },
+      "title": "CollapseSpec",
+      "type": "object"
+    },
+    "FactorSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "prompt_ref": {
+          "title": "Prompt Ref",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "binary",
+            "ternary",
+            "score"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "weight": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Weight"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "prompt_ref"
+      ],
+      "title": "FactorSpec",
+      "type": "object"
+    },
+    "KeywordSelector": {
+      "additionalProperties": false,
+      "properties": {
+        "terms": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Terms",
+          "type": "array"
+        },
+        "type": {
+          "const": "keyword",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "terms"
+      ],
+      "title": "KeywordSelector",
+      "type": "object"
+    },
+    "LiquidityWeighting": {
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "default": "quantile",
+          "enum": [
+            "quantile",
+            "linear",
+            "none"
+          ],
+          "title": "Method",
+          "type": "string"
+        }
+      },
+      "title": "LiquidityWeighting",
+      "type": "object"
+    },
+    "PublishSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "cadence": {
+          "default": "every_2h",
+          "enum": [
+            "real_time",
+            "hourly",
+            "every_2h",
+            "daily"
+          ],
+          "title": "Cadence",
+          "type": "string"
+        },
+        "channels": {
+          "items": {
+            "enum": [
+              "api",
+              "websocket",
+              "webhook"
+            ],
+            "type": "string"
+          },
+          "title": "Channels",
+          "type": "array"
+        }
+      },
+      "title": "PublishSpec",
+      "type": "object"
+    },
+    "SemanticSelector": {
+      "additionalProperties": false,
+      "description": "P1+ \u2014 included so YAML written today validates against a forward-compatible shape.",
+      "properties": {
+        "anchor": {
+          "title": "Anchor",
+          "type": "string"
+        },
+        "min_similarity": {
+          "default": 0.78,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Min Similarity",
+          "type": "number"
+        },
+        "type": {
+          "const": "semantic",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "anchor"
+      ],
+      "title": "SemanticSelector",
+      "type": "object"
+    },
+    "WeightingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "liquidity": {
+          "$ref": "#/$defs/LiquidityWeighting"
+        }
+      },
+      "title": "WeightingSpec",
+      "type": "object"
+    }
+  },
+  "$id": "https://pmi-platform.example.com/schema/index-def.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Top-level declarative PMI definition.",
+  "properties": {
+    "aggregation": {
+      "$ref": "#/$defs/AggregationSpec"
+    },
+    "factors": {
+      "items": {
+        "$ref": "#/$defs/FactorSpec"
+      },
+      "minItems": 1,
+      "title": "Factors",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "owner": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Owner"
+    },
+    "publish": {
+      "$ref": "#/$defs/PublishSpec"
+    },
+    "selectors": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/KeywordSelector"
+          },
+          {
+            "$ref": "#/$defs/CategorySelector"
+          },
+          {
+            "$ref": "#/$defs/SemanticSelector"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Selectors",
+      "type": "array"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "weighting": {
+      "$ref": "#/$defs/WeightingSpec"
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "title",
+    "selectors",
+    "factors"
+  ],
+  "title": "IndexDef",
+  "type": "object"
+}
