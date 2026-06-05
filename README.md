@@ -177,3 +177,4 @@ just mlflow-init                                    # backfill mlflow_* links on
 - **Prompt-as-code**: prompt 檔在 git，DB `core_prompts` 寫 sha256；改 prompt = bump `-vN` 不覆寫
 - **Index DSL**: YAML on disk → Pydantic `IndexDef` IR → DB `core_index_definitions` (SCD Type 2)
 - **MLflow mirror**: 每次 prompt 註冊、pipeline tick、factor eval 都進 MLflow（experiment per index_id；parent run per tick；child run per evaluation）。**DB is the truth；MLflow is the UI**——失聯時 pipeline 不中斷，`mlflow_*` 欄位留 NULL，可用 `just mlflow-init` 補拉。
+# pmi_data_platform
