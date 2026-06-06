@@ -29,6 +29,7 @@ from pmi_core.models import (
     CoreIndexDefinition,
     CorePrompt,
     TsIndexScore,
+    TsOrderbookSnapshot,
     TsPriceSnapshot,
 )
 
@@ -141,20 +142,73 @@ async def _ensure_prompt(session: AsyncSession, factor_prompt_ref: str) -> CoreP
     return row
 
 
-async def _latest_prices(session: AsyncSession, market_ids: list[int]) -> dict[int, float]:
-    """Return the most recent last_price per market (None where missing)."""
+async def _latest_prices(
+    session: AsyncSession, market_ids: list[int]
+) -> tuple[dict[int, float], dict[int, float | None]]:
+    """Return the most recent (last_price, volume_24h) per market.
+
+    Volume is the CORR-3.4 cold-start fallback for liquidity weighting —
+    used by the aggregator only when no ``ts_orderbook_snapshots`` row
+    exists for the market yet (e.g. a freshly ingested market that the
+    CLOB poller hasn't picked up in its 60s cycle).
+    """
     if not market_ids:
-        return {}
+        return {}, {}
     stmt = (
-        select(TsPriceSnapshot.market_id, TsPriceSnapshot.last_price, TsPriceSnapshot.snapshot_at)
+        select(
+            TsPriceSnapshot.market_id,
+            TsPriceSnapshot.last_price,
+            TsPriceSnapshot.volume_24h,
+            TsPriceSnapshot.snapshot_at,
+        )
         .where(TsPriceSnapshot.market_id.in_(market_ids))
         .order_by(TsPriceSnapshot.market_id, TsPriceSnapshot.snapshot_at.desc())
     )
     result = (await session.execute(stmt)).all()
+    prices: dict[int, float] = {}
+    volumes: dict[int, float | None] = {}
+    for mid, price, vol, _ts in result:
+        if mid not in prices and price is not None:
+            prices[mid] = float(price)
+            volumes[mid] = float(vol) if vol is not None else None
+    return prices, volumes
+
+
+async def _latest_orderbook_depths(
+    session: AsyncSession, market_ids: list[int]
+) -> dict[int, float]:
+    """Return the freshest ``bid_depth_1pct + ask_depth_1pct`` per market.
+
+    Uses two-sided depth (CORR-3.4) so one-sided books — common for
+    illiquid sides of binary markets — don't pretend to be deep. Markets
+    with no orderbook snapshot are simply absent from the returned dict
+    so the caller can fall back to ``volume_24h``.
+    """
+    if not market_ids:
+        return {}
+    stmt = (
+        select(
+            TsOrderbookSnapshot.market_id,
+            TsOrderbookSnapshot.bid_depth_1pct,
+            TsOrderbookSnapshot.ask_depth_1pct,
+            TsOrderbookSnapshot.snapshot_at,
+        )
+        .where(TsOrderbookSnapshot.market_id.in_(market_ids))
+        .order_by(
+            TsOrderbookSnapshot.market_id,
+            TsOrderbookSnapshot.snapshot_at.desc(),
+        )
+    )
+    result = (await session.execute(stmt)).all()
     out: dict[int, float] = {}
-    for mid, price, _ts in result:
-        if mid not in out and price is not None:
-            out[mid] = float(price)
+    for mid, bid, ask, _ts in result:
+        if mid in out:
+            continue
+        total = (float(bid) if bid is not None else 0.0) + (
+            float(ask) if ask is not None else 0.0
+        )
+        if total > 0:
+            out[mid] = total
     return out
 
 
@@ -206,7 +260,9 @@ async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
             llm_calls = 0
             cost_usd_total = 0.0
             market_rows: list[MarketEvaluations] = []
-            prices = await _latest_prices(session, [m.id for m in markets])
+            market_ids = [m.id for m in markets]
+            prices, volumes = await _latest_prices(session, market_ids)
+            depths = await _latest_orderbook_depths(session, market_ids)
 
             # Parent MLflow run for this tick. Child runs (one per factor eval)
             # hang under it. NULL when MLflow is down — pipeline still proceeds.
@@ -260,11 +316,19 @@ async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
                                 llm_calls += 1
                             if evalrow.cost_usd is not None:
                                 cost_usd_total += float(evalrow.cost_usd)
+                    # CORR-3.4: depth is the primary liquidity signal;
+                    # volume_24h is the cold-start fallback. ``None`` flows
+                    # through to the aggregator, which treats it as
+                    # "no signal → uniform weight" rather than a zero.
+                    liquidity = depths.get(market.id)
+                    if liquidity is None:
+                        liquidity = volumes.get(market.id)
                     market_rows.append(
                         MarketEvaluations(
                             market=market,
                             by_factor=by_factor,
                             last_price=prices.get(market.id),
+                            liquidity=liquidity,
                         )
                     )
 

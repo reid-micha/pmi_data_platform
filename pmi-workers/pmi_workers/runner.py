@@ -57,6 +57,9 @@ async def _run(name: str) -> None:
 
 def main() -> None:
     _setup_logging()
+    from pmi_core.observability import init_sentry
+
+    init_sentry("pmi-workers")
     if len(sys.argv) != 2:
         names = ", ".join(registry.all_names()) or "(none)"
         print(f"usage: run-job <job_name>\n  registered: {names}", file=sys.stderr)

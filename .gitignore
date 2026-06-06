@@ -10,3 +10,13 @@ __pycache__/
 
 # Transient venv created by `just pmi-e2e` when host lacks pytest + httpx.
 .e2e-venv/
+
+kalshi.key
+
+# Production deploy: the rendered non-secret base + the secrets-injected .env
+# are per-instance and must never be committed. Only *.example is tracked.
+deploy/.env.base
+deploy/.env
+
+.github
+.claude

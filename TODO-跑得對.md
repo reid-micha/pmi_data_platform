@@ -19,8 +19,8 @@
 | ✅ **CORR-0.3** | **LLM provider abstraction layer** — done in SHIP-0.6 `pmi_core/llm/{base.py,openai_client.py}`；`get_provider()` 走 prefix dispatch（`gpt-*` / `openai/*`），加 Anthropic 只要 drop file。 | — | §1.7 S10 / §5.5 C2 |
 | 🟡 **CORR-0.4** | **Cost tracking** — ✅ `audit_evaluations.cost_usd` 每次 LLM 評估都寫真值（SHIP-0.6 用 `_PRICE_PER_M_TOKENS` table）。**剩**：roll up 到 `audit_pipeline_runs.cost_usd / llm_calls`（目前 pipeline-level 還沒 SUM 子 row）。 | 半天剩 | §1.1 / §5.5 C4 一部分 |
 | 🟡 **CORR-0.5** | **LLM retry / circuit breaker / 429** — ✅ **基本 retry**：SHIP-0.6 在 OpenAI client 套了 `tenacity` exp backoff × 3 attempts（涵蓋 `APIConnectionError / RateLimitError / APIStatusError`）。**剩**：account-wide circuit breaker（連續 N 次 429 就停 tick）、cost budget enforcement（CORR-5.4 部分重疊）、跨 factor 共用 token bucket。 | 半天剩 | §5.5 C4 |
-| **CORR-0.6** | **API auth 真的掛上 `Depends(require_api_key)`**：目前 0 個 route 用、`PMI_API_REQUIRE_AUTH` 預設 `false` = 完全開放讀取 | 1 天 | M2 / P0-2 |
-| **CORR-0.7** | API key 發放 CLI：`pmi-core keys create / revoke / list / rotate` | 1 天 | M2 / P0-2 |
+| ✅ ~~**CORR-0.6**~~ | ~~**API auth 真的掛上 `Depends(require_api_key)`**：目前 0 個 route 用、`PMI_API_REQUIRE_AUTH` 預設 `false` = 完全開放讀取~~ **完成 2026-06-02**：`indexes` router 整層加 `dependencies=[Depends(require_api_key)]`（[routes/indexes.py](pmi-api/pmi_api/routes/indexes.py)）；`/sources/health` 個別 route 加同款 dep（[routes/health.py](pmi-api/pmi_api/routes/health.py)）；`/health` liveness 保持公開（cloud 平台 healthcheck 不會帶 X-API-Key）。test 端 `conftest.client` fixture override `require_api_key` 回 None（match dev `.env` 的 `PMI_API_REQUIRE_AUTH=false`），所以既有 18 個 route test 不破。新增 9 個 integration test ([`test_routes_auth.py`](pmi-api/tests/test_routes_auth.py))：`/health` 公開、`/sources/health` + `/indexes/*` 在 auth-on 模式 missing/invalid key → 401、valid key → 200、auth-off → 全開。全部 27 個 pmi-api test pass。`.env.example` 加註解說明 prod 翻 true、跟 CORR-0.7 keys CLI 串。 | 1 天 | M2 / P0-2 |
+| ✅ ~~**CORR-0.7**~~ | ~~API key 發放 CLI：`pmi-core keys create / revoke / list / rotate`~~ **完成 2026-06-04**：`keys` Click group 落在 [`pmi-core/pmi_core/cli.py`](pmi-core/pmi_core/cli.py)。`_mint_raw_key()` 生 `pmi_<token>`、存 `key_prefix`（前 12 字元供識別）+ sha256（明文只在 create/rotate 印一次）。`create`（帶 `--owner` / `--scopes` / `--rate-limit` / `--expires-days`）、`list`（顯示 prefix / owner / status / last_used）、`revoke <prefix>`（set `revoked_at`）、`rotate <prefix>`（atomic 撤舊發新、繼承 owner/scopes）。驗：對 live DB 跑 create→list→rotate→revoke 全綠，搭 CORR-0.6 auth 翻 `PMI_API_REQUIRE_AUTH=true` 後 valid key 200 / revoked key 401。並接上 pmi-web server-side 注入（見 SHIP-1 §0c）。 | 1 天 | M2 / P0-2 |
 | ✅ ~~**CORR-0.8**~~ | ~~修 `pmi-api/pmi_api/deps.py` 兩個 bug：(a) `require_api_key` 的 `session=None` 改 `Depends(get_session)`（B1）(b) `_check_key` 直接 `await session.commit()` 跟 `session_scope` 雙重 commit 衝突（B2）~~ **完成 2026-05-31**：`require_api_key` 改成 `session: AsyncSession = Depends(get_session)`，現在跟 route handler 共享同一條 session（不再每 req 偷開第二條）。`get_session` 本身 docstring 明確寫「不 auto-commit」+ `_check_key` 內 `await session.commit()` 是合法的 single commit point。驗證：[`tests/test_deps_auth.py`](pmi-api/tests/test_deps_auth.py) 4 個 test（missing key 401、invalid key 401、valid key + 共享 session、auth disabled = None principal）全 pass。 | 1 小時 | §1.8 B1 / B2 / §5.5 E1 / E2 |
 
 ---
@@ -62,12 +62,13 @@
 | ✅ ~~**CORR-3.1**~~ | ~~`_upsert_market` 改用 atomic `INSERT ... ON CONFLICT (venue, external_id) DO UPDATE`~~ **完成 2026-05-28**：改用 `sqlalchemy.dialects.postgresql.insert(...).on_conflict_do_update(index_elements=["venue","external_id"], set_={...})` 一次 atomic INSERT+UPDATE，且回傳 `RETURNING id`；caller 用 detached stub 拿 `market.id` 避免每筆多一次 SELECT。Live 10k+ markets 跑過一輪零 `polymarket.market_skip`。位置：[`pmi-ingest/pmi_ingest/pollers/polymarket_rest.py:_upsert_market`](pmi-ingest/pmi_ingest/pollers/polymarket_rest.py)。 | 1 天 | §1.8 B5 + 2026-05-28 subagent report → 已修 |
 | **CORR-3.2** | CLI 升級 private import：把 `_ensure_index_definition` rename 成 public `ensure_index_definition`；移除 `pmi-core/pmi_core/cli.py` L144 的 leak | 1 小時 | §1.8 B3 / §5.5 E4 |
 | ✅ ~~**CORR-3.3**~~ | ~~**`/explain` 端點補完**：(a) **修 dict-update bug**（relevancy/direction 永遠回 0 — `bucket = setdefault(..., {"relevancy": 0.0, ...})` 建立時寫死，迴圈內只 update `factors`） (b) `last_price` 從 `ts_price_snapshots` LATERAL JOIN (c) 從 aggregator 抽 `_relevancy` / `_direction_value` 當共用 helper~~ **完成 2026-05-31**：(a) 把 setdefault dict 拆成 `by_market_evals: dict[int, dict[str, AuditEvaluation]]` + `by_market_factors`，迴圈結束後對每個 market 呼叫 `_relevancy(evals, ir)` / `_direction_value(evals)`；(b) 用 `DISTINCT ON (market_id) ORDER BY market_id, snapshot_at DESC` 在 `ts_price_snapshots` 撈 score.as_of 之前最新 last_price；(c) 直接 `from pmi_core.engine.aggregator import _direction_value, _relevancy` — single source of truth，不再 reimplement。驗證：[`tests/test_routes_indexes.py::test_explain_returns_factors_and_relevancy`](pmi-api/tests/test_routes_indexes.py) 同時 assert relevancy=1.0 / direction=+1 / last_price=0.60 / factors dict 含兩個 factor_id。 | 1 天 | M7 / §1.1 / §5.5 E3 |
-| **CORR-3.4** | Liquidity weighting 落地：aggregator 真的用 `volume` / orderbook depth quantile（目前 YAML parse 進 IR 但 aggregator 從沒 read） | 2 天 | §1.1 / P1-3 |
+| ✅ ~~**CORR-3.4**~~ | ~~Liquidity weighting 落地：aggregator 真的用 `volume` / orderbook depth quantile~~ **完成 2026-06-02**：aggregator 新 `_liquidity_weights(rows, ir)` + `_percentile()` helper。primary signal = `ts_orderbook_snapshots.bid_depth_1pct + ask_depth_1pct`（最新 snapshot per market，via `pipeline._latest_orderbook_depths`）；cold-start fallback = `ts_price_snapshots.volume_24h`（從 `_latest_prices` 同時拉回避免二查）。Quantile ladder 採 Micah `source_weights` 同款 0.90 / 1.00 / 1.20 / 1.50（p20/p50/p80 interpolated），N < 4 樣本或全等值（p20=p50=p80）回 uniform 1.0 保留 pre-CORR-3.4 行為。method=`none` short-circuits，`linear` max-normalises 到 [0.5, 1.5]。`MarketEvaluations` 加 `liquidity: float\|None` 欄；`liquidity=None` 的 market 一律 weight=1.0（cold start 不被懲罰）。`ts_index_scores.breakdown.liquidity_weighting` 帶 `{method, sample_size, applied, p20/p50/p80 or max_d}` 供 audit 看出 tick 為何長這樣。**驗證**：11 個新 unit test ([`tests/test_aggregator_liquidity.py`](pmi-core/tests/test_aggregator_liquidity.py)) — quantile ladder bucket-by-bucket、cold start、no-variance、method=none uniform、aggregate score boost vs unweighted；pmi-core 101 passed total；5 個 fixture dry-run all green（war 49.0098 vs prev 49.0294 微 drift 是 quantile 真接上的證明）。**未做**：`representative: highest_liquidity` 仍 fallback `max_probability`（bucket_collapser 的 P2 工作，CORR-1.4 留尾巴）。 | 2 天 | §1.1 / P1-3 |
 | **CORR-3.5** | Ingest 補 volume 訊號：`core_markets.volume_24h` 從 Gamma `volumeNum` 寫入 **或** `/explain` 從 `ts_price_snapshots` LATERAL JOIN（二選一；ingest 已寫進 `ts_price_snapshots.volume_24h`） | 半天 | M6 / P0-5 |
-| **CORR-3.6** | Embeddings 真的寫入 `vec_market_embeddings` + Semantic selector 真的查 pgvector（目前 schema 接受但 selector 完全忽略） | 3 天 | §1.1 第 4/5 條 |
+| 🔥 **CORR-3.6** | Embeddings 真的寫入 `vec_market_embeddings` + Semantic selector 真的查 pgvector（目前 schema 接受但 selector 完全忽略）。**2026-06-01 升 priority**：reid「data source 還沒整合」對話排在 ROI #2（前置是 SHIP-4.5 已落）— 接上 OpenAI embedding writer 同步 unblock 半個 CORR-5.1。Micah 的 `text-embedding-3-small` pipeline ([`micah/server/app/jobs/embeddings.py`](../micah/server/app/jobs/embeddings.py)) 可整套搬，contract→market 改名而已。 | 3 天 | §1.1 第 4/5 條 + 2026-06-01 對話 |
 | **CORR-3.7** | `audit_pipeline_runs.metadata_json` 欄位定義但從沒被寫過 — 要嘛刪 column 要嘛真寫東西進去 | 1 小時 | §1.8 B4 |
 | ✅ ~~**CORR-3.8**~~ | ~~Polymarket Gamma API offset hard cap ~10,000 → 422~~ **完成 2026-05-28**（路徑 a）：`_fetch_page` 在 `raise_for_status()` 之前先檢查 `resp.status_code==422`，若是則丟自訂 `_OffsetCapReached`（不繼承 `httpx.HTTPError`，retry predicate 不會抓它），poll loop 在外層 `try/except _OffsetCapReached` 把它當「end of dataset」正常 break，cycle 仍標 `success=true`、records=已寫筆數。**驗證**：實際跑到 offset=10100 → 收到 422 → log `polymarket.offset_cap_reached`（INFO，不是 ERROR）→ `audit_source_health.status='healthy'`、`records_24h=10100`。⚠️ 還有後續：要徹底窮舉 > 10k 的市場，需走 keyset pagination（API 回 422 body 直接提示 `/markets/keyset`）— 開 **CORR-3.9** 追蹤。 | 1-2 小時 | 2026-05-28 subagent report → 已修 |
 | ✅ ~~**CORR-3.9**~~ | ~~實作 Polymarket `/markets/keyset` cursor pagination 取齊 > 10k markets~~ **完成 2026-05-30**：整個 poller 從 `/markets?offset=` 改成 `/markets/keyset?after_cursor=`。發現過程：probe 5 個候選 cursor param 都被 server 忽略（連 garbage cursor 都回 page 1）→ 從 `/openapi.json` 的 sibling `/spotlights/keyset` 文件找到正確 param 名 `after_cursor`（`/markets/keyset` 本身未文件化但同 convention）。Verify: 一次 cycle 撈到 **42,016 markets**（vs 舊 10,100）、其中 **26,460 markets** 位於先前兩個方向 offset 都搆不到的 id 中段（2,032,547 ~ 2,375,198）；audit `status=healthy` / 0 skip / 0 retry。Side effect：`_OffsetCapReached` 整段刪掉（CORR-3.8 變成 dead code，因為 offset endpoint 已經不在 hot path）；poll loop 改 cursor-driven + fixpoint guard (`next_cursor==cursor` 早抓 stuck loop)。位置：[`pmi-ingest/pmi_ingest/pollers/polymarket_rest.py`](pmi-ingest/pmi_ingest/pollers/polymarket_rest.py) 整支 module docstring + `_fetch_keyset_page` + `PolymarketRestPoller.run_once`。 | 1 天 | 2026-05-30 已修 |
+| ✅ ~~**CORR-3.11**~~ | ~~`audit_evaluations` write path 缺 ON CONFLICT 保護~~（背景：`evaluate_factor()` 走 SELECT → INSERT 兩步，supercronic hourly tick × 手動 `score` 撞同一 cache key → 第二個 INSERT IntegrityError → 整 tick rollback。2026-06-02 reproduce 過）。**完成 2026-06-04**：採推薦的 (a) atomic 路徑 — [`factor_evaluator.py`](pmi-core/pmi_core/engine/factor_evaluator.py) 改用 `pg_insert(...).on_conflict_do_nothing(constraint="uq_audit_evaluations__cache_key").returning(id)`；`returning` 為 None（即衝突）時 re-read 既有 row 當 cache hit 回傳。idempotent，兩容器並行也不爆。驗：對 Postgres dialect compile 出預期的 `INSERT ... ON CONFLICT ON CONSTRAINT ... DO NOTHING RETURNING` SQL。否決 (b) advisory lock（太重）/ (c) Arq dedupe（屬 CORR-4.6）。 | 半天 | 2026-06-02 對話 — CORR-3.4 smoke 發現 |
 
 ---
 
@@ -75,12 +76,82 @@
 
 | # | Todo | 估算 | 源 |
 |---|---|---|---|
-| **CORR-4.1** | Polymarket WebSocket trade feed — real-time + momentum 訊號的前置 | 1-2 週 | P1-11 |
-| **CORR-4.2** | Polygon chain indexer — trader cohort（whale vs retail）、UMA dispute 偵測 | 2 週 | P2-1 |
-| **CORR-4.3** | Orderbook depth via CLOB API — liquidity weight 換掉 volume proxy | 1 週 | P2-2 |
-| **CORR-4.4** | UMA dispute vs Polymarket display resolution 對齊 → `core_markets.chain_resolution` | 2 天 | §5.5 A6（跟 4.2 一起） |
+| 🟡 **CORR-4.1** | ~~Polymarket WebSocket trade feed — real-time + momentum 訊號的前置~~ **scaffold landed 2026-06-01**：[`pmi-ingest/pmi_ingest/streams/polymarket_ws.py`](pmi-ingest/pmi_ingest/streams/polymarket_ws.py) 訂閱 CLOB market channel → 落 `ts_trades(source='ws')`；auto-reconnect (exp backoff)、token refresh 60s、heartbeat 寫 `audit_source_health`。CLI `pmi-ingest ws`。**剩**：對 full 42k-token universe 沒實跑過，subscribe-replace 行為靠文件假設、需要對著真 server 試；DB outage 時 in-flight 事件會丟（P1 加 Redis stream buffer）；single-market re-eval trigger 要 CORR-4.6 Arq 才能接上。 | 1-2 週 | P1-11 |
+| 🟡 **CORR-4.2** | ~~Polygon chain indexer — trader cohort（whale vs retail）、UMA dispute 偵測~~ **scaffold landed 2026-06-01**：[`pmi-ingest/pmi_ingest/chain/polygon_indexer.py`](pmi-ingest/pmi_ingest/chain/polygon_indexer.py) — web3.py + `eth_getLogs` chunked walker，解 CTF Exchange `OrderFilled` → `ts_trades(source='chain')` + maker/taker → `core_traders`；ConditionalTokens `ConditionPreparation`/`Resolution` + UMA OO V2 `ProposePrice`/`DisputePrice`/`Settle` + UmaCtfAdapter `QuestionResolved` → `audit_chain_events`。checkpoint = `MAX(block_number) FROM audit_chain_events`，再開機從那繼續，`(tx_hash, log_index)` idempotency 保證 overlap safe。Cohort rollup 在 [`chain/cohort.py`](pmi-ingest/pmi_ingest/chain/cohort.py) — 滾過 30d ts_trades 加總 notional → 設 cohort。**剩**：未對 mainnet 實跑過；chunk_blocks 預設 2000 對特定 RPC provider 可能要降；rate-limit 失敗 retry 還沒接 tenacity；需要 `POLYGON_RPC_URL` 才會跑（空則 no-op + audit healthy）。 | 2 週 | P2-1 |
+| 🟡 **CORR-4.3** | ~~Orderbook depth via CLOB API — liquidity weight 換掉 volume proxy~~ **landed 2026-06-01**：[`pmi-ingest/pmi_ingest/pollers/polymarket_clob.py`](pmi-ingest/pmi_ingest/pollers/polymarket_clob.py) 對每個 active YES token 拉 `clob.polymarket.com/book` → 算 mid / spread / depth_1pct / depth_5pct / total → 寫 [`ts_orderbook_snapshots`](pmi-core/pmi_core/models/ts_orderbook_snapshot.py)，並 keep top-25 raw levels JSON 在 `bids` / `asks` 欄做 forensic 重算。 16-way concurrency 切，每 cycle cap 5000 token，預設 60s 一輪。**接通條件**：先跑 polymarket_rest 把 `clob_yes_token` 從 Gamma `clobTokenIds[0]` 寫進 `core_markets`（已落，見 `_parse_clob_tokens`）。**剩**：aggregator 還沒讀 `ts_orderbook_snapshots`（要等 CORR-3.4 liquidity weighting 落地）；NO token 暫不 poll（symmetric 對 binary market 不必要）。 | 1 週 | P2-2 |
+| 🟡 **CORR-4.4** | ~~UMA dispute vs Polymarket display resolution 對齊 → `core_markets.chain_resolution`~~ **scaffold landed 2026-06-01**：[`pmi-ingest/pmi_ingest/chain/uma_resolver.py`](pmi-ingest/pmi_ingest/chain/uma_resolver.py) 兩條路徑：(a) `--gamma-only` 純走 Gamma `raw.umaResolutionStatuses`（不需 chain RPC）但只認得 'proposed' / 'disputed'，settled 留 NULL；(b) 預設模式從 `audit_chain_events` 撈 `uma_propose` / `uma_dispute` / `uma_settle` / `uma_question_resolved`，DISTINCT ON questionKey → join `condition_prepared` 拿 conditionId → UPDATE `core_markets.chain_resolution`。`UMA_SETTLED_YES/NO/INVALID` 由 settled price ≥0.75 / ≤0.25 / else 決定。**剩**：要等 CORR-4.2 跑過至少一次有 `condition_prepared` event 才能做完整 chain path；aggregator filter `WHERE chain_resolution NOT IN ('UMA_DISPUTED', ...)` 也是 CORR-3.4 一起。 | 2 天 | §5.5 A6（跟 4.2 一起） |
+| 🟡 **CORR-4.7** | **Kalshi parity for CORR-4.1 / 4.3** — orderbook + WS trades 跨 venue 一致 schema。**landed 2026-06-01**：[`pmi-ingest/pmi_ingest/pollers/kalshi_clob.py`](pmi-ingest/pmi_ingest/pollers/kalshi_clob.py) 走 `/markets/{ticker}/orderbook` （anon endpoint 回 `orderbook_fp.{yes_dollars,no_dollars}` with string-dollar prices — 真實 shape vs docs 寫的差距，第一次 smoke 0 snapshots 才發現），YES-centric mid from dual-bid book 寫進同一張 `ts_orderbook_snapshots`（token_id=ticker），smoke 1966 snapshots、Kalshi avg spread 9.7% vs Polymarket 27%。WS consumer [`streams/kalshi_ws.py`](pmi-ingest/pmi_ingest/streams/kalshi_ws.py) 用 `_load_private_key` （已 patch 支援 file 內容是 escaped `\n` 字串的 PEM）→ `ts_trades(source='kalshi-ws')`。**剩 / Open**：這把 Kalshi API key（與 REST 共用、REST 200 OK）打 WS handshake 一律回 `401 {"details":"NOT_FOUND"}` — 跨 5 個 signed path 變體 + 5 個 host 變體都同樣；同 key REST 通、WS 401，幾乎肯定是 **Kalshi-side streaming permission 沒開**，不是 code bug。要解：到 Kalshi developer console 把這把 key 升 trader scope（或新開 streaming-enabled key），不動 code。 | 1 天剩 Kalshi-side enable | 對話 2026-06-01 |
 | **CORR-4.5** | TimescaleDB hypertables on `ts_price_snapshots` + `ts_index_scores` + `audit_source_health` — 時序查詢效能 | 2-3 天 | P1-9 |
 | **CORR-4.6** | Arq + Redis 落地：把 cron 換成 worker + on-demand score（WS 觸發 single-market re-eval）。目前 pmi-workers 走 supercronic + `run-job`，OK for P0 不 OK for P1 scale | 1 週 | P1-2 |
+
+---
+
+## 4.5 Data source landscape（2026-06-01 對話：reid「還有哪些 data source 尚未整合」整理）
+
+> **Context**：legacy Micah 接 9 個 source（[CLAUDE.md §15.3](#)）；新平台到 2026-06-01 為止接 **2 個 venue + 5 個 Polymarket 衍生子源**（深度 / WS / chain / UMA / 歷史）。這節記**還沒整合的、為什麼、以及優先序**，避免下次又問一次。
+
+### 4.5.1 Polymarket sub-sources（CLAUDE.md §15.10 + 此 §4 衍生）
+
+| Source | 狀態 | TODO ID | 動作 |
+|---|---|---|---|
+| Gamma REST `/markets/keyset` | ✅ landed | — | base poller，每 5 min |
+| CLOB `/book` orderbook depth | ✅ landed | CORR-4.3 | 60s cadence |
+| CLOB WS `market` channel | 🟡 scaffold | CORR-4.1 | 200-token cap，full universe 要 multi-connection |
+| CLOB `/prices-history` 歷史 backfill | ✅ landed 2026-06-01 | CORR-3.10 / SHIP-4.5 | daily cron |
+| Polygon RPC chain events (CTF Exchange / ConditionalTokens / UMA OO V2 / UmaCtfAdapter) | 🟡 code-only no-op | CORR-4.2 | **要付費 RPC**（Alchemy / Quicknode / Infura） — `POLYGON_RPC_URL` 一填就跑 |
+| UMA dispute projection | 🟡 Gamma-only path live；chain path 待 RPC | CORR-4.4 | 同上 |
+| Polymarket Subgraph (TheGraph / Goldsky) | ❌ | CORR-8.3 (P2+) | 跟 chain-RPC 二擇一的歷史 source；subgraph 較完整但 query 慢、chain 較即時 |
+| Polymarket events endpoint (event-first scraping) | ❌ | SHIP-3.7 | senate PoC 驗過快 ~109×；index def 預先綁 event 就能省全表掃描 |
+
+### 4.5.2 Kalshi sub-sources
+
+| Source | 狀態 | TODO ID |
+|---|---|---|
+| REST `/markets` | ✅ landed | — |
+| `/markets/{ticker}/orderbook` (anon `orderbook_fp` shape) | ✅ landed | CORR-4.7 |
+| WS `/trade-api/ws/v2` | ⏳ key blocked | CORR-4.7 (Kalshi-side permission) |
+
+### 4.5.3 LLM / 推理層 source（CLAUDE.md §6 + reid 對話 ROI 排序）
+
+| Source | 狀態 | TODO | 優先 |
+|---|---|---|---|
+| OpenAI Chat (`gpt-4o-mini-*`) Tier 1 evaluator | ✅ landed (SHIP-0.6) | — | — |
+| OpenAI **Embeddings** for `vec_market_embeddings` | ❌ schema 有、寫入沒接 | CORR-3.6 + CORR-5.1 | 🔥 #1 next（unblock semantic selector + Tier 0 pre-filter） |
+| OpenAI / Anthropic **Batch API** | ❌ | CORR-5.3 | 🔥 #2 next（nightly eval cost -50%） |
+| Anthropic (Sonnet/Opus) Tier 2 agentic | ❌ | CORR-5.6 | 後 |
+| Web search / Bloomberg / Reuters / FRED / BLS (Tier 2 tools) | ❌ | CORR-5.6 子任務 | 後 — Tier 2 上線才需要 |
+
+### 4.5.4 Legacy Micah sources（adoption matrix）
+
+> **2026-06-01 update**：reid 推翻原本「砍 7 個」的設計決定，把 Metaculus / Robinhood / Crypto.com 三個拉回平台。剩下四個維持 deferred。
+
+| Source | Micah 怎麼接 | 平台狀態 | 備註 |
+|---|---|---|---|
+| 🟢 **Metaculus** | REST + RSC | ✅ landed 2026-06-01 ([`pollers/metaculus_rest.py`](pmi-ingest/pmi_ingest/pollers/metaculus_rest.py)) | `pmi-ingest run --source metaculus-rest`。Smoke: 無 token 回 403、audit 寫 down，需在 metaculus.com profile 拿 `Token <key>` 才能跑 list API |
+| 🟢 **Robinhood** | Playwright scraper | ✅ ported 2026-06-01 ([`scrapers/robinhood/`](pmi-ingest/pmi_ingest/scrapers/robinhood/)) | `pmi-ingest robinhood-scrape`，需 `ROBINHOOD_ENABLED=true`。Chromium bundled in pmi-ingest image (+~500MB). 3-phase scrape (discovery → listing → detail) 跑 ~6-15 min full universe |
+| 🟢 **Crypto.com** | Playwright scraper | ✅ ported 2026-06-01 ([`scrapers/crypto/`](pmi-ingest/pmi_ingest/scrapers/crypto/)) | `pmi-ingest crypto-scrape`，需 `CRYPTO_ENABLED=true`。RSC-extraction（不爬 DOM），see-more clicks 到 50 次 cap |
+| ⛔ **PredictIt** | REST | deferred | 量太小（< $1M monthly），美國僅 5 listing；Kalshi 已蓋掉這個 niche |
+| ⛔ **ForecastEx** | REST | deferred | IBKR-only、量小、API 少 |
+| ⛔ **Manifold** | REST | deferred | play-money、self-priced、無真 liquidity；若日後需 forecasting consensus 再加 |
+| ⛔ **Coinbase** | Playwright scraper | deferred | crypto price 走 Coinbase REST 或 CoinGecko 更便宜，scraper 維護成本不值得 |
+
+**deferred 4 個的 reopen 條件**：(a) 某 enterprise customer 明確要求；(b) 某個 commit 的 PMI def 需要那個 venue 的覆蓋率；否則維持 deferred。
+
+### 4.5.5 Scrapers fragility 風險（Robinhood / Crypto.com）
+
+兩個 scraper 都靠 DOM 結構（Robinhood）或 RSC payload shape（Crypto.com）—— 網站改版時會悄悄壞。Mitigation:
+
+* `audit_source_health` 抓到 0-record cycle 就會 `status=down`、`consecutive_failures` 累加 → Slack alert (CORR-7.5)
+* JS extractors 都是 standalone `.js` 文件，DOM 結構變了改 selector 即可（不用動 Python）
+* PR #N（未來）若 Micah 那邊先發現 scraper 壞了，他們的 fix 是 1:1 portable 到這邊（同 JS 同 parser 同 scraper.py）
+
+### 4.5.6 Scrapers smoke 2026-06-01 — 邊跑邊修的 3 個 bug
+
+* **B1 — Crypto: nested asyncio loop**：Crypto scraper 的 `scrape_all()` yields 是在 Playwright sync greenlet 內，主執行緒已有 loop running，`persist_batch()` 用 `asyncio.run()` 撞 `cannot be called from a running event loop`。Fix: [`persistence.py`](pmi-ingest/pmi_ingest/scrapers/persistence.py) 偵測 `get_running_loop()`，nested 時改用 worker thread 跑 fresh loop。
+* **B2 — Cross-loop dead-pool**：pmi-core 的 `engine` 是 module-level singleton，asyncpg 把 connection pool pin 在第一個碰到它的 loop；後續 `asyncio.run()` 開新 loop 後用舊 pool 就炸 `Future ... attached to a different loop`。Fix: 在每個 scraper-context async helper 開頭 `await engine.dispose()` 強制 fresh pool。新 helper `record_audit_in_scrape_context` 統一 audit 寫入。
+* **B3 — InFailedSQLTransactionError cascade**：Robinhood scrape 第一輪跑到 1083 rows 後撞到一筆 bad row（很可能是 title 太長 / unicode / category 超字），try/except 在 Python 層 catch 了但 PG 已把整個 transaction 標 abort，後續所有 INSERT 都失敗。Fix: [`persistence.py`](pmi-ingest/pmi_ingest/scrapers/persistence.py) 用 `session.begin_nested()` 每 row 包 savepoint，一筆失敗只 rollback 到該 savepoint，不污染 batch 其他列。
+
+三個都已 fix；savepoint pattern 是 SQLAlchemy 的 canonical solution，回歸風險低。
 
 ---
 
@@ -88,9 +159,9 @@
 
 | # | Todo | 估算 | 源 |
 |---|---|---|---|
-| **CORR-5.1** | **Tier 0 embedding pre-filter**（pgvector + OpenAI embeddings）— 新市場 cosine < 0.5 跳過 LLM 評估，成本控制 | 1 週 | P1-5 / §5.5 C7 |
+| 🔥 **CORR-5.1** | **Tier 0 embedding pre-filter**（pgvector + OpenAI embeddings）— 新市場 cosine < 0.5 跳過 LLM 評估，成本控制。**依賴 CORR-3.6 先把 embedding 寫入**，兩條一起做合理（CORR-3.6 寫資料、CORR-5.1 讀資料 + selector 邏輯）。reid 2026-06-01 對話 ROI #2 的後半段。 | 1 週 | P1-5 / §5.5 C7 |
 | **CORR-5.2** | **Tier 3 周期性 re-evaluation trigger**（價格漂移 > X% → 觸發重算單一 market） | 1 週 | CLAUDE.md §6 / §5.5 D5 |
-| **CORR-5.3** | **OpenAI / Anthropic Batch API integration**（搬 [`micah-job-executor/.../batch_evaluator.py`](../micah-job-executor/app/jobs/workflows/evaluate_contracts/batch_evaluator.py)）— 成本減半 | 3 天 | CLAUDE.md §6 / §5.5 C6 |
+| 🔥 **CORR-5.3** | **OpenAI / Anthropic Batch API integration**（搬 [`micah-job-executor/.../batch_evaluator.py`](../micah-job-executor/app/jobs/workflows/evaluate_contracts/batch_evaluator.py)）— 成本減半。**reid 2026-06-01 對話 ROI #4**：nightly eval 直接省 50%。Tier 1 已接 real LLM（SHIP-0.6），加 batch path 是純 cost 優化，不解新功能。 | 3 天 | CLAUDE.md §6 / §5.5 C6 + 2026-06-01 對話 |
 | **CORR-5.4** | **Cost budget enforcement**：每次 tick 預算 $X 超過停 + alert | 2 天 | §5.5 C5 |
 | **CORR-5.5** | **A/B testing / shadow mode**：`CoreFactorModel` 加 `traffic_pct` + shadow flag，evaluator 按比例分流 | 1 週 | §5.5 D1 |
 | **CORR-5.6** | **Tier 2 agentic deep eval**（Sonnet / Opus 帶 web search / read resolution criteria tools）— 觸發條件：Tier1 信心低 / factor 矛盾 | 2 週 | P2-3 / §5.5 D6 |

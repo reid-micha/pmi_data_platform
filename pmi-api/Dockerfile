@@ -26,7 +26,8 @@ RUN uv pip install --system --no-cache \
     "click>=8.1.7" \
     "httpx>=0.27.0" \
     "tenacity>=8.4.0" \
-    "alembic>=1.13.2"
+    "alembic>=1.13.2" \
+    "sentry-sdk>=2.0.0"
 
 EXPOSE 8000
 ENTRYPOINT ["python", "-m", "pmi_api.main"]

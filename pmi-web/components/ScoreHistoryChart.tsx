@@ -34,7 +34,10 @@ interface ScoreHistoryChartProps {
 
 interface ChartPoint {
   ts: number;
-  score: number;
+  // null is a gap (index produced no score that tick); recharts skips
+  // nulls when `connectNulls` is false, so the line breaks rather than
+  // crashing on toFixed.
+  score: number | null;
 }
 
 export function ScoreHistoryChart({ points, height = 360 }: ScoreHistoryChartProps) {
@@ -51,7 +54,7 @@ export function ScoreHistoryChart({ points, height = 360 }: ScoreHistoryChartPro
 
   const data: ChartPoint[] = points.map((p) => ({
     ts: new Date(p.as_of).getTime(),
-    score: Number(p.score),
+    score: p.score !== null ? Number(p.score) : null,
   }));
 
   return (
@@ -97,7 +100,10 @@ export function ScoreHistoryChart({ points, height = 360 }: ScoreHistoryChartPro
                 minute: "2-digit",
               })
             }
-            formatter={(v: number) => [v.toFixed(2), "score"]}
+            formatter={(v) => [
+              typeof v === "number" ? v.toFixed(2) : "n/a",
+              "score",
+            ]}
           />
           <Line
             type="monotone"
@@ -106,6 +112,7 @@ export function ScoreHistoryChart({ points, height = 360 }: ScoreHistoryChartPro
             strokeWidth={2}
             dot={false}
             isAnimationActive={false}
+            connectNulls={false}
           />
         </LineChart>
       </ResponsiveContainer>

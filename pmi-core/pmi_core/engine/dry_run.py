@@ -206,15 +206,25 @@ def dry_run(
         )
 
     for market, _ in selected:
-        last_price_raw = (market.raw or {}).get("last_price")
+        raw = market.raw or {}
+        last_price_raw = raw.get("last_price")
         last_price = (
             float(last_price_raw) if isinstance(last_price_raw, (int, float)) else None
+        )
+        # CORR-3.4: fixtures don't carry orderbook depth (the CLOB poller is
+        # online-only), so dry-run reads volume_24h directly off the fixture
+        # row as the liquidity proxy. Real ticks prefer depth_1pct when
+        # available — see pipeline._latest_orderbook_depths.
+        vol_raw = raw.get("volume_24h")
+        liquidity = (
+            float(vol_raw) if isinstance(vol_raw, (int, float)) and vol_raw > 0 else None
         )
         market_rows.append(
             MarketEvaluations(
                 market=market,
                 by_factor=market_to_evals[market.id],
                 last_price=last_price,
+                liquidity=liquidity,
             )
         )
 

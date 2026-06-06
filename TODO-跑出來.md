@@ -30,30 +30,23 @@
 
 ## 1. 部署 / Cloud（MVP M4）
 
-> **狀態**：SHIP-1.0（地端 docker e2e 驗）完成 = 6 個 service 的 image / volume mount / env vars / depends_on 全 work。
-> 剩下的不再是「能不能跑」的問題，而是：
+> **狀態（2026-06-04 更新）**：SHIP-1.0（地端 docker e2e）完成；**R5 已決策 = 單台 AWS EC2 + docker compose + Caddy**（2026-06-04 single-EC2 launch plan）。
+> 對應的 launch 實作（code + 全套 deploy 物件）已落地在 [`deploy/`](deploy/)，本機 docker compose 也已驗過 auth / ingest split / keys CLI / race-fix / LLM endpoint。
+> **唯一還沒做的是「真的開 AWS 機器」那步**（沒有 AWS 帳號/box 可在此環境執行）——以 runbook + scripts 形式交付，待 reid 在有帳號的環境照 [`deploy/README.md`](deploy/README.md) 跑。
 >
-> 1. **R5 — Platform 決策（卡住所有 SHIP-1.1+）**：Render vs Fly.io vs Modal vs DIY VPS。
->    - **Render** 推薦：有 free Postgres、Background Worker 原生支援、blueprint (`render.yaml`) 跟我們 docker-compose 結構幾乎 1:1，env group 共用方便。缺點：價格中等、跨 region 弱。
->    - **Fly.io**：cheapest at small scale、跨 region 強、Postgres machines 需自管。
->    - **Modal**：適合 worker-heavy，web service 不是主流用法。
->    - **DIY (Hetzner + Caddy + docker-compose)**：最便宜、最自由，但 SSL / Postgres backup / log drain 都要自架。
->    - **決策需求**：Reid 預算範圍、未來 6 個月會不會有 enterprise 客戶（需 SLA / VPC）、是否在乎 cross-region。
-> 2. **Secrets 管理**（SHIP-1.6）— platform 級 secret store，不能放 git
-> 3. **DNS + TLS + custom domain**（SHIP-1.7）— 用戶 demo / 機構評估都需要
+> **R5 決策結論**：選 **單台 EC2 t3.large（2 vCPU / 8 GB）+ gp3 100 GB EBS + Elastic IP**，Postgres 跑 container（RDS 是未來遷移）、Caddy 在 host 自動 Let's Encrypt（取代 ALB+ACM）。理由：最省、最自由、與既有 docker-compose 拓樸 1:1、enterprise SLA/VPC 需求未到。Render / Fly.io / Modal 的比較留在附錄 D 當紀錄。
 
-> 沒這節 = 永遠只能在 reid 筆電上 demo。
-
-| # | Todo | 估算 | 源 | 卡在 |
+| # | Todo | 估算 | 源 | 狀態 |
 |---|---|---|---|---|
-| ✅ **SHIP-1.0** | **地端 docker e2e 驗**（cloud 部署的前置）：postgres + mlflow + pmi-api + pmi-ingest + pmi-workers + pmi-web 六個 service 同時起 + 跑完整 migrate / seed / score-all / curl / SSR pipeline。確保 cloud 部署只是「同一組 image + 同樣的 env vars 換 host」 | 半天 | 2026-05-28 對話 | — |
-| **SHIP-1.1** | 寫 `render.yaml` / `fly.toml` / k8s manifest（看 R5 選哪個），include `postgres + pgvector` + `mlflow` + `pmi-api` + `pmi-ingest` + `pmi-workers` + `pmi-web` | 2 天 | M4 / P0-6 | **R5** |
-| **SHIP-1.2** | `pmi-workers` 部成 Background Worker / always-on container（不是 Web Service），確認 supercronic 在雲端環境讀得到 `/app/cron/crontab` | 半天 | P0-10 | SHIP-1.1 |
-| **SHIP-1.3** | Container registry：build + push `pmi-api / pmi-ingest / pmi-workers / pmi-web / mlflow` 五個 image 到 GHCR（GitHub Actions workflow）；tag = git SHA | 半天 | M4 子項 | — |
-| **SHIP-1.4** | MLflow artifact 從 local docker volume 搬到 S3 / R2 / Tigris（boto3 已裝、environment 變數已預留） | 半天 | §4.3 子項 | R2/S3 account |
-| **SHIP-1.5** | Cloud Postgres 上 pgvector extension：寫 init script 或在 DB user setup 跑 `CREATE EXTENSION vector`；確認 platform 的 managed Postgres 允許 extension | 1 小時 | §4.3 | SHIP-1.1（看 platform 是否原生支援） |
-| **SHIP-1.6** | Secrets：把 `OPENAI_API_KEY / DB_PASSWORD / MLFLOW_*` 放進 platform secret store / env group，**不**進 .env 進 git；root `.env` 加進 `.gitignore`（已是）並改成 `.env.example` 風格 | 1 小時 | §4.3 | SHIP-1.1 |
-| **SHIP-1.7** | **DNS + TLS + custom domain**（漏掉的）：申請 / 接已有 domain（例：`pmi.<reid-domain>`、`api.pmi.<reid-domain>`、`mlflow.pmi.<reid-domain>`）、設 CNAME 指向 platform、確認 platform 自動發 Let's Encrypt cert、更新 `NEXT_PUBLIC_PMI_API_URL` / CORS origin 對齊新 domain | 半天 | 2026-05-28 對話 | R5 + domain 來源 |
+| ✅ **SHIP-1.0** | **地端 docker e2e 驗**（cloud 部署的前置）：postgres + mlflow + pmi-api + pmi-ingest + pmi-workers + pmi-web 六個 service 同時起 + 跑完整 migrate / seed / score-all / curl / SSR pipeline。確保 cloud 部署只是「同一組 image + 同樣的 env vars 換 host」 | 半天 | 2026-05-28 對話 | ✅ |
+| 🟡 **SHIP-1.1** | ~~render.yaml / fly.toml~~ → R5 改單台 EC2：**`deploy/docker-compose.prod.yml`** 落地（GHCR image、postgres+pgvector、mlflow、pmi-api、5 個 ingest service、pmi-workers、pmi-web、caddy 共 11 service，`docker compose config` 驗過）。剩：在真 AWS 上 `systemctl start pmi` 拉起（待帳號） | 2 天 | M4 / P0-6 | 🟡 compose 好、AWS apply 待跑 |
+| ✅ **SHIP-1.2** | `pmi-workers` 在 prod compose 是 always-on container（supercronic 讀 `/app/cron/crontab`，hourly `run-job hourly`）；ingest 拆成 5 個獨立 long-lived service（pm-rest / pm-clob / pm-history / kalshi-rest / kalshi-clob，profile `ingest`） | 半天 | P0-10 | ✅ |
+| ✅ **SHIP-1.3** | Container registry：GitHub Actions [`.github/workflows/build-images.yml`](.github/workflows/build-images.yml) matrix build+push `pmi-core / pmi-api / pmi-ingest / pmi-workers / pmi-web / mlflow` 到 GHCR；tag = short git SHA + `latest`；pmi-web bake `NEXT_PUBLIC_PMI_API_URL` build-arg。prod compose pin `:${IMAGE_TAG}` | 半天 | M4 子項 | ✅ |
+| ✅ **SHIP-1.4** | MLflow artifact 搬到 S3：prod compose 設 `MLFLOW_ARTIFACTS_DESTINATION=s3://${MLFLOW_S3_BUCKET}`，credentials 走 instance IAM role（boto3 自 IMDS 取）。剩：建 bucket（在 SHIP-1.x AWS apply 一起） | 半天 | §4.3 子項 | ✅ 配置好、bucket 待建 |
+| ✅ **SHIP-1.5** | pgvector extension：prod 用 `pgvector/pgvector:pg16` image + [`deploy/db-init/00-extensions.sql`](deploy/db-init/00-extensions.sql)（`CREATE EXTENSION vector`）+ alembic 0001 已 `CREATE EXTENSION IF NOT EXISTS vector`（雙保險）；`01-mlflow-database.sql` 建 mlflow DB | 1 小時 | §4.3 | ✅ |
+| ✅ **SHIP-1.6** | Secrets：[`deploy/scripts/fetch-secrets.sh`](deploy/scripts/fetch-secrets.sh) 開機從 AWS Secrets Manager（`pmi/prod/secrets` JSON）render `deploy/.env` + `kalshi.key`，由 [`deploy/systemd/pmi-env-fetch.service`](deploy/systemd/pmi-env-fetch.service) 在 `pmi.service` 前跑；`.gitignore` 加 `deploy/.env` / `deploy/.env.base`。non-secret 留 `deploy/.env.base.example` | 1 小時 | §4.3 | ✅ |
+| ✅ **SHIP-1.7** | DNS + TLS：[`deploy/caddy/Caddyfile`](deploy/caddy/Caddyfile) 3 subdomain（`pmi.` → web、`api.pmi.` → api、`mlflow.pmi.` → mlflow + basic-auth）自動 Let's Encrypt；`.env.base` 對齊 `NEXT_PUBLIC_PMI_API_URL` / CORS。剩：Route 53 A record 指 Elastic IP（AWS apply） | 半天 | 2026-05-28 對話 | ✅ 配置好、DNS record 待設 |
+| 📋 **SHIP-1.8** | **AWS infra apply（唯一待人工執行）**：開 EC2 t3.large + gp3 + Elastic IP + SG(80/443, SSM only) + IAM role + S3 bucket + Route 53 + Secrets Manager + Budgets，跑 [`deploy/scripts/bootstrap.sh`](deploy/scripts/bootstrap.sh) + bring-up runbook。完整步驟見 [`deploy/README.md`](deploy/README.md) | 1.5 天 | 2026-06-04 plan | 📋 待 AWS 帳號 |
 
 ---
 
@@ -96,7 +89,7 @@
 | ✅ **SHIP-4.2** | 文件不一致：`pmi-core/README.md` 改成 `pmi-score / api-dev` + 新加 `dry-run / schema-dump` 範例；`mlflow/README.md` 改 pin 寫成 `>=2.22,<3`（對齊 Dockerfile） | 1 小時 | §1.5 / P0-7 |
 | ✅ **SHIP-4.3** | Root `pmi_data_platform/README.md` 掃一輪：service 表格 + Quickstart 對齊現況（pmi-workers / pmi-web 已不是 stub；pmi-demo 標註已退離；補 dry-run / schema-dump 區塊；補兩本 TODO 連結） | 30 分 | §1.5 |
 | ✅ **SHIP-4.4** | Ingest pagination 拿掉 `max_pages=10` 寫死，改 `while True: batch...` 自然 break，`max_pages` 留成 1000 安全閥（含 `polymarket.max_pages_hit` 告警 log） | 1 小時 | §1.7 S8 / §5.5 A4 |
-| **SHIP-4.5** | Historical price backfill job（Polymarket Subgraph 或 `/markets/{id}/history`）— SHIP-3.4 backtest 的前置 | 3 天 | §5.5 A5 |
+| ✅ **SHIP-4.5** (= CORR-3.10) | ~~Historical price backfill job — SHIP-3.4 backtest 的前置~~ **landed 2026-06-01**：走 CLOB `/prices-history?market=<token>&interval=max` 而非 Subgraph（後者留給 CORR-8.3）。實作 [`pmi-ingest/pmi_ingest/pollers/polymarket_history.py`](pmi-ingest/pmi_ingest/pollers/polymarket_history.py)：8-way concurrency、`POLYMARKET_HISTORY_MAX_PER_CYCLE=1000` cap、ON CONFLICT DO NOTHING 走 alembic 0005 新加的 `uq_ts_price_snapshots__market_time` constraint 做 idempotency。CLI `pmi-ingest polymarket-history` 一次性 backfill，建議 daily cron。Smoke 20 markets → 9674 points 寫入（~484 points/market、覆蓋過去 30 天）；同 20 markets 重跑 → 0 inserted（idempotent verified）。Historical rows 由 `bid IS NULL AND ask IS NULL AND volume_24h IS NULL` 辨識（history endpoint 只給 price）。**剩**：(a) 真實 backfill 整個 universe 要 ~10 個 cron beat（10k markets ÷ 1000/beat）；(b) `audit_source_health.records_24h` 取得 0 重跑值是 noise（idempotent skip 沒寫入），P1 可改成「點數 fetched」而非「inserted」。 | 3 天 | §5.5 A5 + CLAUDE.md §15.10 |
 
 ---
 
@@ -106,15 +99,15 @@
 
 | # | Todo | 估算 | 源 |
 |---|---|---|---|
-| **SHIP-5.1** | Render log drain → Logflare（free tier）— structured JSON 已經有了，集中即可 | 半天 | M8 |
-| **SHIP-5.2** | Sentry SDK 加進 pmi-api / pmi-workers / pmi-ingest（free tier） | 半天 | P1-12 |
+| ✅ **SHIP-5.1** | ~~Render log drain~~ → R5 改 EC2：prod compose 每個 container 套 `awslogs` driver → CloudWatch Logs group `/pmi/prod`（structured JSON 已有）。剩：log group 自動建（driver `awslogs-create-group=true`）+ IAM 權限（在 SHIP-1.8 IAM role） | 半天 | M8 | ✅ 配置好、AWS apply 待跑 |
+| ✅ **SHIP-5.2** | Sentry SDK：[`pmi-core/pmi_core/observability.py`](pmi-core/pmi_core/observability.py) `init_sentry(service)`（`SENTRY_DSN` 未設則 no-op）接進 pmi-api / pmi-workers / pmi-ingest entrypoint；3 個 Dockerfile 加 `sentry-sdk`。設 `SENTRY_DSN` 即開 | 半天 | P1-12 | ✅ |
 
 ---
 
 ## 累積估算
 
 - 第 0 節（election demo）：半天 → **✅ 完成**（地端 docker 跑通）
-- 第 1 節（cloud deploy）：~4-5 天 → **剩 SHIP-1.1 ~ SHIP-1.7**（SHIP-1.0 完成；SHIP-1.1+ 全部卡在 **R5 platform 決策**）
+- 第 1 節（cloud deploy）：~4-5 天 → **R5 已決策（單台 EC2）；SHIP-1.0~1.7 全落地（code + deploy 物件 + 本機驗證）**，只剩 **SHIP-1.8（真 AWS infra apply，~1.5 天，待帳號）**
 - 第 2 節（demo surface）：~1 週 — **未動**
 - 第 3 節（DX 工具）：~2 週（可分批）→ **剩 SHIP-3.2 / 3.4 / 3.5 ≈ 8 天**
 - 第 4 節（修壞掉的）：~1 天 → **剩 SHIP-4.5 ≈ 3 天**（backtest 前置）
@@ -139,7 +132,8 @@
 | SHIP-1.0 | 2026-05-28 對話「SHIP-0.3 / 0.4 跟 1.0 都先用 docker 地端測試」 |
 | SHIP-1.1 ~ SHIP-1.6 | r3 `TODO.md` §2 M4、§5.2 P0-6 / P0-10、§4.3 |
 | SHIP-1.7 | 2026-05-28 對話「DNS / custom domain / TLS 之前漏列」（reid 追問補上） |
-| R5（platform 決策） | 2026-05-28 對話「reid 追問補上 callout，原本只藏在估算段一句話裡」 |
+| SHIP-1.8 | 2026-06-04 single-EC2 launch plan（R5 決策後新增的「真 AWS apply」獨立項） |
+| R5（platform 決策） | 2026-05-28 立 callout → **2026-06-04 決策 = 單台 EC2 + docker compose + Caddy**（見 single-ec2-pmi-launch plan） |
 | SHIP-2.1 | 對話 B8（新概念，r3 TODO 沒列） |
 | SHIP-2.2 | r3 `TODO.md` §5.2 P0-9 |
 | SHIP-2.3 | r3 `TODO.md` §2 M5 / §5.3 P1-1 + 對話 B10 |
@@ -229,3 +223,17 @@
 - 🔍 **DNS / custom domain / TLS** 之前**整個漏列**（只有 SHIP-1.6 secrets 有蓋到）。已新增 **SHIP-1.7** 涵蓋 domain 申請、CNAME 設定、Let's Encrypt cert（platform 自動）、`NEXT_PUBLIC_PMI_API_URL` + CORS origin 對齊新 domain。
 - ✅ **Secrets 管理** 已在 SHIP-1.6 — 沒漏。文字稍微 sharpen 一下講清楚 root `.env` 要進 `.gitignore` 且改 `.env.example` 風格。
 - ✏️ **§1 intro 改寫**：從「本地 docker-compose 都通但完全沒有 cloud spec」→「SHIP-1.0 已完成 = 不是『能不能跑』的問題，剩 R5 platform 決策 + secrets + DNS」這個更精準的框架。
+
+### 2026-06-04 single-EC2 launch batch（R5 決策 → 落地 deploy 物件 + 本機驗證）
+
+> Reid：「單台 docker compose」+「主要 data source 爬→入庫→aggregate→算分→入庫→API→前端 publish」+ 真 LLM 循序跑（稍微重構以後可換自建 LLM server）。據此寫了 single-EC2 launch plan 並實作。**R5 拍板 = 單台 AWS EC2 t3.large + docker compose + Caddy**。
+
+- ✅ **Phase 0 code（本機 docker compose 全驗過）**：
+  - **LLM endpoint 重構**（0a，對應 reid「以後自建 LLM server」）：`config` 加 `PMI_LLM_BASE_URL` / `PMI_LLM_API_KEY`；`OpenAIProvider` 走 `@lru_cache` 的 `AsyncOpenAI(base_url=...)`；`get_provider()` 加 `local/` + `self-hosted/` prefix 路由同一 provider。驗：`get_provider("local/llama-3.1-8b")` → OpenAIProvider、prefix 剝除、base 生效、client 有 cache。未來換 vLLM/Ollama/TGI = 翻 env + 用 `local/<model>` model_id，零改 code。
+  - **Ingest split**（0b）：`docker-compose.yml` 用 YAML anchor 拆成 5 個 long-lived ingest（pm-rest 在 `pmi` profile；clob / history / kalshi-rest / kalshi-clob 在 opt-in `ingest` profile）。history 因 CLI 是 one-shot，包成 daily shell loop。驗：實際 `up -d pmi-ingest-clob` 起來連打 `clob.polymarket.com/book` 200。
+  - **Auth 發布路徑**（0c，CORR-0.7）：`pmi-core keys create/list/revoke/rotate`（raw token 只出一次、存 sha256）；`pmi-web/lib/api-client.ts` 只在 server fetch path 注入 `X-API-Key`（讀 non-`NEXT_PUBLIC_` 的 `PMI_API_KEY`，瀏覽器拿不到）。驗：翻 `PMI_API_REQUIRE_AUTH=true` + 注入 key 重建 api/web → 無 key/錯 key 401、對 key 200、`/health` 公開 200、dashboard SSR 照常渲（bytes 與 auth-off baseline 幾乎一致）。
+  - **Race-fix**（0d，CORR-3.11）：`factor_evaluator` 寫 `audit_evaluations` 改 `INSERT ... ON CONFLICT ON CONSTRAINT uq_audit_evaluations__cache_key DO NOTHING RETURNING`，衝突則 re-read 當 cache hit。驗：對 Postgres dialect compile 出預期 SQL。
+- ✅ **Phase 1 CI（SHIP-1.3）**：`.github/workflows/build-images.yml` matrix build+push 6 image 到 GHCR（tag = short SHA + latest），pmi-web bake `NEXT_PUBLIC_PMI_API_URL`。
+- ✅ **Phase 2-4 deploy 物件（SHIP-1.1/1.4/1.5/1.6/1.7/5.1/5.2）**：`deploy/` 下 `docker-compose.prod.yml`（GHCR image、11 service、awslogs、S3 MLflow artifact、EBS pgdata、Caddy；`docker compose config` 驗過）、`caddy/Caddyfile`（3 subdomain + auto-TLS）、`db-init/`、`.env.base.example`、`scripts/{fetch-secrets,bootstrap}.sh`、`systemd/{pmi-env-fetch,pmi}.service`、`README.md`（AWS console + bring-up + deploy/rollback runbook）。Sentry 走 `pmi_core/observability.py::init_sentry`。
+- 📋 **唯一待人工（SHIP-1.8）**：真 AWS infra apply（沒帳號無法在此執行）——照 [`deploy/README.md`](deploy/README.md) 跑。
+- ⚠️ **已知 tradeoff**：prod 仍 bind-mount `pmi_core`（沒 bake 進 image），所以 git checkout SHA 與 `IMAGE_TAG` 要一起動；未來硬化 = 把 `pmi_core` COPY 進各 image（build context 改 repo root）。

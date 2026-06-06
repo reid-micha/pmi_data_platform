@@ -23,6 +23,22 @@ class Settings(BaseSettings):
     # an `OPENAI_API_KEY=...` env block.
     openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
 
+    # Optional override of the LLM endpoint. Leave empty to hit OpenAI directly.
+    # Set to an OpenAI-compatible server (vLLM / Ollama / TGI / a future
+    # self-hosted ML server) to route real-LLM evaluations there instead — the
+    # provider stays `OpenAIProvider`, only the transport target changes.
+    # `PMI_LLM_API_KEY` is the bearer token for that endpoint; when empty we
+    # fall back to `openai_api_key` so existing OpenAI configs keep working.
+    llm_base_url: str = Field(default="")
+    llm_api_key: str = Field(default="")
+
+    # Ollama (local model worker). Independent of `llm_base_url` so an Ollama
+    # endpoint can coexist with OpenAI-direct: promote a CoreFactorModel with an
+    # `ollama/<model>` model_id (e.g. `ollama/llama3.1`) to route it here.
+    # Inside docker compose this is overridden to `http://ollama:11434/v1`.
+    # The trailing `/v1` is Ollama's OpenAI-compatible API surface.
+    ollama_base_url: str = Field(default="http://localhost:11434/v1")
+
     # MLflow tracking + Prompt Registry. Pipeline gracefully degrades if unreachable
     # or if PMI_MLFLOW_ENABLED=false — audit_evaluations remain the source of truth.
     mlflow_tracking_uri: str = Field(default="http://localhost:5500")

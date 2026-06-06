@@ -28,7 +28,7 @@ export function ScoreCard({ envelope, meta }: ScoreCardProps) {
         <div>
           <p className="text-xs uppercase tracking-wide text-ink-muted">Current score</p>
           <p className="mt-1 text-5xl font-semibold tabular-nums text-accent">
-            {data.score.toFixed(2)}
+            {data.score !== null ? data.score.toFixed(2) : "—"}
           </p>
         </div>
         <div className="text-right text-xs text-ink-muted space-y-0.5">

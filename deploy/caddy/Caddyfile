@@ -1,0 +1,31 @@
+# Caddy reverse proxy for the single-EC2 PMI stack.
+# Auto-provisions + renews Lets Encrypt certs for all three subdomains.
+# {$VARS} are substituted from the caddy container env (set in docker-compose.prod.yml).
+
+{
+	email {$ACME_EMAIL}
+}
+
+# Public dashboard (Next.js SSR).
+pmi.{$PMI_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy pmi-web:3000
+}
+
+# Public read API (FastAPI). Auth is enforced inside pmi-api via X-API-Key
+# when PMI_API_REQUIRE_AUTH=true — Caddy just terminates TLS + proxies.
+api.pmi.{$PMI_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy pmi-api:8000
+}
+
+# MLflow UI — internal tool, gated behind HTTP basic auth. Generate the hash
+# with:  docker run --rm caddy:2-alpine caddy hash-password --plaintext '<pw>'
+# then set MLFLOW_BASICAUTH_USER / MLFLOW_BASICAUTH_HASH in deploy/.env.
+mlflow.pmi.{$PMI_DOMAIN} {
+	encode zstd gzip
+	basic_auth {
+		{$MLFLOW_BASICAUTH_USER} {$MLFLOW_BASICAUTH_HASH}
+	}
+	reverse_proxy mlflow:5000
+}

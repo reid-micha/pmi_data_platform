@@ -25,6 +25,11 @@ CMD ["npm", "run", "dev"]
 FROM node:20.19-alpine AS build
 WORKDIR /app
 ENV NODE_ENV=production
+# Next.js inlines NEXT_PUBLIC_* into the client bundle at build time, so the
+# browser-facing API URL must be supplied here (not at runtime). Defaults to
+# the localhost dev value; CI passes the public domain for releases.
+ARG NEXT_PUBLIC_PMI_API_URL=http://localhost:8001
+ENV NEXT_PUBLIC_PMI_API_URL=${NEXT_PUBLIC_PMI_API_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

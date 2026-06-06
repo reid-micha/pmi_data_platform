@@ -75,6 +75,11 @@ class ContestedSeat:
     source_party: str     # "R" (used R market directly) or "D" (used 1 - D price)
 
 
+# Public alias so sibling engines (e.g. state_lean) can scan titles for any
+# state name without reaching into a private symbol.
+STATE_NAME_TO_CODE = _STATE_NAME_TO_CODE
+
+
 def state_code(name: str) -> str | None:
     """2-letter code for a state name (case-insensitive), or None."""
     return _STATE_NAME_TO_CODE.get(name.strip().lower())

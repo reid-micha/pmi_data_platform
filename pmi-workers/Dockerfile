@@ -53,7 +53,8 @@ RUN uv pip install --system --no-cache \
     "tenacity>=8.4.0" \
     "alembic>=1.13.2" \
     "mlflow-skinny>=2.22,<3" \
-    "openai>=1.40.0"
+    "openai>=1.40.0" \
+    "sentry-sdk>=2.0.0"
 
 # Install the project (no deps — picked them up above) so `run-job`
 # console script lands on PATH.

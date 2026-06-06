@@ -418,6 +418,48 @@ async def seeded_data(
         )
         session.add(senate_score)
 
+        # --- null-score fixture: a dedicated index def with ONE null-score row
+        # and ONE real-score row, so route tests can assert the null surfaces
+        # through /score, /score/history and /explain instead of crashing on
+        # float(None). Backport of Micah PR #316 / job-executor PR #12 — see
+        # alembic 0006 and the aggregator's "below min_components" path.
+        null_ir = {
+            **war_ir,
+            "id": "null-score-index",
+            "title": "Null Score Index",
+        }
+        null_def = CoreIndexDefinition(
+            index_id="null-score-index",
+            version=1,
+            title="Null Score Index",
+            owner="test",
+            definition=null_ir,
+            yaml_source="id: null-score-index\nversion: 1\n",
+            yaml_sha256="0" * 64,
+            is_current=True,
+            effective_from=FIXED_NOW - timedelta(days=10),
+        )
+        session.add(null_def)
+        await session.flush()
+
+        null_latest = TsIndexScore(
+            index_definition_id=null_def.id,
+            as_of=score_as_of,
+            score=None,
+            component_count=0,
+            component_evaluation_ids=[],
+            breakdown={"reason": "below min_components", "candidates": 0},
+        )
+        null_older = TsIndexScore(
+            index_definition_id=null_def.id,
+            as_of=score_as_of - timedelta(days=2),
+            score=33.3,
+            component_count=1,
+            component_evaluation_ids=[],
+            breakdown={"raw": -0.334},
+        )
+        session.add_all([null_latest, null_older])
+
         # --- core_api_keys: one active key + one revoked, for auth tests.
         active_key = CoreApiKey(
             key_prefix="pmi_test_",
@@ -450,6 +492,9 @@ async def seeded_data(
             "revoked_key_hash": "e" * 64,
             "senate_def_id": senate_def.id,
             "senate_index_id": "us-senate-2026-republican-seats",
+            "null_def_id": null_def.id,
+            "null_index_id": "null-score-index",
+            "null_older_expected_score": 33.3,
         }
 
 
@@ -466,14 +511,23 @@ async def client(
     """Yield an httpx AsyncClient wired to the FastAPI app + test DB."""
     # Import locally so app construction doesn't touch the real DB module
     # before our overrides are installed.
-    from pmi_api.deps import get_session
+    from pmi_api.deps import get_session, require_api_key
     from pmi_api.main import app
 
     async def override_get_session() -> AsyncIterator[AsyncSession]:
         async with session_factory() as session:
             yield session
 
+    async def override_require_api_key() -> None:
+        # CORR-0.6: routes are now mounted with ``Depends(require_api_key)``.
+        # Existing route tests exercise handler logic, not the auth gate, so
+        # short-circuit to "auth disabled" here (the dev `.env.example` ships
+        # ``PMI_API_REQUIRE_AUTH=false`` for the same reason). The real auth
+        # behaviour against the live routes lives in test_routes_auth.py.
+        return None
+
     app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[require_api_key] = override_require_api_key
     try:
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"

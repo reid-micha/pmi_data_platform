@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 44" fill="none">
+  
+  <g stroke="#11192C" stroke-width="1.4" stroke-linecap="square" fill="none">
+    
+    <path d="M3 8 V3 H10"></path>
+    
+    <path d="M37 3 H44 V8"></path>
+    
+    <path d="M3 32 V37 H10"></path>
+    
+    <path d="M37 37 H44 V32"></path>
+  </g>
+  
+  <g stroke="#11192C" stroke-width="2.4" stroke-linecap="butt" fill="none">
+    <path d="M9 31 V11 L23.5 28 L38 11 V31" stroke-linejoin="miter"></path>
+  </g>
+  
+  <g fill="#11192C" font-family="Inter, sans-serif" font-weight="600">
+    <text x="52" y="22" font-size="16" letter-spacing="-0.02em">micah</text>
+    <text x="52" y="34" font-size="6.5" letter-spacing="0.18em" font-weight="500" fill="#3A4256">PREDICTION MARKETS</text>
+    <text x="52" y="41" font-size="6.5" letter-spacing="0.18em" font-weight="500" fill="#3A4256">INDEX</text>
+  </g>
+</svg>

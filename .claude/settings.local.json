@@ -31,7 +31,30 @@
       "Bash(echo \"curl_rc=$? bytes=$\\(wc -c < /tmp/bv4.json\\)\")",
       "Bash(python3 -c ' *)",
       "Bash(echo \"exit=$?\")",
-      "Bash(grep -v \"^ *$\")"
+      "Bash(grep -v \"^ *$\")",
+      "Bash(curl -s http://localhost:8001/openapi.json)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(sorted\\(d['paths'].keys\\(\\)\\)\\)\\)\")",
+      "Bash(curl -s http://localhost:8001/indexes)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s 'http://localhost:8001/indexes/senate-seats-2026/senate-board')",
+      "Bash(curl -s 'http://localhost:8001/indexes/us-senate-2026-republican-seats/senate-board')",
+      "Bash(curl -sI -X GET -H 'Origin: http://localhost:3030' 'http://localhost:8001/indexes/us-senate-2026-republican-seats/senate-board')",
+      "Bash(curl -s http://localhost:3030/preview/data-senate-live.js)",
+      "Bash(curl -s http://localhost:3030/preview/index.html)",
+      "Read(//Users/reid/micah/micah/server/app/services/**)",
+      "Read(//Users/reid/micah/micah-job-executor/app/**)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('pmi_ingest/pollers/kalshi_rest.py'\\).read\\(\\)\\); ast.parse\\(open\\('pmi_ingest/cli.py'\\).read\\(\\)\\); ast.parse\\(open\\('pmi_ingest/config.py'\\).read\\(\\)\\); print\\('ok'\\)\")",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('pmi_ingest/pollers/kalshi_rest.py'\\).read\\(\\)\\); ast.parse\\(open\\('pmi_ingest/cli.py'\\).read\\(\\)\\); ast.parse\\(open\\('pmi_ingest/config.py'\\).read\\(\\)\\); print\\('ok'\\)\")",
+      "Bash(find /Users/reid/micah -maxdepth 3 -name \"docker-compose*\" 2>&1 | head)",
+      "Bash(python3 -m py_compile pmi-ingest/pmi_ingest/chain/uma_resolver.py)",
+      "Bash(python3 -m py_compile pmi-core/alembic/versions/20260601_0004_polymarket_deep_signals.py pmi-core/pmi_core/models/ts_orderbook_snapshot.py pmi-core/pmi_core/models/ts_trade.py pmi-core/pmi_core/models/core_trader.py pmi-core/pmi_core/models/audit_chain_event.py pmi-core/pmi_core/models/__init__.py pmi-core/pmi_core/models/core_market.py pmi-ingest/pmi_ingest/config.py pmi-ingest/pmi_ingest/cli.py pmi-ingest/pmi_ingest/pollers/polymarket_rest.py pmi-ingest/pmi_ingest/pollers/polymarket_clob.py pmi-ingest/pmi_ingest/streams/__init__.py pmi-ingest/pmi_ingest/streams/polymarket_ws.py pmi-ingest/pmi_ingest/chain/__init__.py pmi-ingest/pmi_ingest/chain/abis.py pmi-ingest/pmi_ingest/chain/polygon_indexer.py pmi-ingest/pmi_ingest/chain/cohort.py pmi-ingest/pmi_ingest/chain/uma_resolver.py)",
+      "Bash(docker exec *)",
+      "Bash(docker restart *)",
+      "Bash(python3 -m py_compile pmi-ingest/pmi_ingest/pollers/metaculus_rest.py pmi-ingest/pmi_ingest/scrapers/__init__.py pmi-ingest/pmi_ingest/scrapers/playwright_base.py pmi-ingest/pmi_ingest/scrapers/persistence.py pmi-ingest/pmi_ingest/scrapers/scripts/__init__.py pmi-ingest/pmi_ingest/scrapers/robinhood/__init__.py pmi-ingest/pmi_ingest/scrapers/robinhood/types.py pmi-ingest/pmi_ingest/scrapers/robinhood/parser.py pmi-ingest/pmi_ingest/scrapers/robinhood/scraper.py pmi-ingest/pmi_ingest/scrapers/robinhood/job.py pmi-ingest/pmi_ingest/scrapers/crypto/__init__.py pmi-ingest/pmi_ingest/scrapers/crypto/types.py pmi-ingest/pmi_ingest/scrapers/crypto/parser.py pmi-ingest/pmi_ingest/scrapers/crypto/scraper.py pmi-ingest/pmi_ingest/scrapers/crypto/job.py pmi-ingest/pmi_ingest/cli.py pmi-ingest/pmi_ingest/config.py)",
+      "Bash(awk '/^METACULUS_|^ROBINHOOD_|^CRYPTO_/{split\\($0, a, \"=\"\\); print a[1]\"=\"\\(length\\(a[2]\\)>0 ? \"\\(set, \"length\\(a[2]\\)\" chars\\)\" : \"\\(empty\\)\"\\)}' /Users/reid/micah/pmi_data_platform/.env)",
+      "Bash(python3 -m py_compile pmi-ingest/pmi_ingest/scrapers/persistence.py)",
+      "Bash(grep -n \"§3\\\\|§4\\\\|§5\\\\|§6\\\\|§7\\\\|§8\\\\|§10\" /Users/reid/micah/CLAUDE.md | grep \"對位\\\\|落地\\\\|目前\\\\|目標\\\\|✅\\\\|🟡\\\\|❌\" | head -30)",
+      "Bash(grep -n \"15.10\\\\|對位表\\\\|架構層面的已落地\\\\|設計目標 | 落地狀態\" /Users/reid/micah/CLAUDE.md)"
     ]
   }
 }

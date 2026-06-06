@@ -3,14 +3,8 @@ import { notFound } from "next/navigation";
 
 import { ScoreCard } from "@/components/ScoreCard";
 import { ScoreHistoryChart } from "@/components/ScoreHistoryChart";
-import { SenateBoard } from "@/components/SenateBoard";
 import { api, PmiApiError } from "@/lib/api-client";
-import type {
-  HistoryEnvelope,
-  IndexSummary,
-  ScoreEnvelope,
-  SenateBoardEnvelope,
-} from "@/lib/types";
+import type { HistoryEnvelope, IndexSummary, ScoreEnvelope } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -18,23 +12,13 @@ interface LoadResult {
   meta: IndexSummary | null;
   score: ScoreEnvelope | null;
   history: HistoryEnvelope | null;
-  board: SenateBoardEnvelope | null;
   error: string | null;
   notFound: boolean;
 }
 
-/**
- * The senate-board endpoint is generic, but only seat-projection indexes
- * render meaningfully. Gate on the id so the war index doesn't show a board.
- */
-function isSeatProjectionIndex(id: string): boolean {
-  return /senate|house|seats/.test(id);
-}
-
 async function load(id: string): Promise<LoadResult> {
   try {
-    const wantsBoard = isSeatProjectionIndex(id);
-    const [meta, score, history, board] = await Promise.all([
+    const [meta, score, history] = await Promise.all([
       api.getIndex(id),
       api.getScore(id).catch((e) => {
         // Score absent (NO_SCORE_YET) is a soft error — keep rendering the page.
@@ -45,21 +29,14 @@ async function load(id: string): Promise<LoadResult> {
         if (e instanceof PmiApiError && e.status === 404) return null;
         throw e;
       }),
-      wantsBoard
-        ? api.senateBoard(id).catch((e) => {
-            if (e instanceof PmiApiError && e.status === 404) return null;
-            throw e;
-          })
-        : Promise.resolve(null),
     ]);
-    return { meta, score, history, board, error: null, notFound: false };
+    return { meta, score, history, error: null, notFound: false };
   } catch (e) {
     if (e instanceof PmiApiError && e.status === 404) {
       return {
         meta: null,
         score: null,
         history: null,
-        board: null,
         error: null,
         notFound: true,
       };
@@ -74,7 +51,6 @@ async function load(id: string): Promise<LoadResult> {
       meta: null,
       score: null,
       history: null,
-      board: null,
       error: message,
       notFound: false,
     };
@@ -84,7 +60,7 @@ async function load(id: string): Promise<LoadResult> {
 export default async function IndexPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const decoded = decodeURIComponent(id);
-  const { meta, score, history, board, error, notFound: nf } = await load(decoded);
+  const { meta, score, history, error, notFound: nf } = await load(decoded);
 
   if (nf || !meta) {
     if (error) {
@@ -101,7 +77,7 @@ export default async function IndexPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="space-y-8">
       <header>
-        <Link href="/" className="text-sm text-ink-muted hover:text-ink">
+        <Link href="/pmi_dashboard" className="text-sm text-ink-muted hover:text-ink">
           ← back to all indexes
         </Link>
         <div className="mt-2 flex items-baseline justify-between gap-3">
@@ -112,8 +88,6 @@ export default async function IndexPage({ params }: { params: Promise<{ id: stri
       </header>
 
       <ScoreCard envelope={score} meta={meta} />
-
-      {board && <SenateBoard board={board.data} />}
 
       <section>
         <h2 className="text-base font-medium mb-3">Score history</h2>

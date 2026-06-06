@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pmi_api.config import api_settings
 from pmi_api.routes.health import router as health_router
 from pmi_api.routes.indexes import router as indexes_router
+from pmi_api.routes.maga import router as maga_router
 from pmi_core.config import settings
 
 
@@ -32,6 +33,9 @@ def _setup_logging() -> None:
 
 def create_app() -> FastAPI:
     _setup_logging()
+    from pmi_core.observability import init_sentry
+
+    init_sentry("pmi-api")
     app = FastAPI(
         title="pmi-api",
         version="0.1.0",
@@ -47,6 +51,7 @@ def create_app() -> FastAPI:
         )
     app.include_router(health_router)
     app.include_router(indexes_router)
+    app.include_router(maga_router)
     return app
 
 

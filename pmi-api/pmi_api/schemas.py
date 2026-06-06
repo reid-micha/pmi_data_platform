@@ -33,7 +33,11 @@ class ScorePayload(BaseModel):
     index_id: str
     version: int
     as_of: datetime
-    score: float
+    # None when the index couldn't produce a score this tick (below
+    # min_components / zero relevancy). The pipeline persists NULL rather
+    # than 0.0 so the UI shows "no data" instead of a stale-looking real
+    # value. See ts_index_scores migration 0006.
+    score: float | None
     component_count: int
     computed_at: datetime
     breakdown: dict | None
@@ -41,7 +45,7 @@ class ScorePayload(BaseModel):
 
 class HistoryPoint(BaseModel):
     as_of: datetime
-    score: float
+    score: float | None
     component_count: int
 
 
@@ -75,13 +79,18 @@ class ExplainComponent(BaseModel):
     relevancy: float
     direction: float
     factors: dict[str, float | str | None]
+    # Venue (exchange) the market trades on, e.g. "polymarket" / "kalshi", and
+    # its latest 24h volume — surfaced so holdings cards show the real exchange
+    # + traded volume instead of a hard-coded placeholder.
+    venue: str | None = None
+    volume_24h: float | None = None
 
 
 class ExplainPayload(BaseModel):
     index_id: str
     version: int
     as_of: datetime
-    score: float
+    score: float | None
     components: list[ExplainComponent]
 
 
@@ -145,12 +154,46 @@ class SenateBoardPayload(BaseModel):
 
     races: list[SenateRace]
     prob_by_state: dict[str, float]
-    series_14d: list[float]
+    # ``None`` slots are ticks where the index produced no score (below
+    # min_components etc.); the board renders them as gaps rather than 0.
+    series_14d: list[float | None]
 
 
 class SenateBoardEnvelope(BaseModel):
     summary: str
     data: SenateBoardPayload
+
+
+# --------------------------------------------------------------------------
+# MAGA-by-state (Task #6) — drives the National MAGA Index choropleth + State
+# detail view. Per-state partisan lean derived on demand from the partisan
+# general-election race markets already ingested (pmi_core.engine.state_lean),
+# rather than 50 standalone state index definitions.
+# --------------------------------------------------------------------------
+
+
+class StateLeanRow(BaseModel):
+    state: str            # canonical name, e.g. "North Carolina"
+    state_code: str       # 2-letter code, e.g. "NC"
+    heat: float           # 0–100, 100 = deep Republican
+    n_markets: int        # contributing race markets
+    offices: list[str]    # distinct offices (senate / governor / house)
+    volume_24h: float
+
+
+class MagaByStatePayload(BaseModel):
+    as_of: datetime
+    # Keyed by 2-letter state code; states with no recognised market are absent.
+    states: dict[str, StateLeanRow]
+    # Volume-weighted national lean across all contributing markets (0–100).
+    national_heat: float | None
+    n_states: int
+    n_markets: int
+
+
+class MagaByStateEnvelope(BaseModel):
+    summary: str
+    data: MagaByStatePayload
 
 
 # resolve forward ref

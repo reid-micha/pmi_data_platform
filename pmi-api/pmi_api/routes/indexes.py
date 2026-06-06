@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from pmi_api.deps import get_session
+from pmi_api.deps import get_session, require_api_key
 from pmi_api.schemas import (
     ExplainComponent,
     ExplainPayload,
@@ -38,7 +38,11 @@ from pmi_core.models import (
     TsPriceSnapshot,
 )
 
-router = APIRouter(prefix="/indexes", tags=["indexes"])
+router = APIRouter(
+    prefix="/indexes",
+    tags=["indexes"],
+    dependencies=[Depends(require_api_key)],
+)
 
 
 async def _current_def(session: AsyncSession, index_id: str) -> CoreIndexDefinition:
@@ -123,9 +127,11 @@ async def get_score(
                 }
             },
         )
+    score_val = float(score.score) if score.score is not None else None
+    score_str = f"{score_val:.2f}" if score_val is not None else "n/a"
     return ScoreEnvelope(
         summary=(
-            f"{index_def.title} (v{index_def.version}) = {float(score.score):.2f} "
+            f"{index_def.title} (v{index_def.version}) = {score_str} "
             f"across {score.component_count} components as of "
             f"{score.as_of.isoformat()}"
         ),
@@ -133,7 +139,7 @@ async def get_score(
             index_id=index_def.index_id,
             version=index_def.version,
             as_of=score.as_of,
-            score=float(score.score),
+            score=score_val,
             component_count=score.component_count,
             computed_at=score.computed_at,
             breakdown=score.breakdown,
@@ -160,7 +166,9 @@ async def get_history(
     rows = (await session.execute(stmt)).scalars().all()
     points = [
         HistoryPoint(
-            as_of=r.as_of, score=float(r.score), component_count=r.component_count
+            as_of=r.as_of,
+            score=float(r.score) if r.score is not None else None,
+            component_count=r.component_count,
         )
         for r in rows
     ]
@@ -200,7 +208,7 @@ async def explain_score(
             index_id=index_def.index_id,
             version=index_def.version,
             as_of=score.as_of,
-            score=float(score.score),
+            score=float(score.score) if score.score is not None else None,
             components=[],
         )
 
@@ -226,16 +234,21 @@ async def explain_score(
         await session.execute(select(CoreMarket).where(CoreMarket.id.in_(market_ids)))
     ).scalars().all() if market_ids else []
     title_by_id = {m.id: m.title for m in markets}
+    venue_by_id = {m.id: m.venue for m in markets}
 
     # CORR-3.3 (b): join ts_price_snapshots to surface the price that fed into the
     # score. Take the most recent snapshot at-or-before `score.as_of` per market.
     # DISTINCT ON keeps the query single-pass without a window-function rewrite.
+    # Also pull volume_24h from the same snapshot so holdings cards show the real
+    # traded volume.
     last_price_by_market: dict[int, float | None] = {}
+    volume_by_market: dict[int, float | None] = {}
     if market_ids:
         latest_price_stmt = (
             select(
                 TsPriceSnapshot.market_id,
                 TsPriceSnapshot.last_price,
+                TsPriceSnapshot.volume_24h,
             )
             .where(
                 TsPriceSnapshot.market_id.in_(market_ids),
@@ -247,8 +260,9 @@ async def explain_score(
             )
             .distinct(TsPriceSnapshot.market_id)
         )
-        for mid, price in (await session.execute(latest_price_stmt)).all():
+        for mid, price, vol in (await session.execute(latest_price_stmt)).all():
             last_price_by_market[mid] = float(price) if price is not None else None
+            volume_by_market[mid] = float(vol) if vol is not None else None
 
     # Parse the IR once so we can call the aggregator helpers with the typed shape.
     ir = IndexDef.model_validate(index_def.definition)
@@ -265,6 +279,8 @@ async def explain_score(
             relevancy=_relevancy(by_market_evals[mid], ir),
             direction=_direction_value(by_market_evals[mid]),
             factors=by_market_factors[mid],
+            venue=venue_by_id.get(mid),
+            volume_24h=volume_by_market.get(mid),
         )
         for mid in by_market_evals
     ]
@@ -273,7 +289,7 @@ async def explain_score(
         index_id=index_def.index_id,
         version=index_def.version,
         as_of=score.as_of,
-        score=float(score.score),
+        score=float(score.score) if score.score is not None else None,
         components=components,
     )
 
@@ -426,7 +442,7 @@ async def senate_board(
             .limit(14)
         )
     ).scalars().all()
-    series_14d = [float(s) for s in reversed(hist_rows)]
+    series_14d = [float(s) if s is not None else None for s in reversed(hist_rows)]
 
     d_secured = counts["safe-d"] + counts["likely-d"] + counts["lean-d"]
     r_secured = counts["safe-r"] + counts["likely-r"] + counts["lean-r"]

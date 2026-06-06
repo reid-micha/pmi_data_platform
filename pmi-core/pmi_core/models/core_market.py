@@ -30,6 +30,21 @@ class CoreMarket(Base):
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     resolution: Mapped[str | None] = mapped_column(String(32))  # 'YES' / 'NO' / 'INVALID' / NULL
 
+    # On-chain identity (Polymarket). NULL for non-Polymarket venues until each
+    # poller learns to populate them. `condition_id` is the CTF condition hash;
+    # the two `clob_*_token` columns are the ERC-1155 outcome token IDs needed
+    # to subscribe to CLOB WS / fetch /book / filter Polygon Transfer events.
+    condition_id: Mapped[str | None] = mapped_column(String(80))
+    clob_yes_token: Mapped[str | None] = mapped_column(String(80))
+    clob_no_token: Mapped[str | None] = mapped_column(String(80))
+
+    # UMA dispute / settle state from on-chain, separate from `resolution`
+    # (which mirrors the Polymarket Gamma display field). Surfaced by the
+    # chain indexer + uma_resolver — see CORR-4.4. Values: 'UMA_PROPOSED',
+    # 'UMA_DISPUTED', 'UMA_SETTLED_YES', 'UMA_SETTLED_NO', 'UMA_SETTLED_INVALID'.
+    chain_resolution: Mapped[str | None] = mapped_column(String(32))
+    chain_resolution_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     raw: Mapped[dict | None] = mapped_column(JSON)  # vendor payload for forward compat
 
     created_at: Mapped[datetime] = mapped_column(

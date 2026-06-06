@@ -20,7 +20,9 @@ export interface ScorePayload {
   index_id: string;
   version: number;
   as_of: string;
-  score: number;
+  // null when the index couldn't produce a score this tick (below
+  // min_components / zero relevancy). UI shows "no data" rather than 0.
+  score: number | null;
   component_count: number;
   computed_at: string;
   breakdown: Record<string, unknown> | null;
@@ -33,7 +35,7 @@ export interface ScoreEnvelope {
 
 export interface HistoryPoint {
   as_of: string;
-  score: number;
+  score: number | null;
   component_count: number;
 }
 
@@ -55,24 +57,33 @@ export interface ExplainComponent {
   relevancy: number;
   direction: number;
   factors: Record<string, number | string | null>;
+  venue: string | null;
+  volume_24h: number | null;
 }
 
 export interface ExplainPayload {
   index_id: string;
   version: number;
   as_of: string;
-  score: number;
+  score: number | null;
   components: ExplainComponent[];
 }
 
+export interface SourceHealthRow {
+  source: string;
+  status: string;
+  last_success_at: string | null;
+  last_failure_at: string | null;
+  consecutive_failures: number;
+  records_24h: number | null;
+  expected_records_24h: number | null;
+  updated_at: string;
+}
+
 /**
- * Senate board (SHIP-2.5) — mirrors SenateBoardEnvelope in schemas.py.
- *
- * The distribution fields (p_r_majority / p_d_majority / expected_r_seats /
- * counts / series_14d) are real (CORR-1.6 Poisson-binomial). The per-race
- * attribution fields (state / matchup / incumbent_party / delta_14d /
- * contracts / exchanges) and `prob_by_state` are deferred to CORR-1.3 and
- * arrive null / empty until a market→seat mapping exists.
+ * Senate board (SHIP-2.5) — mirrors SenateBoardEnvelope in pmi-api schemas.py.
+ * Distribution fields are real (Poisson-binomial, CORR-1.6); per-race
+ * attribution (state/matchup/incumbent_party/…) is null until CORR-1.3.
  */
 export interface SenateRace {
   market_id: number;
@@ -100,14 +111,14 @@ export interface SenateBoardPayload {
   majority_threshold: number;
   holdover_r: number;
   holdover_d: number;
-  counts: Record<string, number>; // band → seat count (incl. holdover in safes)
+  counts: Record<string, number>; // band → seat count
   d_secured: number;
   r_secured: number;
   tossups: number;
   n_contested: number;
   races: SenateRace[];
   prob_by_state: Record<string, number>; // empty until CORR-1.3
-  series_14d: number[];
+  series_14d: (number | null)[]; // null slots = ticks with no score
 }
 
 export interface SenateBoardEnvelope {
@@ -115,15 +126,27 @@ export interface SenateBoardEnvelope {
   data: SenateBoardPayload;
 }
 
-export interface SourceHealthRow {
-  source: string;
-  status: string;
-  last_success_at: string | null;
-  last_failure_at: string | null;
-  consecutive_failures: number;
-  records_24h: number | null;
-  expected_records_24h: number | null;
-  updated_at: string;
+/** MAGA-by-state (Task #6) — mirrors MagaByStateEnvelope in schemas.py. */
+export interface StateLeanRow {
+  state: string;
+  state_code: string;
+  heat: number; // 0–100, 100 = deep Republican
+  n_markets: number;
+  offices: string[];
+  volume_24h: number;
+}
+
+export interface MagaByStatePayload {
+  as_of: string;
+  states: Record<string, StateLeanRow>;
+  national_heat: number | null;
+  n_states: number;
+  n_markets: number;
+}
+
+export interface MagaByStateEnvelope {
+  summary: string;
+  data: MagaByStatePayload;
 }
 
 export interface ApiError {

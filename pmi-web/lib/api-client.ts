@@ -16,6 +16,7 @@ import type {
   ExplainPayload,
   HistoryEnvelope,
   IndexSummary,
+  MagaByStateEnvelope,
   ScoreEnvelope,
   SenateBoardEnvelope,
   SourceHealthRow,
@@ -26,8 +27,19 @@ const SERVER_BASE =
 
 const BROWSER_BASE = process.env.NEXT_PUBLIC_PMI_API_URL || "http://localhost:8001";
 
+// Server-only service key. When pmi-api runs with PMI_API_REQUIRE_AUTH=true,
+// every /indexes/* + /sources/health route needs `X-API-Key`. We attach it
+// ONLY on the server (RSC / SSR) fetch path so the dashboard can read through
+// a single service key minted via `pmi-core keys create`. It is read from a
+// non-`NEXT_PUBLIC_` env var so Next never inlines it into client bundles.
+const SERVER_API_KEY = process.env.PMI_API_KEY || "";
+
+function isServer(): boolean {
+  return typeof window === "undefined";
+}
+
 function pickBase(): string {
-  return typeof window === "undefined" ? SERVER_BASE : BROWSER_BASE;
+  return isServer() ? SERVER_BASE : BROWSER_BASE;
 }
 
 class PmiApiError extends Error {
@@ -52,6 +64,9 @@ async function get<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: {
       Accept: "application/json",
+      // Inject the service key only on the server; never on the browser path
+      // (would both leak the key and fail CORS preflight needlessly).
+      ...(isServer() && SERVER_API_KEY ? { "X-API-Key": SERVER_API_KEY } : {}),
       ...(init?.headers || {}),
     },
   });
@@ -94,6 +109,10 @@ export const api = {
     );
   },
   sourcesHealth: () => get<SourceHealthRow[]>("/sources/health"),
+  magaByState: (opts?: { asOf?: string }) => {
+    const qs = opts?.asOf ? `?as_of=${encodeURIComponent(opts.asOf)}` : "";
+    return get<MagaByStateEnvelope>(`/maga/by-state${qs}`);
+  },
 };
 
 export { PmiApiError };

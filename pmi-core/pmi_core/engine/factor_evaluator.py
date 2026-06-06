@@ -50,6 +50,7 @@ from datetime import UTC, datetime
 
 import structlog
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pmi_core import mlflow_client
@@ -245,24 +246,49 @@ async def evaluate_factor(
         if value_label is not None:
             mlflow_client.set_tags(child_run_id, {"value_label": value_label})
 
-        row = AuditEvaluation(
-            market_id=market.id,
-            index_definition_id=index_definition_id,
-            factor_id=factor.id,
-            prompt_id=prompt.id,
-            prompt_sha256=prompt.sha256,
-            model_id=model_id,
-            temperature=resolved.temperature,
-            value_numeric=value_numeric,
-            value_label=value_label,
-            confidence=confidence,
-            model_response=model_response_payload,
-            cost_usd=cost_usd,
-            latency_ms=latency_ms,
-            mlflow_run_id=child_run_id,
-            evaluated_at=datetime.now(UTC),
+        # CORR-3.11: atomic INSERT ... ON CONFLICT DO NOTHING instead of a bare
+        # session.add(). Without this, when the supercronic `hourly` tick and a
+        # manual `score` (or a 2nd worker) both miss the cache above and race to
+        # insert the same cache_key, the loser hits IntegrityError on
+        # `uq_audit_evaluations__cache_key` and rolls back the ENTIRE tick. With
+        # DO NOTHING the loser simply finds the winner's row and treats it as a
+        # cache hit — append-only invariant preserved, no tick lost.
+        insert_stmt = (
+            pg_insert(AuditEvaluation)
+            .values(
+                market_id=market.id,
+                index_definition_id=index_definition_id,
+                factor_id=factor.id,
+                prompt_id=prompt.id,
+                prompt_sha256=prompt.sha256,
+                model_id=model_id,
+                temperature=resolved.temperature,
+                value_numeric=value_numeric,
+                value_label=value_label,
+                confidence=confidence,
+                model_response=model_response_payload,
+                cost_usd=cost_usd,
+                latency_ms=latency_ms,
+                mlflow_run_id=child_run_id,
+                evaluated_at=datetime.now(UTC),
+            )
+            .on_conflict_do_nothing(constraint="uq_audit_evaluations__cache_key")
+            .returning(AuditEvaluation.id)
         )
-        session.add(row)
-        await session.flush()
+        new_id = (await session.execute(insert_stmt)).scalar_one_or_none()
 
+    if new_id is None:
+        # A concurrent tick committed the same cache_key between our SELECT and
+        # INSERT. Re-read the winning row and surface it as a cache hit.
+        existing = (await session.execute(cache_q)).scalar_one_or_none()
+        if existing is not None:
+            return existing, True
+        raise RuntimeError(
+            "audit_evaluations ON CONFLICT fired but the conflicting row was "
+            f"not found on re-read (market={market.id}, factor={factor.id})"
+        )
+
+    row = await session.get(AuditEvaluation, new_id)
+    if row is None:  # pragma: no cover — inserted id must be fetchable
+        raise RuntimeError(f"inserted audit_evaluation id={new_id} not retrievable")
     return row, False

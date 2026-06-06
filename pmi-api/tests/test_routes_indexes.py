@@ -26,6 +26,9 @@ async def test_list_indexes_returns_current_versions(
         "polymarket-war-index",
         "empty-index",
         "us-senate-2026-republican-seats",
+        # Null-score fixture seeded for the Micah PR #316 backport tests
+        # (test_routes_null_score.py). Listed because is_current=True.
+        "null-score-index",
     }
     war = next(r for r in rows if r["id"] == "polymarket-war-index")
     assert war["version"] == 1

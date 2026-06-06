@@ -1,0 +1,205 @@
+/* ============================================================
+   Micah Prediction Markets — Design Tokens
+   Colors, type, spacing, shadow, radii
+   ============================================================ */
+
+/* ------ Webfonts (Google Fonts substitutes) -------------------
+   ORIGINAL: design uses a transitional serif (likely Tiempos Text /
+   Spectral family) for display, and a humanist sans for UI/body.
+   SUBSTITUTES used here — confirm with brand team if originals available.
+   Display serif → Spectral (Google)
+   UI sans      → Inter (Google)
+---------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ---------- COLOR — Surface ---------- */
+  --surface-page:     #F3F1EC;   /* warm off-white / paper */
+  --surface-card:     #F8F6F1;   /* slightly lifted card */
+  --surface-raised:   #FFFFFF;
+  --surface-tint:     #ECE9E2;   /* subtle band */
+  --surface-rule:     #E1DCD0;   /* hairline divider */
+
+  /* ---------- COLOR — Ink / text ---------- */
+  --ink-1:            #11192C;   /* primary text, near-black navy */
+  --ink-2:            #3A4256;   /* secondary text */
+  --ink-3:            #6B7180;   /* tertiary / labels */
+  --ink-4:            #9CA1AE;   /* placeholders, axis ticks */
+  --ink-inverse:      #FBFAF6;   /* text on dark/red/blue cards */
+
+  /* ---------- COLOR — Brand political heat scale (0 → 100) ---------- */
+  --heat-0:           #16348A;   /* deep Democrat */
+  --heat-15:          #2D5BCC;   /* mid Democrat */
+  --heat-30:          #6F8FDB;   /* light Democrat */
+  --heat-45:          #B8C5E3;   /* near-tie Dem */
+  --heat-50:          #E9E2DC;   /* neutral cream */
+  --heat-55:          #ECC9CF;
+  --heat-70:          #DC8B95;   /* light Republican */
+  --heat-85:          #B53747;   /* mid Republican */
+  --heat-100:         #8B1E2D;   /* deep Republican */
+
+  /* Solid tile fills — used on stat cards, score badges */
+  --red-strong:       #8B1E2D;
+  --red-soft:         #F4D9DC;
+  --red-soft-edge:    #E8B9BE;
+  --blue-strong:      #1A3FA8;
+  --blue-soft:        #DBE3F5;
+  --blue-soft-edge:   #B7C3E6;
+  --lavender:         #D9D9EE;   /* very low-lean tile */
+
+  /* ---------- COLOR — Status / tag ---------- */
+  --tag-direct-bg:    #FBE7D7;
+  --tag-direct-fg:    #B4581F;
+  --tag-indirect-bg:  #FBE7D7;
+  --tag-indirect-fg:  #B4581F;
+  --tag-neutral-bg:   #ECE9E2;
+  --tag-neutral-fg:   #3A4256;
+  --live-dot:         #1F9D55;
+
+  /* ---------- COLOR — Exchange brand chips ---------- */
+  --x-kalshi:    #00D08C;
+  --x-polymarket:#1652F0;
+  --x-robinhood: #CCFF00;
+  --x-coinbase:  #1652F0;
+  --x-metaculus: #111111;
+  --x-manifold:  #4E2DE0;
+  --x-predictit: #E66A2C;
+  --x-pinata:    #111111;
+
+  /* ---------- TYPE — Families ---------- */
+  --font-serif: "Spectral", "Tiempos Headline", "Iowan Old Style", Georgia, serif;
+  --font-sans:  "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:  ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ---------- TYPE — Scale ---------- */
+  --fs-display:   48px;   /* H1 page title (serif) */
+  --fs-h1:        40px;
+  --fs-h2:        32px;   /* section title */
+  --fs-h3:        22px;
+  --fs-body:      15px;
+  --fs-body-sm:   13px;
+  --fs-label:     12px;
+  --fs-micro:     11px;
+  --fs-stat:      36px;   /* big number in stat cards */
+
+  --lh-tight:  1.1;
+  --lh-snug:   1.25;
+  --lh-body:   1.5;
+
+  --tracking-caps: 0.08em;
+  --tracking-label: 0.04em;
+
+  /* ---------- SPACING (4px base) ---------- */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px;  --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-8: 32px;  --s-10: 40px;
+  --s-12: 48px; --s-16: 64px; --s-20: 80px; --s-24: 96px;
+
+  /* ---------- RADII ---------- */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+  --r-pill: 999px;
+
+  /* ---------- SHADOW / ELEVATION ---------- */
+  --shadow-tooltip: 0 12px 28px -10px rgba(17, 25, 44, 0.18), 0 2px 4px rgba(17,25,44,0.06);
+  --shadow-card:    0 1px 0 rgba(17, 25, 44, 0.04);
+  --shadow-pop:     0 8px 24px -8px rgba(17,25,44,0.20);
+
+  /* ---------- BORDERS ---------- */
+  --border-hairline: 1px solid var(--surface-rule);
+  --border-strong:   1px solid #C9C3B5;
+}
+
+/* ============================================================
+   SEMANTIC TYPE STYLES
+   ============================================================ */
+.t-display {
+  font-family: var(--font-serif);
+  font-size: var(--fs-display);
+  font-weight: 500;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+  color: var(--ink-1);
+}
+.t-display-caps {
+  font-family: var(--font-serif);
+  font-size: var(--fs-display);
+  font-weight: 500;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-caps);
+  font-variant: small-caps;
+  text-transform: lowercase;
+  color: var(--ink-1);
+}
+.t-h2 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h2);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  color: var(--ink-1);
+}
+.t-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: var(--lh-snug);
+  color: var(--ink-1);
+}
+.t-body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--ink-2);
+}
+.t-body-sm {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--ink-2);
+}
+.t-label {
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.t-eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.t-stat {
+  font-family: var(--font-sans);
+  font-size: var(--fs-stat);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink-1);
+}
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-body-sm);
+  color: var(--ink-2);
+}
+
+/* ============================================================
+   GLOBAL RESET-ISH
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--ink-1);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button { font-family: inherit; }

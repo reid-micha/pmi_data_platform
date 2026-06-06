@@ -1,0 +1,18 @@
+# Lifecycle unit for the PMI docker-compose stack. `systemctl start pmi`
+# brings everything up; `restart` does a pull + up (deploy); `stop` tears down.
+[Unit]
+Description=PMI single-EC2 docker-compose stack
+Requires=docker.service pmi-env-fetch.service
+After=docker.service pmi-env-fetch.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/pmi/app/deploy
+# Pull the SHA-pinned images named in .env, then (re)create changed containers.
+ExecStartPre=/usr/bin/docker compose -f docker-compose.prod.yml --env-file .env pull
+ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml --env-file .env up -d --remove-orphans
+ExecStop=/usr/bin/docker compose -f docker-compose.prod.yml --env-file .env down
+
+[Install]
+WantedBy=multi-user.target

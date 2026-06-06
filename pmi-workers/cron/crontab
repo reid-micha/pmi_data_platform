@@ -12,3 +12,17 @@
 
 # Daily 10:00 UTC: heavier maintenance (placeholder — currently same as hourly).
 0 10 * * * run-job daily &
+
+# ─── Polymarket deep-signal cycle jobs (CORR-4.1 ~ 4.4) ─────────────────────
+# These shell out to the pmi-ingest CLI. The pmi-workers image does NOT bundle
+# pmi-ingest's deps (httpx/websockets/web3) — the lines below are commented as
+# the intended cadence; in compose, run them as dedicated sibling services
+# (see `ingest-clob` / `ingest-chain` / `ingest-ws` ideas in
+# `pmi-ingest/README.md`), or uncomment after rebuilding pmi-workers with
+# pmi-ingest installed.
+#
+#   *  *    * * *   pmi-ingest clob --once   &   # orderbook depth, every minute
+#   */2 *   * * *   pmi-ingest chain --once  &   # Polygon log indexer
+#   30 6,18 * * *   pmi-ingest cohort        &   # trader cohort rollup, 2× daily
+#   15 *    * * *   pmi-ingest uma           &   # UMA projection, hourly
+#   (ws)            pmi-ingest ws            &   # WS feed — own long-lived process

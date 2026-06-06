@@ -13,6 +13,19 @@ dependencies = [
     "tenacity>=8.4.0",
     "click>=8.1.7",
     "pydantic>=2.7.0",
+    "cryptography>=42.0.0",
+    # WS consumer (CORR-4.1). Optional at runtime — `import websockets` happens
+    # lazily inside `pmi_ingest.streams.polymarket_ws`. Pinned to the v12 line
+    # for the modern `websockets.connect` async API.
+    "websockets>=12.0",
+    # Polygon chain indexer (CORR-4.2). Lazily imported in
+    # `pmi_ingest.chain.polygon_indexer` so other CLI commands work without
+    # the (heavy) eth-* dep tree installed.
+    "web3>=6.20.0",
+    # Robinhood + Crypto.com scrapers (legacy Micah ports). Lazily imported
+    # in `pmi_ingest.scrapers.playwright_base` — REST-only CLI commands run
+    # without the (heavy) Chromium binary being present.
+    "playwright>=1.45.0",
 ]
 
 [project.optional-dependencies]

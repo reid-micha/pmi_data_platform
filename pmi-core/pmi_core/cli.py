@@ -12,9 +12,11 @@ Flat command surface matches the workspace `justfile` contract:
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
+import secrets
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -658,6 +660,158 @@ def models_promote(model_id: int, stage: str) -> None:
     """Promote a factor model to STAGE; demotes any other active row in same slot."""
     result = asyncio.run(_models_promote_async(model_id, stage))
     click.echo(json.dumps(result, indent=2))
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# API keys — mint / list / revoke / rotate (CORR-0.7)
+# ──────────────────────────────────────────────────────────────────────────
+#
+# pmi-api authenticates `X-API-Key: <raw>` by sha256-comparing against
+# core_api_keys.key_hash (see pmi-api/pmi_api/deps.py). Raw keys are NEVER
+# stored — only the hash + a short display prefix — so `create` / `rotate`
+# print the raw token exactly once. Persist it immediately (e.g. into the
+# pmi-web service env as PMI_API_KEY, or hand to an external consumer).
+
+_KEY_PREFIX = "pmi_"
+
+
+def _mint_raw_key() -> tuple[str, str, str]:
+    """Return (raw_key, key_prefix, key_hash). Raw is shown once, never stored."""
+    raw = _KEY_PREFIX + secrets.token_urlsafe(32)
+    key_prefix = raw[:12]  # fits String(16); enough to eyeball in `keys list`
+    key_hash = hashlib.sha256(raw.encode()).hexdigest()
+    return raw, key_prefix, key_hash
+
+
+async def _keys_create_async(label: str | None, rate_limit: int) -> dict:
+    from pmi_core.models import CoreApiKey
+
+    raw, key_prefix, key_hash = _mint_raw_key()
+    async with session_scope() as session:
+        row = CoreApiKey(
+            key_prefix=key_prefix,
+            key_hash=key_hash,
+            label=label,
+            rate_limit_per_minute=rate_limit,
+            is_active=True,
+        )
+        session.add(row)
+        await session.flush()
+        return {
+            "id": row.id,
+            "api_key": raw,  # shown ONCE — store it now
+            "key_prefix": key_prefix,
+            "label": label,
+            "rate_limit_per_minute": rate_limit,
+            "is_active": True,
+        }
+
+
+async def _keys_list_async() -> list[dict]:
+    from pmi_core.models import CoreApiKey
+
+    async with session_scope() as session:
+        rows = (
+            await session.execute(select(CoreApiKey).order_by(CoreApiKey.id))
+        ).scalars().all()
+        return [
+            {
+                "id": r.id,
+                "key_prefix": r.key_prefix,
+                "label": r.label,
+                "rate_limit_per_minute": r.rate_limit_per_minute,
+                "is_active": r.is_active,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "last_used_at": r.last_used_at.isoformat() if r.last_used_at else None,
+            }
+            for r in rows
+        ]
+
+
+async def _keys_revoke_async(key_id: int) -> dict:
+    from pmi_core.models import CoreApiKey
+
+    async with session_scope() as session:
+        row = (
+            await session.execute(select(CoreApiKey).where(CoreApiKey.id == key_id))
+        ).scalar_one_or_none()
+        if row is None:
+            raise click.ClickException(f"No CoreApiKey with id={key_id}")
+        row.is_active = False
+        await session.flush()
+        return {"id": row.id, "key_prefix": row.key_prefix, "is_active": row.is_active}
+
+
+async def _keys_rotate_async(key_id: int) -> dict:
+    """Revoke an existing key and mint a replacement carrying its label + limit."""
+    from pmi_core.models import CoreApiKey
+
+    async with session_scope() as session:
+        old = (
+            await session.execute(select(CoreApiKey).where(CoreApiKey.id == key_id))
+        ).scalar_one_or_none()
+        if old is None:
+            raise click.ClickException(f"No CoreApiKey with id={key_id}")
+        old.is_active = False
+
+        raw, key_prefix, key_hash = _mint_raw_key()
+        new = CoreApiKey(
+            key_prefix=key_prefix,
+            key_hash=key_hash,
+            label=old.label,
+            rate_limit_per_minute=old.rate_limit_per_minute,
+            is_active=True,
+        )
+        session.add(new)
+        await session.flush()
+        return {
+            "rotated_from": {"id": old.id, "key_prefix": old.key_prefix},
+            "id": new.id,
+            "api_key": raw,  # shown ONCE
+            "key_prefix": key_prefix,
+            "label": new.label,
+            "rate_limit_per_minute": new.rate_limit_per_minute,
+            "is_active": True,
+        }
+
+
+@cli.group("keys")
+def keys() -> None:
+    """Manage pmi-api access keys (X-API-Key)."""
+
+
+@keys.command("create")
+@click.option("--label", default=None, help="Human label, e.g. 'pmi-web' or 'acme-corp'.")
+@click.option("--rate-limit", default=60, type=int, help="rate_limit_per_minute (default 60).")
+def keys_create(label: str | None, rate_limit: int) -> None:
+    """Mint a new API key. Prints the raw token ONCE — store it now."""
+    result = asyncio.run(_keys_create_async(label, rate_limit))
+    click.echo(json.dumps(result, indent=2))
+    click.echo("\n⚠  Save `api_key` now — it is not recoverable.", err=True)
+
+
+@keys.command("list")
+def keys_list() -> None:
+    """List API keys (prefix + metadata only; never the raw token)."""
+    rows = asyncio.run(_keys_list_async())
+    click.echo(json.dumps(rows, indent=2))
+
+
+@keys.command("revoke")
+@click.argument("key_id", type=int)
+def keys_revoke(key_id: int) -> None:
+    """Deactivate the key with KEY_ID (sets is_active=False)."""
+    result = asyncio.run(_keys_revoke_async(key_id))
+    click.echo(json.dumps(result, indent=2))
+
+
+@keys.command("rotate")
+@click.argument("key_id", type=int)
+def keys_rotate(key_id: int) -> None:
+    """Revoke KEY_ID and mint a replacement with the same label + rate limit."""
+    result = asyncio.run(_keys_rotate_async(key_id))
+    click.echo(json.dumps(result, indent=2))
+    click.echo("\n⚠  Save the new `api_key` now — it is not recoverable.", err=True)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, Numeric
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, Numeric, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from pmi_core.models.base import Base
@@ -30,4 +30,7 @@ class TsPriceSnapshot(Base):
 
     __table_args__ = (
         Index("ix_ts_price_snapshots__market_time", "market_id", "snapshot_at"),
+        UniqueConstraint(
+            "market_id", "snapshot_at", name="uq_ts_price_snapshots__market_time"
+        ),
     )

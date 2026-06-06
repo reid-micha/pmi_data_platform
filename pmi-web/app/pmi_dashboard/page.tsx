@@ -53,7 +53,7 @@ export default async function Page() {
           {rows.map((row) => (
             <li key={`${row.id}-${row.version}`}>
               <Link
-                href={`/indexes/${encodeURIComponent(row.id)}`}
+                href={`/pmi_dashboard/indexes/${encodeURIComponent(row.id)}`}
                 className="block rounded-lg border border-surface-border bg-surface p-5 hover:border-accent transition-colors"
               >
                 <div className="flex items-baseline justify-between gap-2">

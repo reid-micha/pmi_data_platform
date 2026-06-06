@@ -1,0 +1,18 @@
+# Oneshot: render /opt/pmi/app/deploy/.env from Secrets Manager before the
+# stack starts. Ordered before pmi.service so compose always sees fresh secrets.
+[Unit]
+Description=PMI fetch secrets into deploy/.env
+After=network-online.target
+Wants=network-online.target
+Before=pmi.service
+
+[Service]
+Type=oneshot
+Environment=APP_DIR=/opt/pmi/app
+Environment=AWS_REGION=us-east-1
+Environment=PMI_SECRET_ID=pmi/prod/secrets
+ExecStart=/opt/pmi/app/deploy/scripts/fetch-secrets.sh
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

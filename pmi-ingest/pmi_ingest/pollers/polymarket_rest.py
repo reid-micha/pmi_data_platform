@@ -71,6 +71,31 @@ def _parse_float(value: Any) -> float | None:
         return None
 
 
+def _parse_clob_tokens(value: Any) -> tuple[str | None, str | None]:
+    """Pull (yes_token, no_token) out of Polymarket Gamma `clobTokenIds`.
+
+    Gamma serializes this as a JSON-stringified array, e.g.
+    `'["123456...", "789012..."]'`. Position [0] is YES, [1] is NO.
+    Some endpoints return it pre-parsed as a list — handle both.
+    """
+    import json
+
+    if value is None:
+        return (None, None)
+    if isinstance(value, str):
+        if not value.strip():
+            return (None, None)
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError:
+            return (None, None)
+    if not isinstance(value, list):
+        return (None, None)
+    yes = str(value[0]) if len(value) >= 1 and value[0] else None
+    no = str(value[1]) if len(value) >= 2 and value[1] else None
+    return (yes, no)
+
+
 def _ilike_terms(market: dict[str, Any]) -> list[str]:
     """Flatten Polymarket tags into a stringified list for `core_markets.tags`."""
     tags = market.get("tags") or []
@@ -89,8 +114,14 @@ async def _fetch_keyset_page(
     client: httpx.AsyncClient,
     after_cursor: str | None,
     limit: int,
+    path: str = "/markets/keyset",
+    items_key: str = "markets",
 ) -> tuple[list[dict[str, Any]], str | None]:
-    """Fetch one keyset page. Returns `(markets, next_cursor)`.
+    """Fetch one keyset page. Returns `(items, next_cursor)`.
+
+    `items_key` is the field in the response body that wraps the list
+    (``markets`` on /markets/keyset, ``events`` on /events/keyset — both
+    follow the same Gamma keyset convention).
 
     `next_cursor` is None when the API signals end-of-dataset (missing key or
     empty string in the response). Callers treat that as the natural break.
@@ -116,14 +147,14 @@ async def _fetch_keyset_page(
         reraise=True,
     ):
         with attempt:
-            resp = await client.get("/markets/keyset", params=params, timeout=10.0)
+            resp = await client.get(path, params=params, timeout=10.0)
             resp.raise_for_status()
             data = resp.json()
             if isinstance(data, dict):
-                markets = data.get("markets") or []
+                items = data.get(items_key) or []
                 next_cursor = data.get("next_cursor") or None
-                if isinstance(markets, list):
-                    return markets, next_cursor
+                if isinstance(items, list):
+                    return items, next_cursor
             # Defensive fallback — older / changed shapes
             if isinstance(data, list):
                 return data, None
@@ -131,7 +162,81 @@ async def _fetch_keyset_page(
     return [], None  # unreachable
 
 
-async def _upsert_market(session: AsyncSession, m: dict[str, Any]) -> CoreMarket:
+# Polymarket uses several editorial tags that aren't topical categories —
+# "Featured" promotes a market on the front page, "Hide From New" hides it.
+# Mirror Micah's "Featured" skip and extend with the other internal flags
+# observed live (2026-06-03 sample: "Hide From New" appearing as the only
+# tag on ~3% of events). Falling through to the next tag preserves the
+# real topical label ("Crypto Prices", "Politics", etc.).
+_SKIP_TAG_LABELS = frozenset({"Featured", "Hide From New"})
+
+
+async def _fetch_event_categories(
+    client: httpx.AsyncClient, page_size: int, max_pages: int
+) -> dict[str, str]:
+    """Walk ``/events/keyset`` once and return ``{market_external_id: category}``.
+
+    Backport of Micah PR #319 / job-executor PR #9's ``_fetch_event_metadata``.
+    The Gamma ``/markets/keyset`` payload doesn't surface the event's
+    editorial category — that lives on the parent event under ``tags[].label``.
+    Walking events alongside markets lets us populate ``core_markets.category``
+    from the topical event tag (e.g. "Politics", "Economy") instead of falling
+    back to ``m.get("category")`` which is usually null on Polymarket markets.
+
+    The first tag whose label is not "Featured" wins, matching Micah's
+    behaviour exactly. Events without a usable tag are skipped — their
+    child markets keep whatever ``m.get("category")`` provides.
+
+    Failure (HTTP 4xx/5xx, network, parse) returns ``{}`` so the caller
+    degrades to the pre-backport behaviour rather than failing the whole
+    market poll cycle.
+    """
+    out: dict[str, str] = {}
+    try:
+        cursor: str | None = None
+        page = 0
+        while page < max_pages:
+            batch, next_cursor = await _fetch_keyset_page(
+                client, cursor, page_size,
+                path="/events/keyset", items_key="events",
+            )
+            if not batch:
+                break
+            for evt in batch:
+                tags = evt.get("tags") or []
+                category: str | None = None
+                for tag in tags:
+                    label = tag.get("label") if isinstance(tag, dict) else None
+                    if not label or label in _SKIP_TAG_LABELS:
+                        continue
+                    category = str(label)
+                    break
+                if not category:
+                    continue
+                for mkt in evt.get("markets") or []:
+                    mkt_id = mkt.get("id") if isinstance(mkt, dict) else None
+                    if mkt_id is not None:
+                        out[str(mkt_id)] = category
+            if not next_cursor or next_cursor == cursor:
+                break
+            cursor = next_cursor
+            page += 1
+    except Exception as exc:
+        # Non-fatal: degrade gracefully so a flaky /events endpoint can't
+        # take out the (much more critical) /markets ingest.
+        log.warning(
+            "polymarket.events_enrich_failed",
+            error=str(exc)[:256],
+            collected=len(out),
+        )
+    return out
+
+
+async def _upsert_market(
+    session: AsyncSession,
+    m: dict[str, Any],
+    event_categories: dict[str, str] | None = None,
+) -> CoreMarket:
     """Atomic upsert on `(venue, external_id)`.
 
     Why ON CONFLICT and not SELECT-then-INSERT
@@ -151,7 +256,15 @@ async def _upsert_market(session: AsyncSession, m: dict[str, Any]) -> CoreMarket
         raise ValueError(f"market missing external_id: keys={list(m)[:8]}")
 
     title = str(m.get("question") or m.get("title") or m.get("slug") or "(untitled)")
-    category = m.get("category") or m.get("group")
+    # Prefer the event-level category we collected from /events/keyset (Micah
+    # backport — PR #319 enrichment), since /markets/keyset itself rarely
+    # populates a usable `category` field. Fall back to whatever the market
+    # row carries so existing callers and mock fixtures still work.
+    category = (
+        (event_categories or {}).get(external_id)
+        or m.get("category")
+        or m.get("group")
+    )
     tags = _ilike_terms(m) or None
     opens_at = _parse_dt(m.get("startDate") or m.get("createdAt"))
     closes_at = _parse_dt(m.get("endDate") or m.get("closedTime"))
@@ -159,6 +272,9 @@ async def _upsert_market(session: AsyncSession, m: dict[str, Any]) -> CoreMarket
     resolution: str | None = None
     if m.get("resolved"):
         resolution = (m.get("resolution") or m.get("outcome") or "RESOLVED").upper()[:32]
+
+    condition_id = m.get("conditionId") or None
+    clob_yes_token, clob_no_token = _parse_clob_tokens(m.get("clobTokenIds"))
 
     stmt = pg_insert(CoreMarket).values(
         venue=VENUE,
@@ -172,6 +288,9 @@ async def _upsert_market(session: AsyncSession, m: dict[str, Any]) -> CoreMarket
         closes_at=closes_at,
         resolved_at=resolved_at,
         resolution=resolution,
+        condition_id=condition_id,
+        clob_yes_token=clob_yes_token,
+        clob_no_token=clob_no_token,
         raw=m,
     )
     stmt = stmt.on_conflict_do_update(
@@ -186,6 +305,9 @@ async def _upsert_market(session: AsyncSession, m: dict[str, Any]) -> CoreMarket
             "closes_at": stmt.excluded.closes_at,
             "resolved_at": stmt.excluded.resolved_at,
             "resolution": stmt.excluded.resolution,
+            "condition_id": stmt.excluded.condition_id,
+            "clob_yes_token": stmt.excluded.clob_yes_token,
+            "clob_no_token": stmt.excluded.clob_no_token,
             "raw": stmt.excluded.raw,
             "updated_at": datetime.now(UTC),
         },
@@ -248,6 +370,19 @@ class PolymarketRestPoller:
 
         try:
             async with httpx.AsyncClient(base_url=self._base_url, follow_redirects=True) as client:
+                # Pre-fetch event categories from /events/keyset so we can
+                # populate core_markets.category from the parent event's
+                # topical tag (Micah PR #319 backport). Failures are swallowed
+                # inside the helper — degrades to per-market `category` only.
+                event_categories = await _fetch_event_categories(
+                    client, self._page_size, self._max_pages
+                )
+                if event_categories:
+                    log.info(
+                        "polymarket.events_enrich_ready",
+                        markets_with_category=len(event_categories),
+                    )
+
                 # Walk /markets/keyset using `after_cursor`. The normal exit is
                 # `next_cursor` going None (or an empty page). `polymarket_max_pages`
                 # is a safety ceiling against runaway loops if the API ever stops
@@ -277,7 +412,9 @@ class PolymarketRestPoller:
                     async with session_scope() as session:
                         for m in batch:
                             try:
-                                market = await _upsert_market(session, m)
+                                market = await _upsert_market(
+                                    session, m, event_categories
+                                )
                                 await _write_price(session, market, m)
                                 total_markets += 1
                             except Exception as inner:

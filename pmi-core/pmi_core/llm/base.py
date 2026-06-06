@@ -261,12 +261,22 @@ def get_provider(model_id: str) -> LLMProvider:
     """
     if not model_id:
         raise UnknownModelError("model_id is empty")
-    if model_id.startswith(("gpt-", "openai/")):
+    # `local/` and `self-hosted/` route to the same OpenAI-compatible provider;
+    # the actual endpoint comes from PMI_LLM_BASE_URL in settings. This lets a
+    # future self-hosted LLM/ML server be a config flip + a `local/<model>`
+    # CoreFactorModel row, with no new provider class.
+    # `ollama/<model>` routes to a local Ollama worker (own endpoint, free,
+    # coexists with OpenAI-direct) — see PMI_OLLAMA_BASE_URL in settings.
+    if model_id.startswith("ollama/"):
+        from pmi_core.llm.ollama_client import OllamaProvider
+
+        return OllamaProvider(model_id=model_id)
+    if model_id.startswith(("gpt-", "openai/", "local/", "self-hosted/")):
         from pmi_core.llm.openai_client import OpenAIProvider
 
         return OpenAIProvider(model_id=model_id)
     raise UnknownModelError(
         f"no provider registered for model_id={model_id!r}. "
-        f"Known prefixes: gpt-*, openai/*. "
+        f"Known prefixes: gpt-*, openai/*, local/*, self-hosted/*, ollama/*. "
         f"(stub-* is handled in-evaluator, not via get_provider.)"
     )
