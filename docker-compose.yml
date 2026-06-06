@@ -1,0 +1,303 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Self-contained LOCAL/DEV stack for the Polymarket PMI Platform.
+#
+# This compose lives at the pmi_data_platform repo root and references only this
+# repo's packages (no legacy Micah services). For SHA-pinned GHCR production on a
+# single EC2 box, see deploy/docker-compose.prod.yml instead.
+#
+# Profile layout
+#   (default)   postgres only — the lightest thing most dev needs
+#   admin       + pgAdmin (http://localhost:5050)
+#   mlflow      mlflow tracking + prompt registry server only
+#   pmi         pmi-core + mlflow + pmi-ingest(REST) + pmi-api + pmi-workers
+#   ingest      deep / cross-venue sources (CLOB depth, history, Kalshi)
+#   pmi-web     Next.js 15 dashboard (next dev)
+#   ollama      local OpenAI-compatible LLM server (heavy; opt-in)
+#
+# Env interpolation reads ./.env (see .env.example). The app reads PMI_* vars;
+# the same PMI_DB_* / *_PORT values drive the compose service config below, so
+# there is a single source of truth.
+#
+# Quick start:  cp .env.example .env && just up
+# ════════════════════════════════════════════════════════════════════════════
+
+# Shared base for every pmi-ingest source container. Each live data source is
+# its own long-lived container off the same image, differing only in `command`
+# (the pmi-workers image deliberately does NOT bundle ingest deps, so ingest
+# can't live in supercronic — see pmi-workers/cron/crontab). pm-rest stays in
+# the light `pmi` profile for laptop e2e; the deeper sources (CLOB depth,
+# history backfill, Kalshi REST/CLOB) live in the opt-in `ingest` profile that
+# production brings up alongside `pmi`.
+x-pmi-ingest-base: &pmi-ingest-base
+  build:
+    context: ./pmi-ingest
+  image: pmi-ingest:dev
+  restart: unless-stopped
+  # Override container DNS to public resolvers so we bypass the host's ISP DNS,
+  # which on some networks NXDOMAIN-hijacks gamma-api.polymarket.com to a
+  # block-page server. See pmi-ingest/pmi_ingest/pollers/polymarket_rest.py.
+  dns:
+    - 1.1.1.1
+    - 8.8.8.8
+  depends_on:
+    postgres:
+      condition: service_healthy
+  env_file:
+    - ./.env
+  environment:
+    PMI_DB_HOST: postgres
+    PMI_MLFLOW_TRACKING_URI: http://mlflow:5000
+  volumes:
+    - ./pmi-core/pmi_core:/app/pmi_core:ro
+    - ./pmi-ingest/pmi_ingest:/app/pmi_ingest:ro
+    # Mock fixtures consumed when POLYMARKET_USE_MOCK=true.
+    - ./pmi-demo/fixtures:/app/fixtures:ro
+    # Kalshi RSA private key — mounted where KALSHI_PRIVATE_KEY=kalshi.key
+    # resolves inside the container (WORKDIR is /app).
+    - ./kalshi.key:/app/kalshi.key:ro
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: pmi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PMI_DB_USER:-warindex}
+      POSTGRES_PASSWORD: ${PMI_DB_PASSWORD:-warindex}
+      POSTGRES_DB: ${PMI_DB_NAME:-pmi}
+    ports:
+      - "${PMI_DB_PORT:-5432}:5432"
+    volumes:
+      - pmi-pgdata:/var/lib/postgresql/data
+      # First-boot init: pgvector/pg_trgm/btree_gin on the pmi DB + create the
+      # separate `mlflow` database. Only runs on a fresh volume.
+      - ./deploy/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PMI_DB_USER:-warindex} -d ${PMI_DB_NAME:-pmi}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Optional: pgAdmin for visual schema inspection. `just db-admin-up`.
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pmi-pgadmin
+    profiles: ["admin"]
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@local
+      PGADMIN_DEFAULT_PASSWORD: dev
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+  # MLflow tracking + Prompt Registry. Enabled by default in the `pmi` profile
+  # because pmi-core's pipeline mirrors prompts + runs here. Pipeline gracefully
+  # degrades if this service is down (mlflow_* columns stay NULL).
+  mlflow:
+    build:
+      context: ./mlflow
+    image: pmi-mlflow:dev
+    container_name: pmi-mlflow
+    profiles: ["pmi", "mlflow"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MLFLOW_BACKEND_STORE_URI: postgresql+psycopg2://${PMI_DB_USER:-warindex}:${PMI_DB_PASSWORD:-warindex}@postgres:5432/mlflow
+      MLFLOW_ARTIFACTS_DESTINATION: /mlartifacts
+      MLFLOW_PORT: "5000"
+    ports:
+      - "${MLFLOW_PORT:-5500}:5000"
+    volumes:
+      - pmi-mlartifacts:/mlartifacts
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  # pmi-core: the engine + CLI. Long-running services depend on its package, but
+  # pmi-core itself runs as one-shot subcommands (migrate / seed / score / …)
+  # via `docker compose --profile pmi run --rm pmi-core <subcommand>`.
+  pmi-core:
+    build:
+      context: ./pmi-core
+    image: pmi-core:dev
+    container_name: pmi-core
+    profiles: ["pmi"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    environment:
+      PMI_DB_HOST: postgres
+      PMI_MLFLOW_TRACKING_URI: http://mlflow:5000
+      PMI_OLLAMA_BASE_URL: http://ollama:11434/v1
+    volumes:
+      - ./pmi-core/pmi_core:/app/pmi_core:ro
+      - ./pmi-core/alembic.ini:/app/alembic.ini:ro
+      - ./pmi-demo/fixtures:/app/fixtures:ro
+
+  # Polymarket Gamma REST poller — the canonical always-on source. Stays in the
+  # light `pmi` profile so laptop e2e + `just ingest-up` keep working.
+  pmi-ingest:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest
+    profiles: ["pmi"]
+    command: ["run", "--source", "polymarket-rest"]
+
+  # ── Deep / cross-venue sources (profile `ingest`, brought up in production) ──
+  # Polymarket CLOB orderbook depth (CORR-4.3) → ts_orderbook_snapshots, 60s.
+  # Requires pm-rest to have written core_markets.clob_yes_token first.
+  pmi-ingest-clob:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-clob
+    profiles: ["ingest"]
+    command: ["clob"]
+
+  # Polymarket /prices-history backfill (CORR-3.10 / SHIP-4.5). The CLI command
+  # is one-shot, so we wrap it in a daily shell loop here.
+  pmi-ingest-history:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-history
+    profiles: ["ingest"]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "while true; do python -m pmi_ingest.cli polymarket-history || true; sleep 86400; done"
+
+  # Kalshi REST markets poller → core_markets + ts_price_snapshots.
+  pmi-ingest-kalshi-rest:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-kalshi-rest
+    profiles: ["ingest"]
+    command: ["run", "--source", "kalshi-rest"]
+
+  # Kalshi orderbook depth (CORR-4.3 parity) → ts_orderbook_snapshots.
+  pmi-ingest-kalshi-clob:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-kalshi-clob
+    profiles: ["ingest"]
+    command: ["kalshi-clob"]
+
+  # Read-only FastAPI gateway over pmi-core. Long-running.
+  pmi-api:
+    build:
+      context: ./pmi-api
+    image: pmi-api:dev
+    container_name: pmi-api
+    profiles: ["pmi"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    environment:
+      PMI_DB_HOST: postgres
+      PMI_MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports:
+      - "${PMI_API_PORT:-8001}:8000"
+    # Bind-mount both packages so uvicorn --reload sees code edits instantly.
+    volumes:
+      - ./pmi-core/pmi_core:/app/pmi_core:ro
+      - ./pmi-api/pmi_api:/app/pmi_api:ro
+
+  # supercronic-driven `run-job` runner (production cron entry point). Also
+  # accepts one-shot `run-job <name>` via `docker compose run --rm pmi-workers`.
+  pmi-workers:
+    build:
+      context: ./pmi-workers
+    image: pmi-workers:dev
+    container_name: pmi-workers
+    profiles: ["pmi", "workers"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    environment:
+      PMI_DB_HOST: postgres
+      PMI_MLFLOW_TRACKING_URI: http://mlflow:5000
+      PMI_OLLAMA_BASE_URL: http://ollama:11434/v1
+    volumes:
+      - ./pmi-core/pmi_core:/app/pmi_core:ro
+      - ./pmi-workers/pmi_workers:/app/pmi_workers:ro
+      - ./pmi-workers/cron:/app/cron:ro
+
+  # Next.js 15 dashboard over pmi-api. Profile `pmi-web` so it stays out of the
+  # default stack; bring up with `just web-up` for SSR dev (auto-reload).
+  pmi-web:
+    build:
+      context: ./pmi-web
+      target: dev
+    image: pmi-web:dev
+    container_name: pmi-web
+    profiles: ["pmi-web"]
+    restart: unless-stopped
+    depends_on:
+      pmi-api:
+        condition: service_started
+    env_file:
+      - ./.env
+    environment:
+      # Force the server-side URL to the compose hostname; cannot rely on the
+      # .env value because that's set for host-side dev (localhost).
+      PMI_API_URL: http://pmi-api:8000
+    ports:
+      - "${PMI_WEB_PORT:-3000}:3000"
+    volumes:
+      - ./pmi-web/app:/app/app:ro
+      - ./pmi-web/components:/app/components:ro
+      - ./pmi-web/lib:/app/lib:ro
+      - ./pmi-web/public:/app/public:ro
+
+  # Ollama local-model worker — serves open LLMs over an OpenAI-compatible API
+  # at :11434/v1. Opt-in via profile `ollama` (the image + model weights are
+  # heavy). pmi-core / pmi-workers reach it at http://ollama:11434/v1
+  # (PMI_OLLAMA_BASE_URL, already wired in their environment blocks). Usage:
+  #   docker compose --profile ollama up -d ollama
+  #   docker compose exec ollama ollama pull llama3.1
+  #   docker compose --profile pmi run --rm pmi-core models register \
+  #       --factor <id> --prompt-name <name> --prompt-version 1 \
+  #       --llm ollama/llama3.1 --temperature 0.1
+  #   docker compose --profile pmi run --rm pmi-core models promote <row-id> --stage production
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pmi-ollama
+    restart: unless-stopped
+    profiles: ["ollama"]
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    # NVIDIA GPU passthrough (uncomment on hosts with the NVIDIA Container Toolkit):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+volumes:
+  pmi-pgdata:
+    name: pmi-pgdata
+  pmi-mlartifacts:
+    name: pmi-mlartifacts
+  ollama-models:
+    name: pmi-ollama-models
