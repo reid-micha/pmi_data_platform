@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pmi_workers.jobs import (  # noqa: F401  registration side-effects
     daily,
+    embed_markets,
     hourly,
     score,
     score_all,

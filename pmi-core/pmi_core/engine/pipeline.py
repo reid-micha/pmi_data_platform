@@ -18,12 +18,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pmi_core import mlflow_client
+from pmi_core.config import settings
 from pmi_core.db import session_scope
-from pmi_core.dsl.ir import IndexDef, load_index_def
+from pmi_core.dsl.ir import IndexDef, SemanticSelector, load_index_def
 from pmi_core.engine.aggregator import MarketEvaluations, aggregate
 from pmi_core.engine.factor_evaluator import evaluate_factor
 from pmi_core.engine.factor_resolver import ResolvedFactorModel, resolve_factor_model
 from pmi_core.engine.selector import select_markets
+from pmi_core.llm import embed_query
 from pmi_core.models import (
     AuditPipelineRun,
     CoreIndexDefinition,
@@ -32,6 +34,7 @@ from pmi_core.models import (
     TsOrderbookSnapshot,
     TsPriceSnapshot,
 )
+from pmi_core.vectorstore import get_vector_store
 
 log = structlog.get_logger(__name__)
 
@@ -212,6 +215,71 @@ async def _latest_orderbook_depths(
     return out
 
 
+async def _tier0_prefilter(markets: list, ir: IndexDef) -> tuple[list, dict]:
+    """Drop candidates whose cosine to the index anchor(s) is below the Tier 0 floor.
+
+    The cheap embedding gate that sits between selection and the (expensive)
+    factor LLM loop. It uses the SemanticSelector anchors as the relevance
+    reference — so an index gets Tier 0 culling for free by declaring at least
+    one `semantic` selector, even if it ALSO selects by keyword/category. An
+    index with no anchor has no embedding reference, so the gate is a no-op.
+
+    Policy decisions:
+      * **max over anchors** — a market relevant to ANY anchor survives.
+      * **fail-open on missing embeddings** — a market with no vector row (writer
+        hasn't run, or it's brand new) is KEPT, never silently dropped. Better to
+        spend a factor call than to vanish a real market from the index.
+      * **fail-open on embed errors** — if the anchor can't be embedded (endpoint
+        down), the gate is skipped entirely for this tick.
+
+    Returns `(survivors, stats)` where stats feeds the run log / summary.
+    """
+    stats = {"considered": len(markets), "dropped": 0, "no_embedding": 0, "enabled": False}
+    anchors = [s.anchor for s in ir.selectors if isinstance(s, SemanticSelector)]
+    if not anchors or not markets:
+        return markets, stats
+
+    model = settings.active_embedding_model
+    floor = settings.embedding_tier0_min_cosine
+    store = get_vector_store()
+    market_ids = [m.id for m in markets]
+
+    best: dict[int, float] = {}
+    try:
+        for anchor in anchors:
+            anchor_vec = await embed_query(anchor, model=model)
+            sims = await store.cosine_for_markets(
+                market_ids=market_ids, query_embedding=anchor_vec, model=model
+            )
+            for mid, cos in sims.items():
+                if mid not in best or cos > best[mid]:
+                    best[mid] = cos
+    except Exception as exc:  # noqa: BLE001 - graceful degradation by design
+        log.warning("tier0.skipped_embed_error", index_id=ir.id, error=str(exc))
+        return markets, stats
+
+    stats["enabled"] = True
+    survivors = []
+    for m in markets:
+        cos = best.get(m.id)
+        if cos is None:
+            stats["no_embedding"] += 1
+            survivors.append(m)  # fail-open
+        elif cos >= floor:
+            survivors.append(m)
+        else:
+            stats["dropped"] += 1
+    log.info(
+        "tier0.prefilter",
+        index_id=ir.id,
+        floor=floor,
+        kept=len(survivors),
+        dropped=stats["dropped"],
+        no_embedding=stats["no_embedding"],
+    )
+    return survivors, stats
+
+
 async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
     """Single tick of the pipeline. Returns a dict summary for CLI display."""
     as_of = as_of or datetime.now(UTC)
@@ -233,6 +301,12 @@ async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
 
             markets = await select_markets(session, ir)
             log.info("pipeline.selected", index_id=index_id, count=len(markets))
+
+            # Tier 0 embedding pre-filter: cull anchor-irrelevant candidates
+            # (e.g. keyword false-positives) before spending factor LLM calls.
+            markets, tier0_stats = await _tier0_prefilter(markets, ir)
+            if tier0_stats["enabled"]:
+                log.info("pipeline.tier0", index_id=index_id, **tier0_stats)
 
             # Cache prompt rows AND resolve the active (factor_model) per factor.
             # If any factor has a CoreFactorModel registered + is_active=True at the

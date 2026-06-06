@@ -23,6 +23,12 @@ from pmi_core.llm.base import (
     get_provider,
     render_prompt,
 )
+from pmi_core.llm.embeddings import (
+    embed_documents,
+    embed_query,
+    market_text,
+    text_sha256,
+)
 
 __all__ = [
     "LLMProvider",
@@ -31,4 +37,8 @@ __all__ = [
     "UnknownModelError",
     "get_provider",
     "render_prompt",
+    "embed_documents",
+    "embed_query",
+    "market_text",
+    "text_sha256",
 ]

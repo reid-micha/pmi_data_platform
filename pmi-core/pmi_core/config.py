@@ -39,6 +39,28 @@ class Settings(BaseSettings):
     # The trailing `/v1` is Ollama's OpenAI-compatible API surface.
     ollama_base_url: str = Field(default="http://localhost:11434/v1")
 
+    # ── Embeddings (Tier 0 pre-filter + SemanticSelector) ──────────────────
+    # `active_embedding_model` is the single source of truth for "which model
+    # the engine queries". It is config, NOT a column in vec_market_embeddings
+    # (that table is row-per-model; storing the active model per-row would be
+    # denormalised). The value carries a provider prefix so the embed path can
+    # route it the same way `get_provider` routes chat models:
+    #   ollama/<tag>            → OllamaProvider endpoint (PMI_OLLAMA_BASE_URL), free
+    #   text-embedding-* / gpt* → OpenAI embeddings endpoint
+    # `nomic-embed-text` needs asymmetric task prefixes (search_document: for
+    # stored markets, search_query: for the anchor) — handled in llm/embeddings.
+    active_embedding_model: str = Field(default="ollama/nomic-embed-text")
+
+    # Tier 0 cosine floor: candidate markets whose cosine(anchor, market) falls
+    # below this are skipped before the (expensive) factor LLM loop. A LOW floor
+    # (recall-first) — precision is the factor evaluator's job downstream.
+    embedding_tier0_min_cosine: float = Field(default=0.5)
+
+    # Which VectorStore implementation backs SemanticSelector / Tier 0 / the
+    # writer. `pgvector` (default) keeps vectors in Postgres — zero new infra.
+    # `milvus` is a forward-compat stub until scale justifies it (§3.1).
+    vector_store: str = Field(default="pgvector")
+
     # MLflow tracking + Prompt Registry. Pipeline gracefully degrades if unreachable
     # or if PMI_MLFLOW_ENABLED=false — audit_evaluations remain the source of truth.
     mlflow_tracking_uri: str = Field(default="http://localhost:5500")
