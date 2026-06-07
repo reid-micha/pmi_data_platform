@@ -66,7 +66,11 @@ services:
       POSTGRES_PASSWORD: ${PMI_DB_PASSWORD:-warindex}
       POSTGRES_DB: ${PMI_DB_NAME:-pmi}
     ports:
-      - "${PMI_DB_PORT:-5432}:5432"
+      # Host-published port is decoupled from the in-container port (always 5432)
+      # so this Postgres can coexist with the legacy Micah Postgres (which holds
+      # host :5432). In-container clients still use PMI_DB_PORT=5432 via the
+      # compose network; only host-side access uses PMI_DB_HOST_PORT.
+      - "${PMI_DB_HOST_PORT:-5433}:5432"
     volumes:
       - pmi-pgdata:/var/lib/postgresql/data
       # First-boot init: pgvector/pg_trgm/btree_gin on the pmi DB + create the
@@ -260,6 +264,29 @@ services:
       - ./pmi-web/components:/app/components:ro
       - ./pmi-web/lib:/app/lib:ro
       - ./pmi-web/public:/app/public:ro
+
+  # 1:1 clone of the legacy micah-frontend maga-index Vite SPA (react-router-7 +
+  # Tailwind v4). Kept as its own Vite app rather than folded into pmi-web because
+  # the two have incompatible build pipelines. Profile `pmi-maga-web` so it stays
+  # out of the default stack; `just maga-up`. Talks to the legacy war-index maga
+  # API by default (VITE_API_URL in apps/maga-index/.env), so no pmi-api dep.
+  pmi-maga-web:
+    build:
+      context: ./pmi-maga-web
+      target: dev
+    image: pmi-maga-web:dev
+    container_name: pmi-maga-web
+    profiles: ["pmi-maga-web"]
+    restart: unless-stopped
+    ports:
+      - "${PMI_MAGA_WEB_PORT:-5173}:5173"
+    volumes:
+      # Hot-reload source + the @micah/* workspace packages. node_modules and
+      # config stay baked in the image (do NOT overmount them).
+      - ./pmi-maga-web/apps/maga-index/src:/app/apps/maga-index/src:ro
+      - ./pmi-maga-web/apps/maga-index/public:/app/apps/maga-index/public:ro
+      - ./pmi-maga-web/apps/maga-index/index.html:/app/apps/maga-index/index.html:ro
+      - ./pmi-maga-web/packages:/app/packages:ro
 
   # Ollama local-model worker — serves open LLMs over an OpenAI-compatible API
   # at :11434/v1. Opt-in via profile `ollama` (the image + model weights are

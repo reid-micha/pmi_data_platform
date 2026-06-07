@@ -38,18 +38,20 @@ MODEL="${1:-${OLLAMA_MODEL:-llama3.1}}"
 INDEX_ID="${INDEX_ID:-polymarket-war-index}"
 TEMP="${OLLAMA_TEMPERATURE:-0.1}"
 
-# Resolve workspace root (the dir holding docker-compose.yml), regardless of CWD.
+# Resolve the pmi_data_platform root (the dir holding docker-compose.yml),
+# regardless of CWD. This platform is self-contained — it does NOT use the
+# legacy Micah workspace one level up.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"   # …/pmi_data_platform/scripts → workspace root
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"   # …/pmi_data_platform/scripts → pmi_data_platform
 cd "$ROOT"
 
 if [ ! -f docker-compose.yml ]; then
-  echo "✗ docker-compose.yml not found in $ROOT — run from the micah workspace." >&2
+  echo "✗ docker-compose.yml not found in $ROOT — run from pmi_data_platform/." >&2
   exit 1
 fi
-if [ ! -f pmi_data_platform/.env ]; then
-  echo "→ pmi_data_platform/.env missing — seeding from .env.example"
-  cp pmi_data_platform/.env.example pmi_data_platform/.env
+if [ ! -f .env ]; then
+  echo "→ .env missing — seeding from .env.example"
+  cp .env.example .env
 fi
 
 DC="docker compose --profile pmi"

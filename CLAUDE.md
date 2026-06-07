@@ -30,10 +30,14 @@
 1. **新功能 / 平台相關任務** → 讀 `pmi-platform-bootstrap`，動本目錄（`pmi_data_platform/`）。
 2. **prod 維運 / hotfix on thewarindex.org** → 讀對應 `micah-*` skill。
 3. 任務模糊（例如「加個新的預測市場」），預設走 (1) `pmi-ingest/`。
-4. **本目錄（`pmi_data_platform/`）的指令一律用 Docker 跑**——透過 workspace-root `justfile`
-   的 recipe（`just pmi-migrate` / `pmi-seed` / `pmi-score` …，內部都是
+4. **本目錄（`pmi_data_platform/`）的指令一律用 Docker 跑，且在本目錄內跑**——本平台
+   self-contained：自帶 [`justfile`](justfile) + [`docker-compose.yml`](docker-compose.yml)
+   + 自己的 Postgres。一律 `cd pmi_data_platform` 後用**本目錄的** `just` recipe
+   （`just up` / `just pmi-migrate` / `pmi-seed` / `pmi-score` …，內部都是
    `docker compose --profile pmi run --rm pmi-core …`），或直接
-   `docker compose --profile {pmi,mlflow} …`。**不要在 host 直接 `pmi-core …`
+   `docker compose --profile {pmi,mlflow} …`。**不再透過 workspace-root 的 justfile**
+   ——root 的 justfile / docker-compose.yml 已切成 **legacy Micah 專用**，不再管 pmi
+   （見根目錄 [`../CLAUDE.md`](../CLAUDE.md)）。**不要在 host 直接 `pmi-core …`
    或 `cd pmi-core && python -m pmi_core.cli …` / `uv run …`**（host venv 不保證存在、
    會接錯 DB／少掉 bind-mount 的 fixtures）。唯一例外是不碰 DB／LLM 的純算 dry-run
    （`just dry-run`），它刻意在 host in-process 跑。

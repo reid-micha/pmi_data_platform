@@ -32,13 +32,14 @@ MODEL="${EMBED_MODEL:-nomic-embed-text}"
 MIGRATE_ONLY="${MIGRATE_ONLY:-0}"
 SCORE="${SCORE:-1}"
 
-# Resolve workspace root (the dir holding docker-compose.yml), regardless of CWD.
+# Resolve the pmi_data_platform root (the dir holding docker-compose.yml),
+# regardless of CWD. Self-contained — does NOT use the legacy Micah workspace.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"   # …/pmi_data_platform/scripts → workspace root
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"   # …/pmi_data_platform/scripts → pmi_data_platform
 cd "$ROOT"
 
 if [ ! -f docker-compose.yml ]; then
-  echo "✗ docker-compose.yml not found in $ROOT — run from the micah workspace." >&2
+  echo "✗ docker-compose.yml not found in $ROOT — run from pmi_data_platform/." >&2
   exit 1
 fi
 

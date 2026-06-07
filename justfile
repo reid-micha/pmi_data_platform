@@ -396,6 +396,83 @@ web-dev:
     cd {{root_dir}}/pmi-web && npm run dev
 
 # ============================================================================
+# pmi-maga-web (1:1 clone of the legacy micah-frontend maga-index Vite SPA)
+# ============================================================================
+# Self-contained Vite app (Tailwind v4 + react-router-7) — kept separate from
+# pmi-web because their build pipelines are incompatible. Talks to the legacy
+# war-index maga API by default (apps/maga-index/.env VITE_API_URL); does not
+# need pmi-api. See pmi-maga-web/README.md.
+
+# Build the pmi-maga-web image (multi-stage; `dev`=vite, `prod`=nginx static).
+[group('pmi-maga-web')]
+maga-build:
+    docker compose --profile pmi-maga-web build pmi-maga-web
+
+# Start the Vite dev server in background. Visit http://localhost:${PMI_MAGA_WEB_PORT:-5173}.
+[group('pmi-maga-web')]
+maga-up:
+    docker compose --profile pmi-maga-web up -d pmi-maga-web
+    @echo "✓ pmi-maga-web on http://localhost:${PMI_MAGA_WEB_PORT:-5173}"
+    @echo "  Tail logs: just maga-logs"
+
+# Stop pmi-maga-web.
+[group('pmi-maga-web')]
+maga-down:
+    docker compose --profile pmi-maga-web stop pmi-maga-web && docker compose --profile pmi-maga-web rm -f pmi-maga-web
+
+# Tail pmi-maga-web logs.
+[group('pmi-maga-web')]
+maga-logs:
+    docker compose --profile pmi-maga-web logs -f --tail 50 pmi-maga-web
+
+# Verify the clone compiles (tsc --noEmit && vite build) inside Docker.
+[group('pmi-maga-web')]
+maga-buildcheck:
+    cd {{root_dir}}/pmi-maga-web && docker build --target build -t pmi-maga-web:buildcheck .
+
+# ============================================================================
+# pmi-e2e (full-stack smoke against an isolated pmi_e2e_test database)
+# ============================================================================
+
+# Brings the entire P0 stack up against an isolated `pmi_e2e_test` Postgres DB,
+# runs migrate → seed → score-all → pmi-api up → curl assertions, then tears
+# down. Zero LLM cost (no factor models registered → all-stub).
+# See tests/e2e/README.md for details.
+[group('pmi-core')]
+pmi-e2e *ARGS='tests/e2e/ -v':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! python3 -c "import httpx, pytest" >/dev/null 2>&1; then
+        echo "→ Installing pytest + httpx into a transient venv for the harness..."
+        python3 -m venv .e2e-venv
+        .e2e-venv/bin/pip install --quiet pytest httpx
+        PY=.e2e-venv/bin/python
+    else
+        PY=$(command -v python3)
+    fi
+    $PY -m pytest {{ARGS}}
+
+# Tear down anything the e2e suite may have left behind (lingering pmi-api
+# container after Ctrl-C, leftover pmi_e2e_test database).
+[group('pmi-core')]
+pmi-e2e-clean:
+    -docker compose --profile pmi -f docker-compose.yml -f tests/e2e/docker-compose.e2e.yml stop pmi-api
+    -docker compose --profile pmi -f docker-compose.yml -f tests/e2e/docker-compose.e2e.yml rm -f pmi-api
+    -docker compose exec -T postgres psql -U ${PMI_DB_USER:-warindex} -d postgres -c "DROP DATABASE IF EXISTS pmi_e2e_test"
+    @echo "✓ e2e remnants cleared"
+
+# End-to-end with a LOCAL OLLAMA model as the default factor LLM (not the stub).
+# Brings up ollama, pulls MODEL, migrate→seed→score(stub)→binds every factor to
+# ollama/MODEL (register+promote)→score again→history. Fully local, no OpenAI key.
+# Add API_CHECK=1 to also bring pmi-api up and curl the served score.
+#   just e2e-ollama                 # MODEL=llama3.1, index=polymarket-war-index
+#   just e2e-ollama qwen2.5:7b
+#   API_CHECK=1 just e2e-ollama
+[group('pmi-core')]
+e2e-ollama MODEL='llama3.1':
+    {{root_dir}}/scripts/e2e-ollama.sh {{MODEL}}
+
+# ============================================================================
 # Ollama (optional local LLM provider)
 # ============================================================================
 
