@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Country-Conflict Mapping | Project Micah</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .country-row:hover { background-color: rgba(59, 130, 246, 0.1); }
+    .contract-pill { transition: all 0.15s; }
+    .contract-pill:hover { transform: scale(1.02); }
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold">Country-Conflict Mapping</h1>
+          <p class="text-slate-400 text-sm">LLM-analyzed prediction market contracts → country associations</p>
+        </div>
+        <div class="flex gap-6 text-sm">
+          <div class="text-center">
+            <div class="text-2xl font-bold text-blue-400" id="stat-contracts">—</div>
+            <div class="text-slate-500">Contracts</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-emerald-400" id="stat-countries">—</div>
+            <div class="text-slate-500">Countries</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-amber-400" id="stat-direct">—</div>
+            <div class="text-slate-500">Direct</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Process Explanation + Generator -->
+    <div class="mb-8 p-6 bg-slate-900 rounded-xl border border-slate-800">
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+        <!-- How it works -->
+        <div class="flex-1">
+          <h2 class="text-lg font-semibold mb-4 text-slate-200">How it works</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold shrink-0 text-xs">1</div>
+              <div>
+                <div class="font-medium text-slate-200">Filter</div>
+                <div class="text-slate-400">12,500+ contracts → geo keywords → ~800</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold shrink-0 text-xs">2</div>
+              <div>
+                <div class="font-medium text-slate-200">Batch</div>
+                <div class="text-slate-400">Contracts sent to GPT-5.2 in pairs</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold shrink-0 text-xs">3</div>
+              <div>
+                <div class="font-medium text-slate-200">Classify</div>
+                <div class="text-slate-400">LLM identifies <span class="text-amber-400">direct</span> vs <span class="text-slate-300">any</span> relation</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold shrink-0 text-xs">4</div>
+              <div>
+                <div class="font-medium text-slate-200">Union</div>
+                <div class="text-slate-400">All countries from all responses → final list</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generator Controls -->
+        <div class="lg:w-80 p-4 bg-slate-800 rounded-lg border border-slate-700">
+          <h3 class="text-sm font-semibold text-slate-200 mb-3">🔄 Re-generate Mapping</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Number of contracts to analyze</label>
+              <input type="number" id="contract-limit" value="4" min="2" max="6" step="2"
+                     class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                     oninput="updateEstimate()">
+              <p class="text-xs text-slate-500 mt-1">Max 6 due to API timeout (use CLI for larger runs)</p>
+            </div>
+            <div class="text-xs text-slate-400">
+              <span id="estimate-batches">2 batches</span> •
+              <span id="estimate-time" class="text-amber-400">~20-30s</span>
+            </div>
+            <button id="generate-btn" onclick="runGeneration()"
+                    class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed rounded font-medium text-sm transition-colors">
+              Generate New Mapping
+            </button>
+            <div id="generation-status" class="hidden text-xs text-center">
+              <div class="flex items-center justify-center gap-2">
+                <svg class="animate-spin h-4 w-4 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span id="status-text" class="text-slate-300">Processing...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="mb-6 flex flex-wrap gap-4 items-center">
+      <input
+        type="text"
+        id="search"
+        placeholder="Search countries..."
+        class="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 w-64 focus:outline-none focus:border-blue-500"
+      >
+      <label class="flex items-center gap-2 text-sm cursor-pointer">
+        <input type="checkbox" id="filter-direct" class="rounded bg-slate-800 border-slate-600">
+        <span>Show only <span class="text-amber-400 font-medium">direct</span> countries</span>
+      </label>
+      <div class="text-slate-500 text-sm ml-auto" id="showing-count"></div>
+    </div>
+
+    <!-- Country Table -->
+    <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-slate-800 text-left text-sm text-slate-400">
+            <th class="px-6 py-4 font-medium">Country</th>
+            <th class="px-6 py-4 font-medium text-center w-24">Type</th>
+            <th class="px-6 py-4 font-medium text-center w-32">Contracts</th>
+            <th class="px-6 py-4 font-medium">Sample Direct Contracts</th>
+          </tr>
+        </thead>
+        <tbody id="country-table">
+          <!-- Rows inserted here -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Selected Country Detail -->
+    <div id="detail-panel" class="hidden mt-8 fade-in">
+      <div class="bg-slate-900 rounded-xl border border-slate-800 p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold">
+            <span id="detail-country-name"></span>
+            <span id="detail-badge" class="ml-2 text-sm px-2 py-1 rounded"></span>
+          </h2>
+          <button onclick="closeDetail()" class="text-slate-400 hover:text-white text-xl">✕</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Direct Contracts -->
+          <div>
+            <h3 class="text-sm font-medium text-amber-400 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              Direct/Heavy Relation
+              <span class="text-slate-500 font-normal" id="detail-direct-count"></span>
+            </h3>
+            <div id="detail-direct-list" class="space-y-2 max-h-80 overflow-y-auto pr-2">
+              <!-- Direct contracts -->
+            </div>
+          </div>
+
+          <!-- Any Contracts -->
+          <div>
+            <h3 class="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+              Any Relation
+              <span class="text-slate-500 font-normal" id="detail-any-count"></span>
+            </h3>
+            <div id="detail-any-list" class="space-y-2 max-h-80 overflow-y-auto pr-2">
+              <!-- Any contracts -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-slate-600 text-sm">
+      <p>Generated <span id="generated-at"></span> via GPT-5.2</p>
+      <p class="mt-1">Project Micah • War Index v2</p>
+    </footer>
+  </main>
+
+  <script>
+    let data = null;
+    let selectedCountry = null;
+
+    async function loadData() {
+      try {
+        const res = await fetch('https://micah-index-builder.s3.us-west-1.amazonaws.com/data/countries.json');
+        data = await res.json();
+        renderStats();
+        renderTable(data.countries);
+
+        // Format date
+        if (data.generated_at) {
+          const d = new Date(data.generated_at);
+          document.getElementById('generated-at').textContent = d.toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+        }
+      } catch (err) {
+        document.getElementById('country-table').innerHTML = `
+          <tr><td colspan="4" class="px-6 py-12 text-center text-red-400">Failed to load: ${err.message}</td></tr>
+        `;
+      }
+    }
+
+    function renderStats() {
+      document.getElementById('stat-contracts').textContent = data.geo_filtered_contracts;
+      document.getElementById('stat-countries').textContent = data.countries.length;
+      document.getElementById('stat-direct').textContent = data.countries_direct_count;
+    }
+
+    function renderTable(countries) {
+      const tbody = document.getElementById('country-table');
+      document.getElementById('showing-count').textContent = `Showing ${countries.length} of ${data.countries.length}`;
+
+      if (countries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-500">No countries match your filters</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = countries.map(c => {
+        const directContracts = c.contracts_direct || [];
+        const sampleContracts = directContracts.slice(0, 2);
+        const isSelected = selectedCountry === c.name;
+
+        return `
+          <tr class="country-row border-b border-slate-800/50 cursor-pointer ${isSelected ? 'bg-blue-500/10' : ''}" onclick="selectCountry('${c.name.replace(/'/g, "\\'")}')">
+            <td class="px-6 py-4">
+              <span class="font-medium">${c.name}</span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              ${c.is_direct
+                ? '<span class="px-2 py-1 text-xs rounded bg-amber-500/20 text-amber-400">Direct</span>'
+                : '<span class="px-2 py-1 text-xs rounded bg-slate-700 text-slate-400">Any</span>'
+              }
+            </td>
+            <td class="px-6 py-4 text-center">
+              <span class="font-mono">${c.market_count}</span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex flex-wrap gap-2">
+                ${sampleContracts.map(contract => `
+                  <span class="contract-pill text-xs px-2 py-1 rounded bg-slate-800 text-slate-300 max-w-xs truncate" title="${contract}">
+                    ${contract.length > 50 ? contract.slice(0, 50) + '...' : contract}
+                  </span>
+                `).join('')}
+                ${directContracts.length > 2 ? `<span class="text-xs text-slate-500">+${directContracts.length - 2} more</span>` : ''}
+                ${directContracts.length === 0 ? '<span class="text-xs text-slate-600 italic">No direct contracts</span>' : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function selectCountry(name) {
+      selectedCountry = name;
+      const country = data.countries.find(c => c.name === name);
+      if (!country) return;
+
+      // Update table selection
+      renderTable(getFilteredCountries());
+
+      // Show detail panel
+      const panel = document.getElementById('detail-panel');
+      panel.classList.remove('hidden');
+
+      document.getElementById('detail-country-name').textContent = country.name;
+
+      const badge = document.getElementById('detail-badge');
+      if (country.is_direct) {
+        badge.textContent = 'Direct';
+        badge.className = 'ml-2 text-sm px-2 py-1 rounded bg-amber-500/20 text-amber-400';
+      } else {
+        badge.textContent = 'Any';
+        badge.className = 'ml-2 text-sm px-2 py-1 rounded bg-slate-700 text-slate-400';
+      }
+
+      // Direct contracts
+      const directList = document.getElementById('detail-direct-list');
+      const directContracts = country.contracts_direct || [];
+      document.getElementById('detail-direct-count').textContent = `(${directContracts.length})`;
+
+      if (directContracts.length === 0) {
+        directList.innerHTML = '<p class="text-slate-500 text-sm italic">No direct contracts identified</p>';
+      } else {
+        directList.innerHTML = directContracts.map(c => `
+          <div class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm">${c}</div>
+        `).join('');
+      }
+
+      // Any contracts (exclude those already in direct)
+      const anyList = document.getElementById('detail-any-list');
+      const anyContracts = (country.contracts_any || []).filter(c => !directContracts.includes(c));
+      document.getElementById('detail-any-count').textContent = `(${anyContracts.length})`;
+
+      if (anyContracts.length === 0) {
+        anyList.innerHTML = '<p class="text-slate-500 text-sm italic">All contracts are direct</p>';
+      } else {
+        anyList.innerHTML = anyContracts.map(c => `
+          <div class="p-3 rounded-lg bg-slate-800 border border-slate-700 text-sm">${c}</div>
+        `).join('');
+      }
+
+      // Scroll to panel
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closeDetail() {
+      selectedCountry = null;
+      document.getElementById('detail-panel').classList.add('hidden');
+      renderTable(getFilteredCountries());
+    }
+
+    function getFilteredCountries() {
+      let countries = data.countries;
+
+      const query = document.getElementById('search').value.toLowerCase().trim();
+      if (query) {
+        countries = countries.filter(c => c.name.toLowerCase().includes(query));
+      }
+
+      const directOnly = document.getElementById('filter-direct').checked;
+      if (directOnly) {
+        countries = countries.filter(c => c.is_direct);
+      }
+
+      return countries;
+    }
+
+    document.getElementById('search').addEventListener('input', () => {
+      renderTable(getFilteredCountries());
+    });
+
+    document.getElementById('filter-direct').addEventListener('change', () => {
+      renderTable(getFilteredCountries());
+    });
+
+    // Generator functions
+    const API_URL = 'https://xelslt5f9l.execute-api.us-west-1.amazonaws.com/prod';
+
+    function updateEstimate() {
+      const limit = parseInt(document.getElementById('contract-limit').value) || 4;
+      const batches = Math.ceil(limit / 2);
+      const minSec = batches * 10;
+      const maxSec = batches * 15;
+
+      document.getElementById('estimate-batches').textContent = `${batches} batch${batches > 1 ? 'es' : ''}`;
+      document.getElementById('estimate-time').textContent = `~${minSec}-${maxSec}s`;
+    }
+
+    async function runGeneration() {
+      const limit = parseInt(document.getElementById('contract-limit').value) || 20;
+      const btn = document.getElementById('generate-btn');
+      const status = document.getElementById('generation-status');
+      const statusText = document.getElementById('status-text');
+
+      // Disable button and show status
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      status.classList.remove('hidden');
+      statusText.textContent = `Processing ${limit} contracts...`;
+
+      try {
+        const response = await fetch(`${API_URL}/countries/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contract_limit: limit })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // Update data and re-render
+        data = result;
+        renderStats();
+        renderTable(getFilteredCountries());
+        closeDetail();
+
+        statusText.textContent = `Done! Found ${result.countries.length} countries`;
+        setTimeout(() => {
+          status.classList.add('hidden');
+        }, 3000);
+
+      } catch (err) {
+        statusText.textContent = `Error: ${err.message}`;
+        status.querySelector('svg').classList.add('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate New Mapping';
+      }
+    }
+
+    // Initialize estimate on load
+    updateEstimate();
+
+    loadData();
+  </script>
+</body>
+</html>

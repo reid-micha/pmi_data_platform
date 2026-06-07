@@ -1,0 +1,21 @@
+{
+  "name": "pmi-maga-web",
+  "private": true,
+  "description": "1:1 clone of the legacy micah-frontend maga-index Vite SPA, lifted into pmi_data_platform. Vite + Tailwind v4 + react-router-7; @micah/* shared packages travel with it. See pmi-maga-web/README.md.",
+  "workspaces": [
+    "packages/*",
+    "apps/maga-index"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w apps/maga-index",
+    "dev:local": "npm run dev -w apps/maga-index -- --mode devlocal",
+    "build": "npm run build -w apps/maga-index",
+    "preview": "npm run preview -w apps/maga-index",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm test --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

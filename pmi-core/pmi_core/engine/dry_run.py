@@ -157,10 +157,10 @@ def dry_run(
     Notes for callers:
     - All factor values come from `_stub_score`, so flipping the same factor on
       the same market across runs is reproducible.
-    - The aggregator's `formula` dispatch is whatever's wired in `aggregator.py`
-      today (`weighted_average_x_100`). YAMLs declaring `seat_projection_sum`
-      will still run, but the score is computed via the default branch — that's
-      visible in `aggregation.formula_used` vs `aggregation.formula_declared`.
+    - The aggregator dispatches on `aggregation.formula`: `seat_projection_sum`
+      → Poisson-binomial E[R seats]; anything else → 0..100 weighted average.
+      `aggregation.formula_used` reflects which branch actually ran (and will
+      equal `formula_declared` for both supported formulas).
     """
     fixture_data = json.loads(Path(fixture_path).read_text(encoding="utf-8"))
     if not isinstance(fixture_data, list):
@@ -256,6 +256,9 @@ def dry_run(
             "component_evaluation_ids_present": bool(agg.component_evaluation_ids),
             "breakdown": agg.breakdown,
             "formula_declared": ir.aggregation.formula,
-            "formula_used": "weighted_average_x_100",  # only branch implemented today
+            # The aggregator now dispatches on `formula`: `seat_projection_sum`
+            # routes to the Poisson-binomial seat path, everything else to the
+            # 0..100 weighted average. `breakdown["formula"]` records which ran.
+            "formula_used": agg.breakdown.get("formula", "weighted_average_x_100"),
         },
     )

@@ -21,6 +21,8 @@ from dataclasses import dataclass, field
 
 from pmi_core.dsl.ir import IndexDef
 from pmi_core.engine.bucket_collapser import collapse_for_scoring
+from pmi_core.engine.seat_distribution import compute_seat_distribution
+from pmi_core.engine.seat_mapping import extract_contested_seats
 from pmi_core.models import AuditEvaluation, CoreMarket
 
 
@@ -190,9 +192,92 @@ class AggregationResult:
     breakdown: dict
 
 
+def _seat_projection_aggregate(
+    rows: list[MarketEvaluations], ir: IndexDef
+) -> AggregationResult:
+    """``formula: seat_projection_sum`` — score = expected Republican seat count.
+
+    Reuses the exact path the ``/senate-board`` endpoint uses so the top-line
+    score and the board never diverge:
+
+    1. ``seat_mapping.extract_contested_seats`` collapses the component markets
+       into one ``P(R wins)`` per state — polarity handled by preferring the R
+       market's price or using ``1 - D price``. This per-state collapse *is* the
+       collapse for this formula, so the generic date-bucket collapse is skipped.
+    2. ``compute_seat_distribution`` (CORR-1.6 Poisson-binomial) folds those
+       per-race Bernoullis plus the chamber's holdover seats into ``E[R seats]``.
+
+    The ``score`` is the expected seat count (e.g. ``52.3``), NOT the 0..100
+    weighted-average index — a seat-count index returns a chamber seat count.
+
+    House district races are not yet recognised by ``parse_seat_race`` (it
+    matches per-state *Senate* races only), so a House seats index yields
+    ``score=None`` here until a House-district extractor lands.
+    """
+    triples = [
+        (r.market.id, r.market.title, r.last_price)
+        for r in rows
+        if r.last_price is not None
+    ]
+    seats = extract_contested_seats(triples)
+    if len(seats) < ir.aggregation.min_components:
+        return AggregationResult(
+            score=None,
+            component_count=len(seats),
+            component_evaluation_ids=[],
+            breakdown={
+                "formula": "seat_projection_sum",
+                "reason": "below min_components",
+                "contested_seats": len(seats),
+                "candidates": len(triples),
+            },
+        )
+
+    sp = ir.aggregation.seat_projection
+    geometry = {
+        "holdover_r": sp.holdover_r if sp else 0,
+        "holdover_d": sp.holdover_d if sp else 0,
+        "total_seats": sp.total_seats if sp else 100,
+        "majority_threshold": sp.majority_threshold if sp else 51,
+    }
+    dist = compute_seat_distribution([s.prob_r for s in seats], **geometry)
+
+    # Lineage: every evaluation behind a market that became a contested seat.
+    seat_market_ids = {s.market_id for s in seats}
+    component_ids = [
+        e.id
+        for r in rows
+        if r.market.id in seat_market_ids
+        for e in r.by_factor.values()
+        if e.id is not None
+    ]
+    return AggregationResult(
+        score=round(dist.expected_r_seats, 4),
+        component_count=len(seats),
+        component_evaluation_ids=component_ids,
+        breakdown={
+            "formula": "seat_projection_sum",
+            "expected_r_seats": round(dist.expected_r_seats, 4),
+            "stdev_r_seats": round(dist.stdev_r_seats, 4),
+            "p_r_majority": round(dist.p_r_majority, 6),
+            "p_d_majority": round(dist.p_d_majority, 6),
+            "n_contested": dist.n_contested,
+            **geometry,
+        },
+    )
+
+
 def aggregate(rows: list[MarketEvaluations], ir: IndexDef) -> AggregationResult:
-    """Return a 0..100 score + lineage IDs. ``score`` is None when no score
-    can be computed (insufficient components or zero relevancy)."""
+    """Return a score + lineage IDs. ``score`` is None when no score can be
+    computed (insufficient components or zero relevancy).
+
+    Most indexes use ``formula: weighted_average_x_100`` → a 0..100 index.
+    Seat-count indexes declare ``formula: seat_projection_sum`` → the score is
+    an expected seat count, computed via :func:`_seat_projection_aggregate`.
+    """
+    if ir.aggregation.formula == "seat_projection_sum":
+        return _seat_projection_aggregate(rows, ir)
+
     collapsed = _collapse(rows, ir)
     if len(collapsed) < ir.aggregation.min_components:
         return AggregationResult(

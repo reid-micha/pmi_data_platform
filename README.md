@@ -12,7 +12,8 @@ vision / north-star 在 [`../CLAUDE.md`](../CLAUDE.md) / [`../AGENTS.md`](../AGE
 看 [`./HOWTO-新增index.md`](./HOWTO-新增index.md)。
 
 實作現況的 data-flow 架構圖（含 ✅/🟡/❌ 狀態，對應上述兩本 TODO 的 SHIP-* / CORR-* ID）：
-[`./architecture-current.html`](./architecture-current.html)（snapshot 2026-05-29）。
+[`./docs/architecture-current.html`](./docs/architecture-current.html)（snapshot 2026-05-29）。
+所有說明文件已集中在 [`./docs/`](./docs/)，入口頁 [`./docs/index.html`](./docs/index.html)。
 
 ---
 

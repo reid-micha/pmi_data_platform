@@ -196,6 +196,74 @@ class MagaByStateEnvelope(BaseModel):
     data: MagaByStatePayload
 
 
+# --- State detail: per-chamber groups + contributing contracts ---------------
+
+
+class MagaRaceContractRow(BaseModel):
+    market_id: int
+    title: str
+    venue: str
+    yes_pct: float          # the market's own latest YES probability, 0–100
+    p_r: float              # directed P(Republican wins), 0–1
+    volume_24h: float | None
+    slug: str | None
+
+
+class MagaGroupRow(BaseModel):
+    state: str
+    state_code: str
+    office: str             # senate / governor / house
+    district: int | None = None
+    heat: float             # 0–100, 100 = deep Republican
+    n_markets: int
+    volume_24h: float
+    base_question: str
+    contracts: list[MagaRaceContractRow]
+
+
+class MagaStateDetailPayload(BaseModel):
+    state: str
+    state_code: str
+    heat: float
+    n_markets: int
+    volume_24h: float
+    offices: list[str]
+    groups: list[MagaGroupRow]
+
+
+class MagaStateDetailEnvelope(BaseModel):
+    summary: str
+    data: MagaStateDetailPayload
+
+
+class MagaGroupsPayload(BaseModel):
+    as_of: datetime
+    groups: list[MagaGroupRow]
+    n_states: int
+    n_markets: int
+
+
+class MagaGroupsEnvelope(BaseModel):
+    summary: str
+    data: MagaGroupsPayload
+
+
+class MagaTrendPoint(BaseModel):
+    date: str               # ISO date, e.g. "2026-06-07"
+    value: float            # state heat 0–100 that day
+
+
+class MagaTrendsPayload(BaseModel):
+    state_code: str
+    days: int
+    points: list[MagaTrendPoint]
+
+
+class MagaTrendsEnvelope(BaseModel):
+    summary: str
+    data: MagaTrendsPayload
+
+
 # resolve forward ref
 ScoreEnvelope.model_rebuild()
 HistoryEnvelope.model_rebuild()

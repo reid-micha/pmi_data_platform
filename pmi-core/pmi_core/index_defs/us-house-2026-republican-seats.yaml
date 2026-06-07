@@ -1,8 +1,11 @@
 # US House 2026 — projected Republican seat *count* (#).
 #
-# P0 status: parses + persists, but `formula: seat_projection_sum` is NOT YET
-# implemented in pmi_core/engine/aggregator.py. See the senate-seats variant
-# header for the full caveat; same TODO (CORR-2.x).
+# Status: `formula: seat_projection_sum` is implemented (see the senate-seats
+# variant header). NOTE: seat collapse currently recognises per-state *Senate*
+# races only (seat_mapping.parse_seat_race), so until a House-district extractor
+# lands this index returns score=None — the aggregator degrades honestly rather
+# than feeding 435 unmatched markets to the Poisson-binomial. Tracked alongside
+# CORR-1.3.
 
 id: us-house-2026-republican-seats
 version: 2  # v2 (CORR-1.2): added aggregation.seat_projection chamber geometry

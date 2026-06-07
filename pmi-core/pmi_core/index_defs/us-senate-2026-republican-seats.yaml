@@ -1,14 +1,12 @@
 # US Senate 2026 — projected Republican seat *count* (#).
 #
-# P0 status: parses + persists, but `formula: seat_projection_sum` is NOT YET
-# implemented in pmi_core/engine/aggregator.py — the aggregator falls through
-# to the default `weighted_average_x_100` branch, so today's score is the same
-# shape as the *_share variant. The semantic-correct sum-of-probabilities
-# aggregator is tracked as CORR-2.x in TODO-跑得對.md.
-#
-# Why ship the YAML before the aggregator: lets us validate selector matching,
-# factor evaluation lineage, MLflow runs, and API plumbing using the existing
-# pipeline; only the final aggregation arithmetic needs swapping later.
+# Status: `formula: seat_projection_sum` IS implemented in
+# pmi_core/engine/aggregator.py::_seat_projection_aggregate. The score is the
+# expected Republican seat count E[R seats] (NOT a 0..100 index): component
+# markets collapse to one P(R wins) per state via seat_mapping.
+# extract_contested_seats, then the CORR-1.6 Poisson-binomial distribution
+# folds in the holdover geometry below. This is the exact path the
+# /senate-board endpoint uses, so the top-line score and the board agree.
 #
 # Pair with `us-senate-2026-republican-share.yaml` for the share variant.
 

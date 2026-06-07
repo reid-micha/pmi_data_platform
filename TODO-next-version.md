@@ -4,7 +4,7 @@
 > **不負責**：把分數 ship 出來看得到、auth、observability、cloud deploy（→ [`TODO-跑出來.md`](TODO-跑出來.md)）；以及單純的 correctness bug / schema 補洞（→ [`TODO-跑得對.md`](TODO-跑得對.md)）。本檔是**架構方向**,落地時很多步會回頭吃掉 / 取代 `TODO-跑得對.md` 的 CORR-1.x。
 >
 > **整合來源**：2026-05-31 chat 對話（contract 歸類 → graph 解法 → typed multigraph → formula registry → pipeline 對比）。
-> **架構對比圖**：[`pipeline-comparison.html`](pipeline-comparison.html)（同層 folder,瀏覽器開）— 左「現況單迴圈」vs 右「新雙迴圈」,顏色標出新增/改動/不變 + 三個量的位置。
+> **架構對比圖**：[`docs/pipeline-comparison.html`](docs/pipeline-comparison.html)（瀏覽器開）— 左「現況單迴圈」vs 右「新雙迴圈」,顏色標出新增/改動/不變 + 三個量的位置。
 > **最後更新**：2026-05-31（v1,設計定稿,尚未動工）。
 
 ---

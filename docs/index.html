@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMI Platform — 文件入口 / Docs index</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#30363d; --muted:#8b949e; --fg:#c9d1d9; --dim:#484f58;
+    --blue:#58a6ff; --green:#3fb950; --purple:#a78bfa; --orange:#e3b341; --cyan:#39d2c0;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+       background:var(--bg); color:var(--fg); padding:0 0 70px; line-height:1.55}
+  header{background:linear-gradient(135deg,#11203a 0%,#161b22 60%); border-bottom:1px solid var(--border); padding:36px 0 28px}
+  .wrap{max-width:1000px; margin:0 auto; padding:0 24px}
+  header h1{font-size:26px; color:#f0f6fc; margin-bottom:6px}
+  header p{font-size:13px; color:var(--muted); max-width:760px}
+  h2{font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:var(--dim);
+     margin:34px 0 12px; font-weight:600}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  a.doc{display:block; text-decoration:none; background:var(--card); border:1px solid var(--border);
+        border-left-width:3px; border-radius:10px; padding:16px 18px; color:var(--fg); transition:.15s}
+  a.doc:hover{background:var(--card2); border-color:var(--blue); transform:translateY(-1px)}
+  a.doc h3{font-size:15px; margin-bottom:5px; display:flex; align-items:center; gap:8px}
+  a.doc .en{color:var(--muted); font-weight:400; font-size:12px}
+  a.doc p{font-size:12.5px; color:var(--muted); margin-top:4px}
+  a.doc .who{font-size:10.5px; color:var(--dim); margin-top:8px; display:block}
+  .ico{font-size:18px}
+  .b-blue{border-left-color:var(--blue)} .b-green{border-left-color:var(--green)}
+  .b-purple{border-left-color:var(--purple)} .b-orange{border-left-color:var(--orange)}
+  .b-cyan{border-left-color:var(--cyan)} .b-gray{border-left-color:var(--border)}
+  .grid.proto a.doc{background:#11161d}
+  footer{color:var(--dim); font-size:11.5px; margin-top:40px; border-top:1px solid var(--border); padding-top:16px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>PMI Platform — 文件入口</h1>
+    <p>Polymarket PMI Platform 的說明文件總覽。點任一張卡片開啟對應的 HTML。<span style="color:var(--dim)">Documentation index for the Polymarket PMI Platform — click a card to open.</span></p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <h2>核心說明文件 · Core docs</h2>
+  <div class="grid">
+    <a class="doc b-blue" href="architecture-current.html">
+      <h3><span class="ico">🏗️</span> 細節架構 <span class="en">Architecture (current)</span></h3>
+      <p>五層 data-flow（Sources → Ingest → Storage → Compute → Serving），狀態對位 SHIP-*/CORR-*，含前端取資料 + index 計算兩張資料流圖。</p>
+      <span class="who">給工程師 / 資料科學家 / 資料工程師 · snapshot 2026-05-29</span>
+    </a>
+    <a class="doc b-green" href="business-overview.html">
+      <h3><span class="ico">📈</span> 商業概覽 <span class="en">Business overview</span></h3>
+      <p>「10 分鐘建一個指數」的產品價值、PMI 迭代週期與使用情境。少術語。</p>
+      <span class="who">給一般人 / 非技術讀者</span>
+    </a>
+    <a class="doc b-purple" href="pipeline-comparison.html">
+      <h3><span class="ico">🔀</span> Pipeline 對比 <span class="en">Pipeline comparison</span></h3>
+      <p>左「現況單迴圈」vs 右「Typed Multigraph 新雙迴圈」，顏色標出新增 / 改動 / 不變。</p>
+      <span class="who">對應 TODO-next-version（架構方向）</span>
+    </a>
+    <a class="doc b-orange" href="roadmap-bilingual.html">
+      <h3><span class="ico">🗺️</span> 雙語路線圖 <span class="en">Bilingual roadmap</span></h3>
+      <p>四軌 SHIP / CORR / E2E / NEXT 的狀態與估算，含粗略 + 細節架構圖與兩張資料流圖。</p>
+      <span class="who">給所有人 · 整合四本 TODO</span>
+    </a>
+  </div>
+
+  <h2>原型 / 設計 · Prototypes &amp; design</h2>
+  <div class="grid proto">
+    <a class="doc b-cyan" href="../design/2026 Senate Index (standalone).html">
+      <h3><span class="ico">🏛️</span> 2026 Senate Index <span class="en">standalone</span></h3>
+      <p>參議院席次盤面 standalone 原型（席次預測視覺）。</p>
+      <span class="who">設計原型 · design/</span>
+    </a>
+    <a class="doc b-gray" href="../pmi-new-frontend/index.html">
+      <h3><span class="ico">🧪</span> 舊前端 prototype <span class="en">pmi-new-frontend</span></h3>
+      <p>Babel-standalone 前端原型進入點（將被 production pmi-web 取代）。</p>
+      <span class="who">prototype · pmi-new-frontend/</span>
+    </a>
+  </div>
+
+  <footer>
+    來源資料夾 pmi_data_platform/ · 另見實作 TODO：<code>TODO-跑出來.md</code> / <code>TODO-跑得對.md</code> / <code>TODO-真實e2e.md</code> / <code>TODO-next-version.md</code>，與 <code>README.md</code>。
+  </footer>
+
+</div>
+</body>
+</html>

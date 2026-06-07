@@ -1,0 +1,2498 @@
+{
+  "generated_at": "2026-01-28T17:52:25Z",
+  "total_markets": 12575,
+  "geo_filtered_contracts": 20,
+  "countries_any_count": 146,
+  "countries_direct_count": 39,
+  "countries": [
+    {
+      "name": "Russia",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Putin out as President of Russia by end of 2026?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Xi Jinping out before 2027?",
+        "Will South Korea win the 2026 FIFA World Cup?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "market_count": 20
+    },
+    {
+      "name": "China",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will South Korea win the 2026 FIFA World Cup?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Xi Jinping out before 2027?",
+        "Trump out as President before GTA VI?",
+        "Will South Korea win the 2026 FIFA World Cup?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "market_count": 18
+    },
+    {
+      "name": "Ukraine",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Xi Jinping out before 2027?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "market_count": 18
+    },
+    {
+      "name": "Iran",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Xi Jinping out before 2027?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 17
+    },
+    {
+      "name": "North Korea",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will South Korea win the 2026 FIFA World Cup?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Trump out as President before GTA VI?",
+        "Will South Korea win the 2026 FIFA World Cup?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "market_count": 17
+    },
+    {
+      "name": "Turkey",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 17
+    },
+    {
+      "name": "Afghanistan",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 16
+    },
+    {
+      "name": "Gaza",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Xi Jinping out before 2027?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 16
+    },
+    {
+      "name": "Iraq",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Iran win the 2026 FIFA World Cup?"
+      ],
+      "market_count": 16
+    },
+    {
+      "name": "Israel",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Xi Jinping out before 2027?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 16
+    },
+    {
+      "name": "South Korea",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will South Korea win the 2026 FIFA World Cup?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will South Korea win the 2026 FIFA World Cup?"
+      ],
+      "market_count": 16
+    },
+    {
+      "name": "Syria",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?"
+      ],
+      "market_count": 16
+    },
+    {
+      "name": "Taiwan",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will South Korea win the 2026 FIFA World Cup?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Xi Jinping out before 2027?",
+        "Trump out as President before GTA VI?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "market_count": 16
+    },
+    {
+      "name": "Belarus",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?"
+      ],
+      "market_count": 15
+    },
+    {
+      "name": "Lebanon",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Iran win the 2026 FIFA World Cup?"
+      ],
+      "market_count": 15
+    },
+    {
+      "name": "Pakistan",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 15
+    },
+    {
+      "name": "Qatar",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 15
+    },
+    {
+      "name": "Armenia",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 14
+    },
+    {
+      "name": "Azerbaijan",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 14
+    },
+    {
+      "name": "India",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Xi Jinping out before 2027?"
+      ],
+      "market_count": 14
+    },
+    {
+      "name": "Libya",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 14
+    },
+    {
+      "name": "Saudi Arabia",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Will Iran win the 2026 FIFA World Cup?"
+      ],
+      "market_count": 14
+    },
+    {
+      "name": "United Arab Emirates",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 14
+    },
+    {
+      "name": "United States",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will South Korea win the 2026 FIFA World Cup?",
+        "Xi Jinping out before 2027?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Xi Jinping out before 2027?",
+        "Trump out as President before GTA VI?",
+        "Will South Korea win the 2026 FIFA World Cup?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "market_count": 14
+    },
+    {
+      "name": "Yemen",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?"
+      ],
+      "market_count": 14
+    },
+    {
+      "name": "Crimea",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?"
+      ],
+      "market_count": 13
+    },
+    {
+      "name": "Mali",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 13
+    },
+    {
+      "name": "Niger",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 13
+    },
+    {
+      "name": "Nigeria",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 13
+    },
+    {
+      "name": "Poland",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Xi Jinping out before 2027?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 13
+    },
+    {
+      "name": "Somalia",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 13
+    },
+    {
+      "name": "Burkina Faso",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "Cameroon",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "Democratic Republic of the Congo",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "Ethiopia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "France",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Xi Jinping out before 2027?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "Germany",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Xi Jinping out before 2027?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "Kosovo",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "Lithuania",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Xi Jinping out before 2027?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 12
+    },
+    {
+      "name": "Moldova",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 12
+    },
+    {
+      "name": "Myanmar",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "Serbia",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "South Sudan",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "Sudan",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 12
+    },
+    {
+      "name": "United Kingdom",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Xi Jinping out before 2027?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 12
+    },
+    {
+      "name": "Bosnia and Herzegovina",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 11
+    },
+    {
+      "name": "Central African Republic",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 11
+    },
+    {
+      "name": "Eritrea",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 11
+    },
+    {
+      "name": "Estonia",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 11
+    },
+    {
+      "name": "Georgia",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Putin out as President of Russia by end of 2026?"
+      ],
+      "market_count": 11
+    },
+    {
+      "name": "Japan",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will South Korea win the 2026 FIFA World Cup?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will China invades Taiwan before GTA VI?",
+        "Xi Jinping out before 2027?"
+      ],
+      "market_count": 11
+    },
+    {
+      "name": "Latvia",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 11
+    },
+    {
+      "name": "Mozambique",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 11
+    },
+    {
+      "name": "Philippines",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Will China invades Taiwan before GTA VI?",
+        "Xi Jinping out before 2027?"
+      ],
+      "market_count": 11
+    },
+    {
+      "name": "Egypt",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 10
+    },
+    {
+      "name": "Morocco",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 10
+    },
+    {
+      "name": "Canada",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 9
+    },
+    {
+      "name": "Chad",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 9
+    },
+    {
+      "name": "Colombia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 9
+    },
+    {
+      "name": "Hungary",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 9
+    },
+    {
+      "name": "Romania",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 9
+    },
+    {
+      "name": "Vietnam",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Xi Jinping out before 2027?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Xi Jinping out before 2027?"
+      ],
+      "market_count": 9
+    },
+    {
+      "name": "Algeria",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 8
+    },
+    {
+      "name": "Denmark",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 8
+    },
+    {
+      "name": "Jordan",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 8
+    },
+    {
+      "name": "Norway",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 8
+    },
+    {
+      "name": "Sweden",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 8
+    },
+    {
+      "name": "Finland",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 7
+    },
+    {
+      "name": "Italy",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 7
+    },
+    {
+      "name": "Mexico",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 7
+    },
+    {
+      "name": "Netherlands",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 7
+    },
+    {
+      "name": "Slovakia",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 7
+    },
+    {
+      "name": "Spain",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 7
+    },
+    {
+      "name": "Venezuela",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 7
+    },
+    {
+      "name": "Bahrain",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 6
+    },
+    {
+      "name": "Belgium",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 6
+    },
+    {
+      "name": "Bulgaria",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 6
+    },
+    {
+      "name": "Czechia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 6
+    },
+    {
+      "name": "Tunisia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Dilan Ye\u015filg\u00f6z-Zegerius become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 6
+    },
+    {
+      "name": "Burundi",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 5
+    },
+    {
+      "name": "Greece",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 5
+    },
+    {
+      "name": "Haiti",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 5
+    },
+    {
+      "name": "Oman",
+      "is_direct": false,
+      "contracts_any": [
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 5
+    },
+    {
+      "name": "Palestine",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Iran win the 2026 FIFA World Cup?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?",
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 5
+    },
+    {
+      "name": "Portugal",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 5
+    },
+    {
+      "name": "Rwanda",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Trump out as President before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 5
+    },
+    {
+      "name": "Albania",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Australia",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [
+        "Will China invades Taiwan before GTA VI?"
+      ],
+      "market_count": 4
+    },
+    {
+      "name": "Bangladesh",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Cambodia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Croatia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Cyprus",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Henri Bontenbal become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Guyana",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Iceland",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Indonesia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Kuwait",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Trump out as President before GTA VI?",
+        "Will Iran win the 2026 FIFA World Cup?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Laos",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Luxembourg",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Malaysia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Montenegro",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Nepal",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "New Zealand",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "North Macedonia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Slovenia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Sri Lanka",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Switzerland",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Ukraine qualify for the 2026 FIFA World Cup?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Thailand",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will China invades Taiwan before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "West Bank",
+      "is_direct": true,
+      "contracts_any": [
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?"
+      ],
+      "market_count": 4
+    },
+    {
+      "name": "Western Sahara",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Geert Wilders become the next Prime Minister of the Netherlands?",
+        "Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlands?",
+        "Will Frans Timmermans become the next Prime Minister of the Netherlands?",
+        "Will Dick Schoof become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 4
+    },
+    {
+      "name": "Austria",
+      "is_direct": false,
+      "contracts_any": [
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 3
+    },
+    {
+      "name": "Cuba",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Gavin Newsom win the 2028 US Presidential Election?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Trump out as President before GTA VI?"
+      ],
+      "contracts_direct": [],
+      "market_count": 3
+    },
+    {
+      "name": "Ireland",
+      "is_direct": false,
+      "contracts_any": [
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 3
+    },
+    {
+      "name": "Kenya",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?",
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 3
+    },
+    {
+      "name": "Transnistria",
+      "is_direct": true,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Russia-Ukraine Ceasefire before GTA VI?",
+        "Trump out as President before GTA VI?"
+      ],
+      "contracts_direct": [
+        "Putin out as President of Russia by end of 2026?",
+        "Russia-Ukraine Ceasefire before GTA VI?"
+      ],
+      "market_count": 3
+    },
+    {
+      "name": "Angola",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Argentina",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Bhutan",
+      "is_direct": false,
+      "contracts_any": [
+        "Will China invades Taiwan before GTA VI?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Bolivia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Brazil",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Chile",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Costa Rica",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Czech Republic",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Dominican Republic",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Ecuador",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "El Salvador",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Guatemala",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Honduras",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Kashmir",
+      "is_direct": false,
+      "contracts_any": [
+        "Will Rob Jetten become the next Prime Minister of the Netherlands?",
+        "Will Caroline van der Plas become the next Prime Minister of the Netherlands?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Kazakhstan",
+      "is_direct": false,
+      "contracts_any": [
+        "Putin out as President of Russia by end of 2026?",
+        "Russia-Ukraine Ceasefire before GTA VI?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Mongolia",
+      "is_direct": false,
+      "contracts_any": [
+        "Will China invades Taiwan before GTA VI?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Nicaragua",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Panama",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Paraguay",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Peru",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Singapore",
+      "is_direct": false,
+      "contracts_any": [
+        "Will China invades Taiwan before GTA VI?",
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "South Africa",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Uganda",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Uruguay",
+      "is_direct": false,
+      "contracts_any": [
+        "Will JD Vance win the 2028 US Presidential Election?",
+        "Will Gavin Newsom win the 2028 US Presidential Election?"
+      ],
+      "contracts_direct": [],
+      "market_count": 2
+    },
+    {
+      "name": "Brunei",
+      "is_direct": false,
+      "contracts_any": [
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 1
+    },
+    {
+      "name": "Donbas",
+      "is_direct": true,
+      "contracts_any": [
+        "Russia-Ukraine Ceasefire before GTA VI?"
+      ],
+      "contracts_direct": [
+        "Russia-Ukraine Ceasefire before GTA VI?"
+      ],
+      "market_count": 1
+    },
+    {
+      "name": "Kyrgyzstan",
+      "is_direct": false,
+      "contracts_any": [
+        "Russia-Ukraine Ceasefire before GTA VI?"
+      ],
+      "contracts_direct": [],
+      "market_count": 1
+    },
+    {
+      "name": "Papua New Guinea",
+      "is_direct": false,
+      "contracts_any": [
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 1
+    },
+    {
+      "name": "Solomon Islands",
+      "is_direct": false,
+      "contracts_any": [
+        "Xi Jinping out before 2027?"
+      ],
+      "contracts_direct": [],
+      "market_count": 1
+    },
+    {
+      "name": "Tajikistan",
+      "is_direct": false,
+      "contracts_any": [
+        "Russia-Ukraine Ceasefire before GTA VI?"
+      ],
+      "contracts_direct": [],
+      "market_count": 1
+    },
+    {
+      "name": "Turkmenistan",
+      "is_direct": false,
+      "contracts_any": [
+        "Russia-Ukraine Ceasefire before GTA VI?"
+      ],
+      "contracts_direct": [],
+      "market_count": 1
+    },
+    {
+      "name": "Uzbekistan",
+      "is_direct": false,
+      "contracts_any": [
+        "Russia-Ukraine Ceasefire before GTA VI?"
+      ],
+      "contracts_direct": [],
+      "market_count": 1
+    }
+  ]
+}

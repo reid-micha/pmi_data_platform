@@ -1,0 +1,274 @@
+{
+  "generated_at": "2026-01-19T18:00:00Z",
+  "summary": {
+    "war_index": 42,
+    "peace_index": 58,
+    "total_markets": 47
+  },
+  "components": {
+    "escalation": {
+      "name": "Escalation",
+      "description": "Markets tracking conflict escalation risks",
+      "score": 38,
+      "market_count": 12
+    },
+    "military": {
+      "name": "Military Action",
+      "description": "Markets related to military operations",
+      "score": 45,
+      "market_count": 8
+    },
+    "diplomacy": {
+      "name": "Diplomacy",
+      "description": "Markets tracking diplomatic efforts",
+      "score": 52,
+      "market_count": 9
+    },
+    "territory": {
+      "name": "Territory",
+      "description": "Markets related to territorial control",
+      "score": 35,
+      "market_count": 6
+    },
+    "nuclear": {
+      "name": "Nuclear Risk",
+      "description": "Markets tracking nuclear escalation",
+      "score": 12,
+      "market_count": 4
+    },
+    "ceasefire": {
+      "name": "Ceasefire",
+      "description": "Markets tracking ceasefire probability",
+      "score": 41,
+      "market_count": 8
+    }
+  },
+  "all_markets": [
+    {
+      "external_id": "polymarket:ukraine-ceasefire-2025",
+      "title": "Will there be a Ukraine-Russia ceasefire by July 2025?",
+      "source": "polymarket",
+      "probability": 0.38,
+      "category": "ceasefire",
+      "direction": -1,
+      "relevancy": {
+        "directLink": 1,
+        "causation": 1,
+        "leadingIndicator": 1,
+        "laggingIndicator": 0,
+        "soonImmediate": 1,
+        "changeIntent": 1,
+        "changeCapability": 0
+      },
+      "reasoning": "Direct measure of peace outcome"
+    },
+    {
+      "external_id": "kalshi:russia-nato-conflict",
+      "title": "Will Russia engage in direct military conflict with a NATO country in 2025?",
+      "source": "kalshi",
+      "probability": 0.08,
+      "category": "escalation",
+      "direction": 1,
+      "relevancy": {
+        "directLink": 1,
+        "causation": 1,
+        "leadingIndicator": 0,
+        "laggingIndicator": 0,
+        "soonImmediate": 1,
+        "changeIntent": 0,
+        "changeCapability": 1
+      },
+      "reasoning": "Major escalation indicator"
+    },
+    {
+      "external_id": "metaculus:ukraine-territory-control",
+      "title": "What percentage of pre-2014 Ukrainian territory will Ukraine control by end of 2025?",
+      "source": "metaculus",
+      "probability": 0.72,
+      "category": "territory",
+      "direction": -1,
+      "relevancy": {
+        "directLink": 1,
+        "causation": 0,
+        "leadingIndicator": 0,
+        "laggingIndicator": 1,
+        "soonImmediate": 0,
+        "changeIntent": 0,
+        "changeCapability": 0
+      },
+      "reasoning": "Territorial outcome measure"
+    },
+    {
+      "external_id": "polymarket:putin-power-2025",
+      "title": "Will Putin remain in power through 2025?",
+      "source": "polymarket",
+      "probability": 0.94,
+      "category": "leadership",
+      "direction": 1,
+      "relevancy": {
+        "directLink": 0,
+        "causation": 1,
+        "leadingIndicator": 1,
+        "laggingIndicator": 0,
+        "soonImmediate": 0,
+        "changeIntent": 0,
+        "changeCapability": 1
+      },
+      "reasoning": "Leadership stability affects conflict continuation"
+    },
+    {
+      "external_id": "kalshi:nuclear-weapon-use",
+      "title": "Will a nuclear weapon be detonated in conflict by end of 2025?",
+      "source": "kalshi",
+      "probability": 0.03,
+      "category": "nuclear",
+      "direction": 1,
+      "relevancy": {
+        "directLink": 1,
+        "causation": 1,
+        "leadingIndicator": 0,
+        "laggingIndicator": 0,
+        "soonImmediate": 1,
+        "changeIntent": 0,
+        "changeCapability": 1
+      },
+      "reasoning": "Extreme escalation measure"
+    },
+    {
+      "external_id": "polymarket:taiwan-china-conflict",
+      "title": "Will China initiate military action against Taiwan in 2025?",
+      "source": "polymarket",
+      "probability": 0.05,
+      "category": "escalation",
+      "direction": 1,
+      "relevancy": {
+        "directLink": 1,
+        "causation": 1,
+        "leadingIndicator": 1,
+        "laggingIndicator": 0,
+        "soonImmediate": 1,
+        "changeIntent": 1,
+        "changeCapability": 1
+      },
+      "reasoning": "Major new conflict indicator"
+    },
+    {
+      "external_id": "manifold:israel-hamas-ceasefire",
+      "title": "Will Israel and Hamas reach a lasting ceasefire by March 2025?",
+      "source": "manifold",
+      "probability": 0.32,
+      "category": "ceasefire",
+      "direction": -1,
+      "relevancy": {
+        "directLink": 1,
+        "causation": 1,
+        "leadingIndicator": 1,
+        "laggingIndicator": 0,
+        "soonImmediate": 1,
+        "changeIntent": 1,
+        "changeCapability": 0
+      },
+      "reasoning": "Middle East peace indicator"
+    },
+    {
+      "external_id": "kalshi:us-troops-ukraine",
+      "title": "Will US deploy combat troops to Ukraine in 2025?",
+      "source": "kalshi",
+      "probability": 0.04,
+      "category": "escalation",
+      "direction": 1,
+      "relevancy": {
+        "directLink": 1,
+        "causation": 1,
+        "leadingIndicator": 0,
+        "laggingIndicator": 0,
+        "soonImmediate": 1,
+        "changeIntent": 1,
+        "changeCapability": 1
+      },
+      "reasoning": "Direct US involvement escalation"
+    },
+    {
+      "external_id": "polymarket:ukraine-eu-membership",
+      "title": "Will Ukraine begin EU accession negotiations in 2025?",
+      "source": "polymarket",
+      "probability": 0.61,
+      "category": "diplomacy",
+      "direction": -1,
+      "relevancy": {
+        "directLink": 0,
+        "causation": 1,
+        "leadingIndicator": 1,
+        "laggingIndicator": 0,
+        "soonImmediate": 0,
+        "changeIntent": 1,
+        "changeCapability": 0
+      },
+      "reasoning": "Diplomatic integration signal"
+    },
+    {
+      "external_id": "metaculus:russia-sanctions",
+      "title": "Will major new sanctions be imposed on Russia in 2025?",
+      "source": "metaculus",
+      "probability": 0.68,
+      "category": "sanctions",
+      "direction": 1,
+      "relevancy": {
+        "directLink": 0,
+        "causation": 1,
+        "leadingIndicator": 0,
+        "laggingIndicator": 1,
+        "soonImmediate": 0,
+        "changeIntent": 1,
+        "changeCapability": 0
+      },
+      "reasoning": "Economic pressure indicator"
+    },
+    {
+      "external_id": "kalshi:ukraine-offensive-success",
+      "title": "Will Ukraine recapture significant territory in 2025?",
+      "source": "kalshi",
+      "probability": 0.28,
+      "category": "military",
+      "direction": -1,
+      "relevancy": {
+        "directLink": 1,
+        "causation": 1,
+        "leadingIndicator": 0,
+        "laggingIndicator": 0,
+        "soonImmediate": 0,
+        "changeIntent": 0,
+        "changeCapability": 1
+      },
+      "reasoning": "Military outcome affecting conflict trajectory"
+    },
+    {
+      "external_id": "polymarket:trump-ukraine-deal",
+      "title": "Will Trump administration broker Ukraine peace deal in first 100 days?",
+      "source": "polymarket",
+      "probability": 0.15,
+      "category": "diplomacy",
+      "direction": -1,
+      "relevancy": {
+        "directLink": 1,
+        "causation": 1,
+        "leadingIndicator": 1,
+        "laggingIndicator": 0,
+        "soonImmediate": 1,
+        "changeIntent": 1,
+        "changeCapability": 1
+      },
+      "reasoning": "Direct peace negotiation measure"
+    }
+  ],
+  "history": [
+    { "date": "2026-01-12", "war_index": 44, "peace_index": 56 },
+    { "date": "2026-01-13", "war_index": 43, "peace_index": 57 },
+    { "date": "2026-01-14", "war_index": 45, "peace_index": 55 },
+    { "date": "2026-01-15", "war_index": 44, "peace_index": 56 },
+    { "date": "2026-01-16", "war_index": 43, "peace_index": 57 },
+    { "date": "2026-01-17", "war_index": 41, "peace_index": 59 },
+    { "date": "2026-01-18", "war_index": 42, "peace_index": 58 },
+    { "date": "2026-01-19", "war_index": 42, "peace_index": 58 }
+  ]
+}

@@ -1,0 +1,26 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+node_modules/
+**/node_modules/
+**/dist/
+**/build/
+.vite/
+.turbo/
+
+# Tests / lint caches
+**/__tests__/
+**/*.test.*
+**/*.spec.*
+**/coverage/
+.eslintcache
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+README.md
