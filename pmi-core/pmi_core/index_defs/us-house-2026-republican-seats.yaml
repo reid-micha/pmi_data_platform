@@ -8,7 +8,7 @@
 # CORR-1.3.
 
 id: us-house-2026-republican-seats
-version: 2  # v2 (CORR-1.2): added aggregation.seat_projection chamber geometry
+version: 3  # v3 (ab03bd3): status header rewritten when seat_projection_sum landed — content changed, so SCD2 requires a new version (yaml_sha256 is over the whole file, comments included). v2 (CORR-1.2): added aggregation.seat_projection chamber geometry
 title: "US House 2026 — Projected Republican Seats (#)"
 owner: reid
 
