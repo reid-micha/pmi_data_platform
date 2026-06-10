@@ -30,6 +30,7 @@
 #   OLLAMA_MODEL        default model tag           (default: llama3.1)
 #   INDEX_ID            index to score              (default: polymarket-war-index)
 #   OLLAMA_TEMPERATURE  factor-model temperature    (default: 0.1)
+#   OLLAMA_GPU          auto | 1 | 0 — use host GPU  (default: auto-detect)
 #   API_CHECK=1         also bring pmi-api up + curl the score (default: off)
 # ============================================================================
 set -euo pipefail
@@ -56,6 +57,22 @@ fi
 
 DC="docker compose --profile pmi"
 CORE="$DC run --rm -T pmi-core"
+
+# GPU for ollama: auto-detect host NVIDIA GPU + Container Toolkit and layer the
+# docker-compose.gpu.yml override onto the ollama bring-up so it runs on the GPU
+# (ollama auto-switches its library to cuda). Override the auto-detection with
+# OLLAMA_GPU=1 (force GPU) or OLLAMA_GPU=0 (force CPU).
+OLLAMA_GPU="${OLLAMA_GPU:-auto}"
+_have_gpu() {
+  command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1 \
+    && docker info 2>/dev/null | grep -qiE 'Runtimes:.*nvidia'
+}
+OLLAMA_DC=(docker compose --profile ollama)
+OLLAMA_MODE="CPU"
+if [ "$OLLAMA_GPU" = 1 ] || { [ "$OLLAMA_GPU" = auto ] && _have_gpu; }; then
+  OLLAMA_DC=(docker compose -f docker-compose.yml -f docker-compose.gpu.yml --profile ollama)
+  OLLAMA_MODE="GPU (nvidia)"
+fi
 
 # factor_id : core_prompts.name : version   (must match the index_def YAML).
 # For polymarket-war-index, prompt_ref `prompts/factors/<x>-vN` maps to
@@ -90,8 +107,8 @@ echo "════════════════════════�
 echo " e2e-ollama │ model=ollama/$MODEL │ index=$INDEX_ID │ temp=$TEMP"
 echo "════════════════════════════════════════════════════════════════════"
 
-echo "▶ 1/7  Ollama up + pull $MODEL  (image + weights are heavy — first run is slow)"
-docker compose --profile ollama up -d ollama
+echo "▶ 1/7  Ollama up [$OLLAMA_MODE] + pull $MODEL  (image + weights are heavy — first run is slow)"
+"${OLLAMA_DC[@]}" up -d ollama
 echo "       waiting for ollama to answer…"
 docker compose exec -T ollama sh -c 'until ollama list >/dev/null 2>&1; do sleep 1; done'
 docker compose exec -T ollama ollama pull "$MODEL"

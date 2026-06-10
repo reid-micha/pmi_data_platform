@@ -476,11 +476,24 @@ e2e-ollama MODEL='llama3.1':
 # Ollama (optional local LLM provider)
 # ============================================================================
 
-# Start the Ollama server in background.
+# Start the Ollama server in background. Auto-uses the host GPU when present
+# (NVIDIA driver + Container Toolkit); else CPU. Force with OLLAMA_GPU=1, skip
+# with OLLAMA_GPU=0.
 [group('ollama')]
 ollama-up:
-    docker compose --profile ollama up -d ollama
-    @echo "✓ Ollama on http://localhost:${OLLAMA_PORT:-11434}. Pull a model: just ollama-pull llama3.1"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    files=(-f docker-compose.yml)
+    want="${OLLAMA_GPU:-auto}"
+    have_gpu() { command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1 \
+                   && docker info 2>/dev/null | grep -qiE 'Runtimes:.*nvidia'; }
+    if [ "$want" = 1 ] || { [ "$want" = auto ] && have_gpu; }; then
+      files+=(-f docker-compose.gpu.yml); mode="GPU (nvidia)"
+    else
+      mode="CPU"
+    fi
+    docker compose "${files[@]}" --profile ollama up -d ollama
+    echo "✓ Ollama [$mode] on http://localhost:${OLLAMA_PORT:-11434}. Pull a model: just ollama-pull llama3.1"
 
 # Pull a model into the running Ollama server.
 [group('ollama')]

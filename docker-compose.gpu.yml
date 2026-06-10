@@ -1,0 +1,29 @@
+# ============================================================================
+# GPU override for the `ollama` service — layer ON TOP of docker-compose.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml \
+#       --profile ollama up -d ollama
+#
+# Gives the ollama container the host's NVIDIA GPU(s). Ollama auto-detects the
+# device at startup and switches its inference library from `cpu` to `cuda`
+# (check `docker compose logs ollama` for `library=cuda`).
+#
+# Requirements on the host:
+#   • an NVIDIA GPU + driver (`nvidia-smi -L` lists it)
+#   • the NVIDIA Container Toolkit (`nvidia-ctk --version`) with docker's
+#     `nvidia` runtime registered (`docker info | grep Runtimes`)
+#
+# Kept as a SEPARATE file (not uncommented inline) so the base compose stays
+# CPU-portable: `just ollama-up` / `scripts/e2e-ollama.sh` auto-detect the GPU
+# and add this `-f` only when the host can satisfy it. Force with OLLAMA_GPU=1,
+# disable with OLLAMA_GPU=0.
+# ============================================================================
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
