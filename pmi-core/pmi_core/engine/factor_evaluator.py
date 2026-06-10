@@ -95,13 +95,19 @@ async def _run_real_llm(
     factor: FactorSpec,
     resolved: ResolvedFactorModel,
 ) -> LLMResponse:
-    """Render the prompt and dispatch to the provider matching `model_id`."""
+    """Render the prompt and dispatch to the provider matching `model_id`.
+
+    `market` + `resolved.tools_config` are forwarded for Tier 2 (agentic)
+    providers — single-shot providers accept and ignore them.
+    """
     provider = get_provider(resolved.llm_model_id)
     rendered = render_prompt(resolved.prompt.template, market)
     return await provider.evaluate(
         rendered_prompt=rendered,
         factor=factor,
         temperature=resolved.temperature,
+        market=market,
+        tools_config=resolved.tools_config,
     )
 
 
@@ -165,6 +171,12 @@ async def evaluate_factor(
                 # search/index queries can still hit the summary fields fast.
                 "raw_response": llm_response.raw_response,
             }
+            # Tier 2 (agentic) providers populate `extras` with the reasoning /
+            # tool-call trace + tier marker. Persisting it here is the §9
+            # "every score is traceable" guarantee; single-shot providers leave
+            # extras empty so this is a no-op for Tier 1.
+            if llm_response.extras:
+                model_response_payload["extras"] = llm_response.extras
         except Exception as exc:
             fallback_reason = f"{type(exc).__name__}: {exc}"
             log.warning(

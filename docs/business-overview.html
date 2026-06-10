@@ -1,558 +1,397 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<title>PMI Platform — Overview</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMI Platform — 商業概覽 / Business overview</title>
 <style>
-  :root {
-    --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #64748b; --dim: #94a3b8;
-    --navy: #1e3a8a; --navy-light: #3b82f6; --navy-bg: #eff6ff;
-    --gold: #f59e0b; --gold-light: #fbbf24; --gold-bg: #fffbeb;
-    --green: #059669; --green-bg: #ecfdf5;
-    --red: #dc2626; --red-bg: #fef2f2;
-    --purple: #7c3aed; --purple-bg: #f5f3ff;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif;
-    background: var(--bg); color: var(--text); line-height: 1.6; padding: 0; }
-
-  .container { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
-
-  /* ========== HERO ========== */
-  .hero {
-    background: linear-gradient(135deg, var(--navy) 0%, #312e81 100%);
-    color: #fff; padding: 80px 0 60px; text-align: center;
-  }
-  .hero .eyebrow { font-size: 13px; letter-spacing: 3px; color: var(--gold-light); font-weight: 600; margin-bottom: 16px; }
-  .hero h1 { font-size: 42px; font-weight: 700; line-height: 1.2; margin-bottom: 16px; letter-spacing: -1px; }
-  .hero .sub { font-size: 18px; color: #c7d2fe; max-width: 720px; margin: 0 auto 36px; }
-  .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 800px; margin: 0 auto; }
-  .hero-stat { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 12px; padding: 20px; }
-  .hero-stat .num { font-size: 28px; font-weight: 700; color: var(--gold-light); }
-  .hero-stat .label { font-size: 12px; color: #c7d2fe; margin-top: 4px; }
-
-  /* ========== SECTIONS ========== */
-  .section { padding: 64px 0; }
-  .section.alt { background: #fff; }
-  .section-eyebrow { font-size: 12px; letter-spacing: 3px; color: var(--navy-light); font-weight: 700; text-align: center; margin-bottom: 8px; }
-  .section h2 { font-size: 32px; font-weight: 700; text-align: center; margin-bottom: 12px; color: var(--text); letter-spacing: -0.5px; }
-  .section .lead { font-size: 16px; color: var(--muted); text-align: center; max-width: 700px; margin: 0 auto 48px; }
-
-  /* ========== PROBLEM/SOLUTION ========== */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .pain-card {
-    background: var(--red-bg); border: 1px solid #fecaca; border-radius: 12px; padding: 28px;
-  }
-  .pain-card h3 { font-size: 16px; color: var(--red); font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  .pain-card .icon { width: 28px; height: 28px; background: var(--red); color: #fff; border-radius: 6px;
-    display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
-  .pain-card ul { list-style: none; }
-  .pain-card li { font-size: 14px; color: #7f1d1d; padding: 8px 0; padding-left: 20px; position: relative; }
-  .pain-card li::before { content: '✗'; position: absolute; left: 0; color: var(--red); font-weight: 700; }
-
-  .gain-card {
-    background: var(--green-bg); border: 1px solid #bbf7d0; border-radius: 12px; padding: 28px;
-  }
-  .gain-card h3 { font-size: 16px; color: var(--green); font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  .gain-card .icon { width: 28px; height: 28px; background: var(--green); color: #fff; border-radius: 6px;
-    display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
-  .gain-card ul { list-style: none; }
-  .gain-card li { font-size: 14px; color: #14532d; padding: 8px 0; padding-left: 20px; position: relative; }
-  .gain-card li::before { content: '✓'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
-
-  /* ========== ITERATION COMPARISON ========== */
-  .iter-grid { display: grid; grid-template-columns: 1fr 60px 1fr; gap: 0; align-items: center; margin-top: 32px; }
-  .iter-panel { background: #fff; border-radius: 16px; padding: 32px; border: 2px solid; }
-  .iter-panel.before { border-color: #fecaca; }
-  .iter-panel.after { border-color: #bbf7d0; box-shadow: 0 10px 40px rgba(5, 150, 105, 0.1); }
-  .iter-panel h3 { font-size: 14px; letter-spacing: 2px; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; }
-  .iter-panel.before h3 { color: var(--red); }
-  .iter-panel.after h3 { color: var(--green); }
-  .iter-panel .who { font-size: 11px; color: var(--muted); margin-bottom: 24px; }
-
-  .iter-steps { list-style: none; }
-  .iter-step { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
-  .iter-step:last-child { border-bottom: none; }
-  .iter-step .num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: #f1f5f9; color: var(--muted);
-    font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 2px; }
-  .iter-panel.after .iter-step .num { background: var(--green); color: #fff; }
-  .iter-step .body { flex: 1; }
-  .iter-step .what { font-size: 14px; font-weight: 600; color: var(--text); }
-  .iter-step .when { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-  .iter-total { margin-top: 16px; padding-top: 16px; border-top: 2px solid #f1f5f9; text-align: center; }
-  .iter-total .time { font-size: 24px; font-weight: 700; }
-  .iter-panel.before .iter-total .time { color: var(--red); }
-  .iter-panel.after .iter-total .time { color: var(--green); }
-  .iter-total .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-
-  .iter-arrow { text-align: center; font-size: 32px; color: var(--gold); }
-  .iter-arrow .label { font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-top: 4px; }
-
-  .iter-impact { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; }
-  .iter-impact-card { background: #fff; border-radius: 12px; padding: 24px; border: 1px solid var(--border); text-align: center; }
-  .iter-impact-card .big { font-size: 36px; font-weight: 700; color: var(--gold); line-height: 1; }
-  .iter-impact-card .small { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
-  .iter-impact-card .desc { font-size: 13px; color: var(--text); margin-top: 12px; }
-
-  /* ========== PMI LIFECYCLE ========== */
-  .lifecycle { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 24px; position: relative; }
-  .lifecycle-step { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center;
-    position: relative; }
-  .lifecycle-step::after {
-    content: '→'; position: absolute; right: -16px; top: 50%; transform: translateY(-50%);
-    font-size: 24px; color: var(--gold); z-index: 1;
-  }
-  .lifecycle-step:last-child::after { content: ''; }
-  .lifecycle-step .step-num { display: inline-block; width: 32px; height: 32px; border-radius: 50%;
-    background: var(--navy-bg); color: var(--navy); font-weight: 700; line-height: 32px; font-size: 14px; margin-bottom: 8px; }
-  .lifecycle-step .step-name { font-size: 13px; font-weight: 700; color: var(--text); }
-  .lifecycle-step .step-time { font-size: 11px; color: var(--gold); font-weight: 600; margin-top: 4px; }
-  .lifecycle-step .step-detail { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
-
-  /* ========== USE CASES ========== */
-  .usecase-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-  .usecase-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 28px;
-    border-top: 4px solid; transition: transform 0.2s; }
-  .usecase-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
-  .usecase-card.c1 { border-top-color: var(--navy-light); }
-  .usecase-card.c2 { border-top-color: var(--gold); }
-  .usecase-card.c3 { border-top-color: var(--purple); }
-  .usecase-card .persona { font-size: 11px; letter-spacing: 2px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
-  .usecase-card h3 { font-size: 18px; font-weight: 700; margin-top: 6px; margin-bottom: 12px; }
-  .usecase-card .scenario { font-size: 13px; color: var(--text); margin-bottom: 16px; line-height: 1.7; }
-  .usecase-card .ability { background: #f8fafc; border-left: 3px solid var(--navy-light); padding: 12px 14px; font-size: 12px;
-    color: var(--text); border-radius: 0 6px 6px 0; }
-  .usecase-card .ability b { color: var(--navy); }
-
-  /* ========== AI / TIMELINE ========== */
-  .ai-flow { background: linear-gradient(135deg, var(--navy-bg) 0%, var(--purple-bg) 100%);
-    border-radius: 16px; padding: 32px; }
-  .ai-tier-row { display: grid; grid-template-columns: 130px 1fr 140px; gap: 16px; padding: 16px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.06); align-items: center; }
-  .ai-tier-row.header { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; padding-top: 0; }
-  .ai-tier-row:last-child { border-bottom: none; }
-  .ai-tier-name { font-weight: 700; color: var(--navy); font-size: 14px; }
-  .ai-tier-what { font-size: 13px; color: var(--text); }
-  .ai-tier-when { font-size: 12px; color: var(--muted); text-align: right; }
-
-  .timeline { position: relative; padding-left: 40px; }
-  .timeline::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: var(--border); }
-  .timeline-item { position: relative; padding-bottom: 28px; }
-  .timeline-item::before { content: ''; position: absolute; left: -36px; top: 4px; width: 16px; height: 16px;
-    border-radius: 50%; background: #fff; border: 3px solid var(--border); }
-  .timeline-item.done::before { background: var(--green); border-color: var(--green); }
-  .timeline-item.now::before { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.2); }
-  .timeline-item .when { font-size: 11px; letter-spacing: 1.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
-  .timeline-item .what { font-size: 16px; font-weight: 700; margin: 2px 0 4px; color: var(--text); }
-  .timeline-item .detail { font-size: 13px; color: var(--muted); }
-  .timeline-item.now .what { color: var(--gold); }
-
-  /* ========== TECH STACK BADGES ========== */
-  .stack-section { background: #fff; }
-  .stack-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 32px; }
-  .stack-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .stack-card .role { font-size: 11px; letter-spacing: 1.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
-  .stack-card .name { font-size: 15px; font-weight: 700; margin-top: 4px; color: var(--text); }
-  .stack-card .why { font-size: 12px; color: var(--muted); margin-top: 8px; }
-
-  /* ========== FOOTER ========== */
-  .footer { background: var(--text); color: #cbd5e1; padding: 32px 0; text-align: center; font-size: 12px; }
-  .footer .tag { color: var(--gold-light); font-weight: 600; }
-  .footer .links { margin-top: 8px; color: var(--dim); font-size: 11px; }
-  .footer .links code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; margin: 0 4px; }
-
-  /* ========== DISCLAIMER BANNER ========== */
-  .disclaimer { background: var(--gold-bg); border-bottom: 1px solid #fde68a; padding: 10px 0; text-align: center;
-    font-size: 12px; color: #92400e; }
-  .disclaimer b { color: var(--gold); }
+:root{
+  --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#2d333b; --muted:#8b949e; --fg:#e6edf3; --dim:#6e7681; --accent:#58a6ff;
+  --green-bg:#12351f; --green-border:#2ea043; --green-fg:#56d364;
+  --blue-bg:#0d2c4d; --blue-border:#1f6feb; --blue-fg:#79c0ff;
+  --cyan-bg:#0c2f33; --cyan-border:#1f9aa8; --cyan-fg:#56d4dd;
+  --orange-bg:#3a2a10; --orange-border:#bb8009; --orange-fg:#e3b341;
+  --purple-bg:#2a2151; --purple-border:#8957e5; --purple-fg:#bc8cff;
+  --red-bg:#3a1418; --red-border:#da3633; --red-fg:#ff7b72;
+  --gray-bg:#21262d; --gray-border:#444c56; --gray-fg:#8b949e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6;padding:0 0 80px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+header.page{background:linear-gradient(135deg,#11203a 0%,#161b22 60%);border-bottom:1px solid var(--border);padding:34px 0 26px}
+header.page h1{font-size:25px;color:#f0f6fc;margin-bottom:8px}
+header.page .sub{font-size:13.5px;color:var(--muted);max-width:820px}
+header.page .en{color:var(--dim)}
+.meta{font-size:12px;color:var(--dim);margin-top:12px}
+.nav-back{display:inline-block;font-size:12px;color:var(--accent);text-decoration:none;margin:18px 0 0}
+.nav-back:hover{text-decoration:underline}
+h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:38px 0 14px;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:6px}
+h2 .en{text-transform:none;letter-spacing:0;color:var(--dim)}
+h3{font-size:16px;color:#f0f6fc;margin:22px 0 8px}
+h3 .en{font-size:12.5px;color:var(--muted);font-weight:400}
+p{margin:8px 0;font-size:14px;color:var(--fg)}
+.en,.en-block{color:var(--muted)}
+.en-block{font-size:12.5px;display:block;margin-top:2px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin:12px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid,.grid3{grid-template-columns:1fr}}
+.badge{display:inline-block;font-size:11px;padding:1px 8px;border-radius:20px;border:1px solid;vertical-align:middle}
+.b-green{background:var(--green-bg);border-color:var(--green-border);color:var(--green-fg)}
+.b-orange{background:var(--orange-bg);border-color:var(--orange-border);color:var(--orange-fg)}
+.b-blue{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue-fg)}
+.b-gray{background:var(--gray-bg);border-color:var(--gray-border);color:var(--gray-fg)}
+.b-purple{background:var(--purple-bg);border-color:var(--purple-border);color:var(--purple-fg)}
+.b-cyan{background:var(--cyan-bg);border-color:var(--cyan-border);color:var(--cyan-fg)}
+.b-red{background:var(--red-bg);border-color:var(--red-border);color:var(--red-fg)}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+th{color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+code{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px;background:#0b0f14;border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--cyan-fg)}
+ul{margin:8px 0 8px 20px}
+li{font-size:13.5px;margin:4px 0}
+.stat{background:#0b0f14;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.stat .v{font-size:26px;font-weight:700;color:#f0f6fc}
+.stat .k{font-size:12px;color:var(--muted);margin-top:4px}
+.banner{background:var(--orange-bg);border:1px solid var(--orange-border);border-radius:10px;padding:12px 16px;margin:16px 0;font-size:12.5px;color:var(--orange-fg)}
+.step{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center;font-size:12.5px}
+.step .n{font-size:11px;color:var(--accent);font-weight:600}
+.step .t{color:#f0f6fc;margin:4px 0;font-size:13.5px}
+.step .d{color:var(--muted);font-size:11.5px}
+.flowrow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:14px 0}
+.flowrow .arrow{display:flex;align-items:center;color:var(--dim);font-size:18px}
+footer{color:var(--dim);font-size:11.5px;margin-top:48px;border-top:1px solid var(--border);padding-top:16px}
+footer a{color:var(--accent);text-decoration:none}
+.vs-center{display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--dim);padding:8px}
 </style>
 </head>
 <body>
 
-<div class="disclaimer">
-  <b>本文件焦點：</b>技術開發 + 指標開發週期。&nbsp;定價、獲客模式、商業組合<b>尚未決定</b>，不在此版本範圍內。
+<header class="page">
+  <div class="wrap">
+    <h1>PMI Platform — 商業概覽 <span style="font-size:16px;font-weight:400;color:var(--muted)">/ Business Overview</span></h1>
+    <div class="sub">
+      把預測市場資料變成可宣告、可迭代、可追溯的「指數產品」。少術語版。<br>
+      <span class="en">Turning prediction-market data into declarative, iterable, auditable index products. Jargon-light.</span>
+    </div>
+    <div class="meta">Snapshot 2026-06-07</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <a class="nav-back" href="index.html">← 回文件入口 / Back to index</a>
+
+  <div class="banner">
+    <strong>設計探索聲明：</strong>本文是 2026-05 期間的設計探索；定價、訂閱層級、獲客策略 <em>尚未決定</em>。技術側只承諾三個 invariant：multi-tenant 欄位預留、API key + rate-limit 機制、cost tracking。<br>
+    <span style="color:var(--dim);font-size:11.5px;">Exploratory note: pricing, tiers, and go-to-market strategy are not yet decided. The engineering side commits only to three invariants: multi-tenant columns, API key + rate-limit hooks, and cost tracking.</span>
+  </div>
+
+  <!-- 1. 核心主張 -->
+  <h2>核心主張 <span class="en">/ The Pitch</span></h2>
+  <p>
+    Polymarket 給的是單一合約的即時價格——「川普當選的機率是 62%」。但沒有人把相關合約聚合成「Fed 升息不確定性指數」或「地緣衝突風險指數」這種主題化、可比較的數字。
+    <span class="en-block">Polymarket gives you per-contract prices. Nobody aggregates related contracts into a themed, comparable index — a "Fed hawkishness index" or "geopolitical risk index".</span>
+  </p>
+  <p>
+    傳統上自己做一個這樣的指數，需要 2–4 週的工程 + 量化 + 部署工作。這個平台讓你用一段 YAML 宣告指數，約 10 分鐘建好，全程可追溯、可一鍵回測。
+    <span class="en-block">Building one traditionally takes 2–4 weeks of engineering, quant work, and deployment. This platform lets you declare an index in YAML and have it running in ~10 minutes, fully auditable and one-click backtestable.</span>
+  </p>
+
+  <div class="grid3" style="margin-top:18px">
+    <div class="stat">
+      <div class="v">~10 分鐘</div>
+      <div class="k">建一個新指數<br><span class="en">to build a new index</span></div>
+    </div>
+    <div class="stat">
+      <div class="v">100%</div>
+      <div class="k">可追溯（版本·prompt·model·來源合約）<br><span class="en">auditable — version · prompt · model · contracts</span></div>
+    </div>
+    <div class="stat">
+      <div class="v">真 LLM</div>
+      <div class="k">已上線 gpt-4o-mini 評估<br><span class="en">live gpt-4o-mini factor scoring</span></div>
+    </div>
+  </div>
+
+  <!-- 2. 問題與機會 -->
+  <h2>問題與機會 <span class="en">/ Problem &amp; Opportunity</span></h2>
+  <div class="grid">
+    <div class="card">
+      <h3><span class="badge b-red">痛點</span> 現狀 <span class="en" style="font-size:12px">Status quo</span></h3>
+      <ul>
+        <li>只有單一合約價格，無主題聚合</li>
+        <li>客製指數需要 2–4 週工程</li>
+        <li>無版本控制：改一次 weight 就失去歷史可比性</li>
+        <li>無 backtest：改完才知道對不對</li>
+        <li>無 prompt / model lineage：LLM 評估不可重現</li>
+      </ul>
+      <p style="margin-top:10px;font-size:12px;color:var(--muted)">Single-contract prices only. Custom indexes take weeks. No versioning, no backtest, no LLM audit trail.</p>
+    </div>
+    <div class="card">
+      <h3><span class="badge b-green">平台</span> 本平台提供 <span class="en" style="font-size:12px">This platform</span></h3>
+      <ul>
+        <li>主題聚合：YAML 宣告哪些合約、用哪些 factor</li>
+        <li>~10 分鐘建好可運行的指數</li>
+        <li>SCD2 版本控制：每次改動保留歷史</li>
+        <li>一鍵 90 天 backtest（規劃中）</li>
+        <li>prompt sha256 + model_id 全程 lineage</li>
+      </ul>
+      <p style="margin-top:10px;font-size:12px;color:var(--muted)">Thematic aggregation. ~10 min to a running index. SCD2 versioning. 90-day backtest (planned). Full LLM lineage.</p>
+    </div>
+  </div>
+
+  <!-- 3. 快速迭代 -->
+  <h2>核心能力：快速迭代 PMI <span class="en">/ Fast Iteration</span></h2>
+  <p>「把一個宏觀觀點變成可量化指數」的循環時間，從幾週壓縮到幾分鐘。<span class="en-block">Compressing the cycle time from "macro thesis" to "quantified, tracked index" from weeks to minutes.</span></p>
+
+  <div class="grid3" style="margin-top:14px">
+    <div class="card">
+      <h3 style="color:var(--red-fg)">傳統 DIY</h3>
+      <p style="font-size:12.5px;color:var(--muted)">Traditional approach</p>
+      <ul style="margin-top:8px;color:var(--fg)">
+        <li>拉 Polymarket API：0.5 天</li>
+        <li>決定哪些合約相關：1–3 天</li>
+        <li>設計 weighting 邏輯：2–5 天</li>
+        <li>寫評估 pipeline：3–7 天</li>
+        <li>部署 + 觀測：1–3 天</li>
+      </ul>
+      <div class="stat" style="margin-top:14px">
+        <div class="v" style="color:var(--red-fg)">2–4 週</div>
+        <div class="k">到可用指數</div>
+      </div>
+    </div>
+    <div class="vs-center">VS</div>
+    <div class="card">
+      <h3 style="color:var(--green-fg)">本平台</h3>
+      <p style="font-size:12.5px;color:var(--muted)">This platform</p>
+      <ul style="margin-top:8px;color:var(--fg)">
+        <li>寫 YAML 宣告 selectors + factors：~5 分鐘</li>
+        <li><code>just dry-run</code> 預覽成分合約：~30 秒</li>
+        <li>seed 進 DB → 自動評估：~3 分鐘</li>
+        <li>API 即可查詢分數：~1 分鐘</li>
+        <li>版本 diff + backtest（規劃中）</li>
+      </ul>
+      <div class="stat" style="margin-top:14px">
+        <div class="v" style="color:var(--green-fg)">~10 分鐘</div>
+        <div class="k">到可用指數</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid3" style="margin-top:14px">
+    <div class="stat">
+      <div class="v" style="color:var(--green-fg)">~200×</div>
+      <div class="k">更快的迭代速度<br><span class="en">faster iteration</span></div>
+    </div>
+    <div class="stat">
+      <div class="v">0</div>
+      <div class="k">工程依賴（純 YAML）<br><span class="en">engineering dependencies</span></div>
+    </div>
+    <div class="stat">
+      <div class="v">100%</div>
+      <div class="k">可重現（sha256 lineage）<br><span class="en">reproducible results</span></div>
+    </div>
+  </div>
+
+  <!-- 4. PMI 生命週期 -->
+  <h2>PMI 生命週期 <span class="en">/ Index Lifecycle</span></h2>
+  <p>從構想到發佈，每一步都有對應工具，且可獨立重跑。<span class="en-block">From idea to publish — each step is independently rerunnable.</span></p>
+
+  <div class="flowrow">
+    <div class="step" style="flex:1;min-width:120px">
+      <div class="n">① 定義 Define</div>
+      <div class="t">撰寫 YAML</div>
+      <div class="d">selectors + factors<br>~5 分鐘 / ~5 min</div>
+      <div style="margin-top:8px"><span class="badge b-green">✅ 已落地</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="flex:1;min-width:120px">
+      <div class="n">② Dry-run 預覽</div>
+      <div class="t">成分合約預覽</div>
+      <div class="d">host in-process, $0<br>~30 秒 / ~30s</div>
+      <div style="margin-top:8px"><span class="badge b-green">✅ 已落地</span> <code style="font-size:10px">just dry-run</code></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="flex:1;min-width:120px">
+      <div class="n">③ Backtest 回測</div>
+      <div class="t">90 天歷史重算</div>
+      <div class="d">比較版本差異<br>~1 分鐘 / ~1 min</div>
+      <div style="margin-top:8px"><span class="badge b-orange">🟡 規劃中</span> SHIP-3.2</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="flex:1;min-width:120px">
+      <div class="n">④ Diff 比對</div>
+      <div class="t">版本差異檢視</div>
+      <div class="d">哪個合約進出了<br>~10 秒 / ~10s</div>
+      <div style="margin-top:8px"><span class="badge b-orange">🟡 規劃中</span> SHIP-3.4</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step" style="flex:1;min-width:120px">
+      <div class="n">⑤ Commit 發佈</div>
+      <div class="t">寫入 DB，SCD2</div>
+      <div class="d">sha256 鎖版本<br>~1 分鐘 / ~1 min</div>
+      <div style="margin-top:8px"><span class="badge b-green">✅ 已落地</span> seed + SCD2</div>
+    </div>
+  </div>
+
+  <!-- 5. 使用情境 -->
+  <h2>使用情境 <span class="en">/ Use Cases</span></h2>
+  <div class="grid3">
+    <div class="card">
+      <h3>研究 / 量化 <span class="en">Research / Quant</span></h3>
+      <p style="font-size:13px">把宏觀觀點（例如「Fed 不會降息」）具象化為 <strong>Fed-Hawkish 指數</strong> YAML。跑 10 個 weight 變體的 backtest，找最能捕捉市場分歧的版本。</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Translate a macro thesis into a YAML index. Run 10 weight-variant backtests to find the spec that best captures market disagreement.</p>
+    </div>
+    <div class="card">
+      <h3>內容 / 媒體 <span class="en">Content / Media</span></h3>
+      <p style="font-size:13px">追地緣事件：調整 War Index 的 weight 或 prompt → 立即得到新圖表 + 成分合約清單 → 直接引用進報導。現役 <code>polymarket-war-index</code> 真實分數 <strong>47.11</strong>。</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Track geopolitical events: tweak War Index weights or prompts, get an updated chart + constituent list, cite directly in reporting. Live score: 47.11.</p>
+    </div>
+    <div class="card">
+      <h3>風險 / 法遵 <span class="en">Risk / Compliance</span></h3>
+      <p style="font-size:13px">監控供應鏈中斷：建客製 <strong>Supply-Chain-Risk 指數</strong> → dashboard feed → 分數超閾值自動觸發 alert，並附全程稽核 lineage 供法遵查核。</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Monitor supply-chain disruption: custom index → dashboard feed → threshold alert with full audit lineage for compliance review.</p>
+    </div>
+  </div>
+
+  <!-- 6. AI 四層策略 -->
+  <h2>AI 四層策略 <span class="en">/ AI Tier Ladder</span></h2>
+  <p>目標是「用最少的 LLM 成本，得到最高品質的評估」。越貴的模型只在真正需要時才啟動。<span class="en-block">Minimize LLM cost while maximizing evaluation quality — expensive models only activate when necessary.</span></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>層級 / Tier</th>
+        <th>用途</th>
+        <th>模型</th>
+        <th>成本</th>
+        <th>狀態</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Tier 0</strong><br><span class="en" style="font-size:11px">Embedding pre-filter</span></td>
+        <td>餘弦相似度 &lt; 0.5 → 直接跳過，省 LLM 呼叫<br><span class="en" style="font-size:11px">Cosine filter — skip irrelevant contracts before LLM</span></td>
+        <td><code>ollama/nomic-embed-text</code><br><span style="font-size:11px;color:var(--muted)">本地免費 / local free</span></td>
+        <td style="color:var(--green-fg)">$0</td>
+        <td><span class="badge b-orange">已落地但 dormant</span><br><span style="font-size:11px;color:var(--muted)">現役 index 未宣告 semantic anchor</span></td>
+      </tr>
+      <tr>
+        <td><strong>Tier 1</strong><br><span class="en" style="font-size:11px">Cheap factor eval</span></td>
+        <td>每個 factor 快速打分；約 90% 日常流量<br><span class="en" style="font-size:11px">Per-factor scoring — handles ~90% of daily volume</span></td>
+        <td><code>gpt-4o-mini</code></td>
+        <td style="color:var(--orange-fg)">低 / Low</td>
+        <td><span class="badge b-green">✅ 上線中</span></td>
+      </tr>
+      <tr>
+        <td><strong>Tier 2</strong><br><span class="en" style="font-size:11px">Deep agentic eval</span></td>
+        <td>合約描述模糊 / factor 矛盾 / Tier 1 信心低 → 升級<br><span class="en" style="font-size:11px">Escalate when contract is ambiguous or factors conflict</span></td>
+        <td>Sonnet / Opus + tools</td>
+        <td style="color:var(--red-fg)">高 / High</td>
+        <td><span class="badge b-gray">❌ P2 規劃中</span></td>
+      </tr>
+      <tr>
+        <td><strong>Tier 3</strong><br><span class="en" style="font-size:11px">Periodic re-eval</span></td>
+        <td>不每天全表跑；價格漂移 &gt; X% 或新資訊到達才重算<br><span class="en" style="font-size:11px">Re-evaluate only on price drift or new information signal</span></td>
+        <td>Tier 1（觸發後）</td>
+        <td style="color:var(--green-fg)">按需 / On-demand</td>
+        <td><span class="badge b-gray">❌ P1+ 規劃中</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 7. 技術地基白話 -->
+  <h2>技術地基（白話）<span class="en">/ Tech Foundation, Plain Words</span></h2>
+  <p>原則：能不加基礎設施就不加。<span class="en-block">Principle: add infrastructure only when forced to.</span></p>
+
+  <div class="grid3">
+    <div class="card" style="padding:12px 14px">
+      <strong style="font-size:13px">單一 PostgreSQL + pgvector</strong>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">一個資料庫存所有東西。pgvector 做語意搜尋。不拆三個 DB。<br>One DB for everything. pgvector for semantic search. No DB sprawl.</p>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <strong style="font-size:13px">YAML → Pydantic 宣告式 DSL</strong>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">使用者寫 YAML，平台解析成 IR，engine 只認 IR。<br>Users write YAML; platform parses to IR; engine only sees IR.</p>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <strong style="font-size:13px">Python asyncio 抓資料</strong>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">REST 輪詢 + WebSocket 串流 + 鏈上事件，全 Python。<br>REST polling + WebSocket streaming + on-chain events, all Python.</p>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <strong style="font-size:13px">MLflow 鏡像層</strong>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">Prompt / run 可視化 UI；Postgres 是真相來源，MLflow 是 productivity layer。<br>Prompt + run visualization. Postgres is truth; MLflow is a productivity mirror.</p>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <strong style="font-size:13px">httpx + tenacity 輪詢重試</strong>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">自動 retry + source health 監控。每次 poll 記錄成功 / 失敗 / 延遲。<br>Auto-retry + source health monitoring. Every poll logged.</p>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <strong style="font-size:13px">FastAPI 對外 / MCP 規劃中</strong>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">REST API 已上；MCP server（讓 Claude / Cursor 直接讀寫指數）P3 規劃中。<br>REST API live. MCP server for AI-agent access planned for P3.</p>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <strong style="font-size:13px">supercronic 排程</strong>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">現在用 cron；之後 Arq（短任務）+ Temporal（長跑 workflow）。<br>Cron now; Arq for short tasks + Temporal for durable workflows later.</p>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <strong style="font-size:13px">Sentry + OTel / Grafana</strong>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">Sentry 接好待啟用；OTel + Grafana Cloud 之後加。先跑起來再觀測。<br>Sentry ready to enable; OTel + Grafana Cloud next. Ship first, observe later.</p>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <strong style="font-size:13px">全 Docker / 一鍵啟動</strong>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px"><code>docker compose --profile pmi up</code> 起全部服務。host 不需要 venv。<br>One command starts everything. No host venv needed.</p>
+    </div>
+  </div>
+
+  <!-- 8. 目前到哪 -->
+  <h2>目前到哪 <span class="en">/ Where We Are — P0 Landed</span></h2>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span class="badge b-green">P0 已落地</span>
+      <strong style="font-size:15px;color:#f0f6fc">地端 Docker e2e 跑通真資料</strong>
+    </div>
+    <div class="grid">
+      <ul>
+        <li>16 張 table；Alembic 0007 migration</li>
+        <li>append-only 稽核（<code>audit_evaluations</code>、<code>audit_pipeline_runs</code>）</li>
+        <li>prompt sha256 cache（用過的 prompt 不重評）</li>
+        <li>真 LLM tick（gpt-4o-mini，含 cost tracking、tenacity retry）</li>
+        <li>API auth（OAuth + API keys）已接</li>
+      </ul>
+      <ul>
+        <li>18,682 markets → 7 factor 真 LLM 評估 → API 對外 serve</li>
+        <li>5 個 YAML index def（含 senate-2026 兩個變體）</li>
+        <li>MLflow Prompt Registry + Tracking 鏡像</li>
+        <li>pmi-web SSR 5 張 index card + dashboard 渲分數 + history</li>
+        <li>Orderbook depth (CLOB) 已抓並存入 <code>ts_orderbook_snapshots</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>下一步 <span class="en">Next</span></h3>
+  <div class="grid3">
+    <div class="card" style="padding:12px 14px">
+      <span class="badge b-blue">近期 Near-term</span>
+      <p style="margin-top:8px;font-size:13px">Cloud 開機（單台 AWS EC2，runbook ready）；WebSocket trade feed 接真資料</p>
+      <p style="font-size:12px;color:var(--muted)">Deploy to cloud (single EC2, runbook ready). Wire WS trade feed to live data.</p>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <span class="badge b-orange">P1</span>
+      <p style="margin-top:8px;font-size:13px">Backtest CLI + diff view；Arq 短任務 queue；trader cohort 權重</p>
+      <p style="font-size:12px;color:var(--muted)">Backtest CLI + diff view. Arq task queue. Trader cohort weighting.</p>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <span class="badge b-purple">P2–P3</span>
+      <p style="margin-top:8px;font-size:13px">Tier 2 agentic LLM；MCP server（Claude / Cursor 直接接）；Temporal durable workflow</p>
+      <p style="font-size:12px;color:var(--muted)">Tier 2 agentic eval. MCP server for AI agents. Temporal for durable long-running workflows.</p>
+    </div>
+  </div>
+
+  <footer>
+    <a href="index.html">← 文件入口 / Back to index</a>
+    <p style="margin-top:10px">PMI = 可宣告、可版本控、可分享、可 backtest 的指數物件。<span class="en"> PMI = a declarable, versionable, shareable, backtestable index object.</span></p>
+    <p style="margin-top:6px;color:var(--dim)">商業模式重啟討論從本文 + CLAUDE.md §9 出發。/ To restart the business-model discussion, start from this doc + CLAUDE.md §9.</p>
+  </footer>
 </div>
-
-<!-- ============= HERO ============= -->
-<section class="hero">
-  <div class="container">
-    <div class="eyebrow">POLYMARKET PMI PLATFORM</div>
-    <h1>把預測市場資料<br>變成可宣告、可迭代的「指數產品」</h1>
-    <p class="sub">
-      Polymarket 是全球最大的真錢預測市場（年成交量 &gt; $7B）。<br>
-      散戶看的是單一價格；研究員需要的是<b style="color:#fde68a;">能在分鐘級內定義、修改、回測「主題化指數」</b>的工具——這就是我們做的。
-    </p>
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <div class="num">10 分鐘</div>
-        <div class="label">新指數 / 修改的目標週期</div>
-      </div>
-      <div class="hero-stat">
-        <div class="num">100%</div>
-        <div class="label">每個分數可追溯到原始合約</div>
-      </div>
-      <div class="hero-stat">
-        <div class="num">~4,000</div>
-        <div class="label">行 Python · P0 已完成</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============= 問題與機會 ============= -->
-<section class="section">
-  <div class="container">
-    <div class="section-eyebrow">問題與機會</div>
-    <h2>研究員想要什麼？目前拿不到什麼？</h2>
-    <p class="lead">
-      預測市場的真正價值不是「單一合約價格」，而是「組合起來的主題訊號」。但沒有工具讓你快速組。
-    </p>
-    <div class="two-col">
-      <div class="pain-card">
-        <h3><span class="icon">!</span>現在做指數的痛點</h3>
-        <ul>
-          <li><b>Polymarket 只給單一合約價格</b>——沒有跨合約的主題聚合</li>
-          <li><b>自己組指數要寫程式</b>——一個指數從定義到上線 2-4 週</li>
-          <li><b>沒有版本控、沒有 audit trail</b>——改完 weight 不知道之前是什麼</li>
-          <li><b>沒有 backtest</b>——「過去半年指數怎麼跑」答不出來</li>
-          <li><b>沒有 prompt 版本管理</b>——AI 評估結果不可重現</li>
-        </ul>
-      </div>
-      <div class="gain-card">
-        <h3><span class="icon">✓</span>平台提供的</h3>
-        <ul>
-          <li><b>PMI = 預測市場指數</b>——把多個相關合約聚合成單一可追蹤分數</li>
-          <li><b>YAML 宣告，10 分鐘建一個指數</b>——不需 dev pipeline</li>
-          <li><b>每個分數帶完整 lineage</b>——版本、prompt、model、合約全可追</li>
-          <li><b>一鍵 backtest 過去 90 天</b></li>
-          <li><b>prompt 跟模型走 git + DB 版本控</b>——同條件可完全重現</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============= 核心：快速迭代 PMI ============= -->
-<section class="section alt">
-  <div class="container">
-    <div class="section-eyebrow">★ 平台核心能力 ★</div>
-    <h2>快速迭代 PMI ——「指數開發週期」是真正的產品</h2>
-    <p class="lead">
-      平台的核心 metric 不是「我們做了多少指數」，是「定義一個新指數需要多久」。
-      週期越短，能探索的指數空間越大。
-    </p>
-
-    <div class="iter-grid">
-      <div class="iter-panel before">
-        <h3>傳統做法（DIY）</h3>
-        <div class="who">研究員 + 內部 dev / quant team</div>
-        <ul class="iter-steps">
-          <li class="iter-step"><span class="num">1</span><div class="body"><div class="what">研究員：「我想看 Fed Rate Uncertainty 指數」</div><div class="when">當下</div></div></li>
-          <li class="iter-step"><span class="num">2</span><div class="body"><div class="what">開發寫程式：抓合約、定義因子、權重、聚合公式</div><div class="when">+ 3-5 天</div></div></li>
-          <li class="iter-step"><span class="num">3</span><div class="body"><div class="what">Backtest 跑歷史資料、調 weight、看結果</div><div class="when">+ 3-5 天</div></div></li>
-          <li class="iter-step"><span class="num">4</span><div class="body"><div class="what">Code review、deploy 到 prod、串 monitoring</div><div class="when">+ 2-3 天</div></div></li>
-          <li class="iter-step"><span class="num">5</span><div class="body"><div class="what">研究員看結果：「再改 weight 試試」→ 回 step 2</div><div class="when">每次重複</div></div></li>
-        </ul>
-        <div class="iter-total">
-          <div class="time">2-4 週 / 迭代</div>
-          <div class="label">每次新指數 / 大改動的週期</div>
-        </div>
-      </div>
-
-      <div class="iter-arrow">
-        <div>→</div>
-        <div class="label">VS</div>
-      </div>
-
-      <div class="iter-panel after">
-        <h3>平台做法</h3>
-        <div class="who">研究員一人，在 builder UI / CLI / chat</div>
-        <ul class="iter-steps">
-          <li class="iter-step"><span class="num">1</span><div class="body"><div class="what">研究員打開 builder UI 或 chat 跟 AI 對話</div><div class="when">當下</div></div></li>
-          <li class="iter-step"><span class="num">2</span><div class="body"><div class="what">寫 / 改 YAML（factors + weights + 篩選），AI 推薦 baseline</div><div class="when">+ 5 分鐘</div></div></li>
-          <li class="iter-step"><span class="num">3</span><div class="body"><div class="what">即時 preview：90 天 backtest + 與舊版的合約 diff</div><div class="when">+ 30 秒</div></div></li>
-          <li class="iter-step"><span class="num">4</span><div class="body"><div class="what">滿意 → 一鍵 commit，自動版本號 + SCD2 audit</div><div class="when">+ 1 分鐘</div></div></li>
-          <li class="iter-step"><span class="num">5</span><div class="body"><div class="what">下個迭代 → 改一行 YAML → 立刻見新結果</div><div class="when">分鐘級循環</div></div></li>
-        </ul>
-        <div class="iter-total">
-          <div class="time">10 分鐘 / 迭代</div>
-          <div class="label">每次新指數 / 改動的週期</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="iter-impact">
-      <div class="iter-impact-card">
-        <div class="big">200×</div>
-        <div class="small">迭代速度</div>
-        <div class="desc">2 週 → 10 分鐘<br>=「指數設計空間」的探索速度暴增</div>
-      </div>
-      <div class="iter-impact-card">
-        <div class="big">0</div>
-        <div class="small">Dev pipeline 依賴</div>
-        <div class="desc">改 YAML = 改指數<br>不再需要 PR / review / deploy 流程</div>
-      </div>
-      <div class="iter-impact-card">
-        <div class="big">100%</div>
-        <div class="small">可重現</div>
-        <div class="desc">每個版本、每個分數都有完整 lineage<br>同條件結果不變</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============= PMI Lifecycle ============= -->
-<section class="section">
-  <div class="container">
-    <div class="section-eyebrow">PMI LIFECYCLE</div>
-    <h2>一個指數從想法到上線的 5 個階段</h2>
-    <p class="lead">
-      每階段都是分鐘級。整條 pipeline 設計成「沒有人類等待人類」——研究員不需等開發、開發不需等 ops。
-    </p>
-    <div class="lifecycle">
-      <div class="lifecycle-step">
-        <div class="step-num">1</div>
-        <div class="step-name">定義</div>
-        <div class="step-time">~ 5 分鐘</div>
-        <div class="step-detail">YAML 宣告 factors、weights、合約篩選條件、prompt 引用</div>
-      </div>
-      <div class="lifecycle-step">
-        <div class="step-num">2</div>
-        <div class="step-name">Dry-run 預覽</div>
-        <div class="step-time">~ 30 秒</div>
-        <div class="step-detail">不寫 DB，本地跑一次完整 pipeline 看結果跟 component breakdown</div>
-      </div>
-      <div class="lifecycle-step">
-        <div class="step-num">3</div>
-        <div class="step-name">Backtest</div>
-        <div class="step-time">~ 1 分鐘</div>
-        <div class="step-detail">用既有歷史合約 + cached evaluation 跑 90 天回測</div>
-      </div>
-      <div class="lifecycle-step">
-        <div class="step-num">4</div>
-        <div class="step-name">Diff 比對</div>
-        <div class="step-time">~ 10 秒</div>
-        <div class="step-detail">跟前一版比：哪些合約進 / 出、哪些分數變了、整體分數差多少</div>
-      </div>
-      <div class="lifecycle-step">
-        <div class="step-num">5</div>
-        <div class="step-name">Commit + Publish</div>
-        <div class="step-time">~ 1 分鐘</div>
-        <div class="step-detail">SCD2 版本號自動 bump、舊版 retire、新版開始接 production tick</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============= USE CASES ============= -->
-<section class="section alt">
-  <div class="container">
-    <div class="section-eyebrow">USE CASES（情境示範，非客戶承諾）</div>
-    <h2>「快速迭代 PMI」的三個典型場景</h2>
-    <p class="lead">
-      同樣的能力，三組不同使用者用不同方式。情境用來測試平台 capabilities 是否夠用。
-    </p>
-    <div class="usecase-grid">
-      <div class="usecase-card c1">
-        <div class="persona">研究 / Quant</div>
-        <h3>把宏觀觀點變成可追蹤訊號</h3>
-        <p class="scenario">
-          研究員有觀點：「下季 Fed 不會降息」。傳統上要 quant 寫程式抓相關合約 → backtest → deploy。在平台上：5 分鐘建 Fed-Hawkish 指數 YAML，立刻看 90 天 backtest，調 weight 試 10 種版本。
-        </p>
-        <div class="ability">
-          <b>需要的平台能力：</b>YAML DSL、selector（keyword + semantic）、backtest CLI、diff CLI
-        </div>
-      </div>
-      <div class="usecase-card c2">
-        <div class="persona">內容 / 媒體</div>
-        <h3>追蹤事件演變的指數</h3>
-        <p class="scenario">
-          分析師追蹤地緣事件。「俄烏戰況有變」→ 改 War Index 的 weight 跟 prompt → 立刻有新的圖表跟 component 列表 → 寫報導引用「我們的 v3 指數」。
-        </p>
-        <div class="ability">
-          <b>需要的平台能力：</b>prompt versioning、SCD2 index_definition、explain endpoint、public read API
-        </div>
-      </div>
-      <div class="usecase-card c3">
-        <div class="persona">監控 / 風控</div>
-        <h3>用市場價格當風險訊號</h3>
-        <p class="scenario">
-          風控長要監控供應鏈中斷風險。客製 Supply Chain Risk Index → 串進內部 dashboard → 超過閾值自動 alert。需要 24/7 可靠 + 完整 audit。
-        </p>
-        <div class="ability">
-          <b>需要的平台能力：</b>schedule/cron、webhook/alert、source health monitoring、append-only audit
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============= AI 層級 ============= -->
-<section class="section">
-  <div class="container">
-    <div class="section-eyebrow">AI STRATEGY</div>
-    <h2>四層 AI 架構：把成本跟品質分開思考</h2>
-    <p class="lead">
-      不是所有合約都需要 GPT-4o。便宜的篩選 + 便宜的評分 + 必要時才升級到深評。
-      這層架構讓平台可以擴展到 10k+ 合約而不爆預算。
-    </p>
-    <div class="ai-flow">
-      <div class="ai-tier-row header">
-        <div>AI 層</div>
-        <div>做什麼 / 何時觸發</div>
-        <div>實作狀態</div>
-      </div>
-      <div class="ai-tier-row">
-        <div class="ai-tier-name">Tier 0 篩選</div>
-        <div class="ai-tier-what">用 embedding 判斷新合約跟指數是否相關 → 不相關直接跳過，不花錢評</div>
-        <div class="ai-tier-when">P1 / Schema 已備</div>
-      </div>
-      <div class="ai-tier-row">
-        <div class="ai-tier-name">Tier 1 評分</div>
-        <div class="ai-tier-what">便宜 model（Haiku / 4o-mini）對篩選後合約算多個因子。日常 90% 流量在這層</div>
-        <div class="ai-tier-when">MVP（接 LLM 取代 stub）</div>
-      </div>
-      <div class="ai-tier-row">
-        <div class="ai-tier-name">Tier 2 深評</div>
-        <div class="ai-tier-what">合約描述模糊 / factor 矛盾 / 信心低 → 升級到 Sonnet/Opus + 帶搜尋工具</div>
-        <div class="ai-tier-when">P2</div>
-      </div>
-      <div class="ai-tier-row">
-        <div class="ai-tier-name">Tier 3 重評</div>
-        <div class="ai-tier-what">不每天全表重跑——當價格漂移 &gt; X% 或新資訊出現才觸發單一合約重算</div>
-        <div class="ai-tier-when">P1 trigger logic</div>
-      </div>
-    </div>
-    <div style="margin-top: 24px; padding: 20px; background: var(--gold-bg); border-radius: 12px; border-left: 4px solid var(--gold);">
-      <b style="color: var(--gold);">為什麼分層：</b>
-      <span style="color: var(--text); font-size: 14px;">
-        Polymarket 活躍合約 ~1000-3000，全部跑 Tier 1 一次 ~$1，每天 12 tick = $12/天。
-        如果全部跑 Tier 2 (Sonnet) = ~$50/天，10× 成本。Tier 階梯讓平台可隨意加新指數而不會成本爆炸。
-      </span>
-    </div>
-  </div>
-</section>
-
-<!-- ============= 技術 Stack ============= -->
-<section class="section stack-section alt">
-  <div class="container">
-    <div class="section-eyebrow">TECH STACK</div>
-    <h2>技術選型對齊「快速迭代」</h2>
-    <p class="lead">
-      每個元件選擇的理由：要不要讓「新增 N+1 個東西」不需要改前 N 個東西。
-    </p>
-    <div class="stack-grid">
-      <div class="stack-card">
-        <div class="role">Schema 演化</div>
-        <div class="name">PostgreSQL + Alembic</div>
-        <div class="why">SCD Type 2 給 index_definition；append-only audit；prompt 用 sha256 cache key。一個 DB 不分家，dev/prod 對齊。</div>
-      </div>
-      <div class="stack-card">
-        <div class="role">指數定義語言</div>
-        <div class="name">YAML → Pydantic IR</div>
-        <div class="why">user 寫 YAML，engine 拿 IR。沒寫程式 = 沒 deploy 風險。schema 變更可向後相容。</div>
-      </div>
-      <div class="stack-card">
-        <div class="role">Pipeline 引擎</div>
-        <div class="name">Python asyncio + SQLAlchemy 2.0</div>
-        <div class="why">純函式式 selector → resolver → evaluator → aggregator。每段可獨立測 + 替換。</div>
-      </div>
-      <div class="stack-card">
-        <div class="role">Model / Prompt 版本控</div>
-        <div class="name">MLflow (mirror)</div>
-        <div class="why">DB 是 source of truth，MLflow 是 UI。MLflow 掛了 pipeline 不停。可換 Weights &amp; Biases 不重做。</div>
-      </div>
-      <div class="stack-card">
-        <div class="role">資料擷取</div>
-        <div class="name">httpx + tenacity + structlog</div>
-        <div class="why">async REST polling 已上，WS / chain indexer 是同 pattern 加 poller 檔案。新資料源 = drop in。</div>
-      </div>
-      <div class="stack-card">
-        <div class="role">外部介面</div>
-        <div class="name">FastAPI + MCP server</div>
-        <div class="why">REST 給 web / 自動化，MCP 給 AI agent。同一個資料層雙協議暴露。</div>
-      </div>
-      <div class="stack-card">
-        <div class="role">背景任務</div>
-        <div class="name">Arq → Temporal（演進）</div>
-        <div class="why">MVP 用 Arq 簡單，長 workflow / backtest 痛了再加 Temporal。不 over-engineer。</div>
-      </div>
-      <div class="stack-card">
-        <div class="role">觀測</div>
-        <div class="name">structlog → Grafana Cloud</div>
-        <div class="why">JSON 結構化 log + 三個基礎面板（source health / LLM cost / PMI freshness）。Sentry 抓錯。</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============= 開發進度 ============= -->
-<section class="section">
-  <div class="container">
-    <div class="section-eyebrow">DEVELOPMENT ROADMAP</div>
-    <h2>技術開發里程碑</h2>
-    <p class="lead">P0 技術底座完成 · 接下來是 LLM 落地 + 部署 + 第二個指數驗證 DSL 通用性。</p>
-    <div style="max-width: 720px; margin: 0 auto;">
-      <div class="timeline">
-        <div class="timeline-item done">
-          <div class="when">P0 · 已完成</div>
-          <div class="what">技術底座</div>
-          <div class="detail">
-            13 個 4-tier table、3 個 Alembic migration、SCD2 index definition、append-only audit、
-            sha256 prompt cache key、MLflow mirror（graceful degradation）、Polymarket REST poller、
-            read-only FastAPI、deterministic stub evaluator、CLI。約 4,000 行程式碼。
-          </div>
-        </div>
-        <div class="timeline-item now">
-          <div class="when">MVP · 進行中</div>
-          <div class="what">第一條真實 PMI tick 端到端</div>
-          <div class="detail">
-            接真 LLM (M1) 取代 stub、API auth (M2)、worker 排程 (M3)、prompt template render、
-            cloud 部署 (M4)、`/explain` 補完 (M7)、ingest 補 volume (M6)、Sentry / 集中 log (M8)。
-          </div>
-        </div>
-        <div class="timeline-item">
-          <div class="when">P1 · 接下來 4-8 週</div>
-          <div class="what">證明 DSL 通用、加速迭代工具</div>
-          <div class="detail">
-            <code>pmi-core dry-run</code> + <code>diff</code> CLI；第 2-3 個 baseline index（Fed / election uncertainty）；
-            backtest CLI；Tier 0 embedding pre-filter；liquidity weighting；
-            Polymarket WebSocket trades；MCP server Tier A read tools。
-          </div>
-        </div>
-        <div class="timeline-item">
-          <div class="when">P2 · 之後</div>
-          <div class="what">深度 Polymarket 訊號 + 多 AI algo</div>
-          <div class="detail">
-            Polygon chain indexer（trader cohort / UMA dispute）、CLOB orderbook depth、
-            Tier 2 agentic deep eval、Temporal durable workflow、ClickHouse for analytics、
-            A/B testing infrastructure、disagreement detection。
-          </div>
-        </div>
-        <div class="timeline-item">
-          <div class="when">P3+ · 平台化</div>
-          <div class="what">外部接入 + 治理</div>
-          <div class="detail">
-            完整 MCP server (Tier B/C write)、Next.js dashboard + builder UI、多租戶 isolation、
-            完整稽核能力。商業模式 / 獲客模式在這階段前必須決定。
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============= FOOTER ============= -->
-<footer class="footer">
-  <div class="container">
-    <span class="tag">PMI Platform</span> · 把 Polymarket 變成可宣告、可迭代的指數產品
-    <div class="links">
-      設計文件：<code>CLAUDE.md</code><code>TODO-跑出來.md</code><code>TODO-跑得對.md</code><code>architecture-current.html</code> · 本頁焦點：技術開發 + 指標開發週期
-    </div>
-  </div>
-</footer>
 
 </body>
 </html>

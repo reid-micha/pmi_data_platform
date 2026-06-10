@@ -60,6 +60,37 @@ class IngestSettings(BaseSettings):
         )
     )
 
+    # ─── ForecastEx REST ────────────────────────────────────────────────────
+    forecastex_base_url: str = Field(default="https://forecastex.com")
+    forecastex_page_size: int = Field(default=100)
+    forecastex_max_pages: int = Field(default=50)
+
+    # ─── Gemini prediction-markets REST ─────────────────────────────────────
+    gemini_base_url: str = Field(default="https://exchange.gemini.com")
+
+    # ─── Manifold REST ──────────────────────────────────────────────────────
+    manifold_base_url: str = Field(default="https://api.manifold.markets")
+    manifold_page_size: int = Field(default=1000)
+    # `before=<id>` cursor pages of 1000; 50 pages = 50k markets, ample headroom.
+    manifold_max_pages: int = Field(default=50)
+
+    # ─── PredictIt REST ─────────────────────────────────────────────────────
+    # Whole universe in one call (/api/marketdata/all/); no pagination knobs.
+    predictit_base_url: str = Field(default="https://www.predictit.org")
+
+    # ─── Coinbase prediction-markets scraper ───────────────────────────────
+    coinbase_enabled: bool = Field(default=False)
+    coinbase_page_load_wait_sec: float = Field(default=5.0)
+    coinbase_tab_switch_wait_sec: float = Field(default=3.0)
+    coinbase_scroll_pause_sec: float = Field(default=2.0)
+    coinbase_skip_categories: list[str] = Field(default=["Trending"])
+    coinbase_skip_region_check: bool = Field(default=False)
+    # Phase-2 per-event-page pacing (rate-limit avoidance).
+    coinbase_verify_delay_sec: float = Field(default=3.0)
+    coinbase_verify_batch_size: int = Field(default=25)
+    coinbase_verify_batch_pause_sec: float = Field(default=10.0)
+    coinbase_scrape_workers: int = Field(default=4)
+
     # ─── Playwright (shared by robinhood + crypto scrapers) ────────────────
     # Disabled by default — set the per-source enable flag below before use.
     # Chromium binary lives in the pmi-ingest image (added in Dockerfile);

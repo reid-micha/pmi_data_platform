@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMI Platform — Team Roadmap Brief / 團隊路線圖摘要</title>
+<style>
+:root{
+  --bg:#0d1117; --card:#161b22; --card2:#0b0f14; --border:#2d333b; --muted:#8b949e; --fg:#e6edf3; --dim:#6e7681; --accent:#58a6ff;
+  --green-bg:#12351f; --green-border:#2ea043; --green-fg:#56d364;
+  --blue-bg:#0d2c4d; --blue-border:#1f6feb; --blue-fg:#79c0ff;
+  --cyan-bg:#0c2f33; --cyan-border:#1f9aa8; --cyan-fg:#56d4dd;
+  --orange-bg:#3a2a10; --orange-border:#bb8009; --orange-fg:#e3b341;
+  --purple-bg:#2a2151; --purple-border:#8957e5; --purple-fg:#bc8cff;
+  --gray-bg:#21262d; --gray-border:#444c56; --gray-fg:#8b949e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6;padding:0 0 70px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+header.page{background:linear-gradient(135deg,#11203a 0%,#161b22 60%);border-bottom:1px solid var(--border);padding:32px 0 24px}
+header.page h1{font-size:25px;color:#f0f6fc;margin-bottom:8px}
+header.page .sub{font-size:13.5px;color:var(--muted);max-width:820px}
+.nav-back{display:inline-block;font-size:12px;color:var(--accent);text-decoration:none;margin:18px 0 0}
+.nav-back:hover{text-decoration:underline}
+h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:34px 0 14px;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:6px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+.chead{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.chead strong{font-size:16px}
+.badge{display:inline-block;font-size:12px;padding:2px 10px;border-radius:20px;border:1px solid;white-space:nowrap}
+.b-green{background:var(--green-bg);border-color:var(--green-border);color:var(--green-fg)}
+.b-orange{background:var(--orange-bg);border-color:var(--orange-border);color:var(--orange-fg)}
+.b-blue{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue-fg)}
+.b-purple{background:var(--purple-bg);border-color:var(--purple-border);color:var(--purple-fg)}
+.b-gray{background:var(--gray-bg);border-color:var(--gray-border);color:var(--gray-fg)}
+ul{margin:0 0 0 20px}
+li{font-size:14px;margin:6px 0}
+.lead{font-size:13.5px;color:var(--muted);margin:6px 0 0}
+.focus{background:linear-gradient(135deg,#241a06 0%,#161b22 70%);border-color:var(--orange-border)}
+.focus .big{font-size:15px;color:var(--fg);font-weight:600;margin-bottom:6px}
+code{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12.5px;background:#0b0f14;border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--cyan-fg)}
+footer{color:var(--dim);font-size:12px;margin-top:42px;border-top:1px solid var(--border);padding-top:16px}
+footer a{color:var(--accent);text-decoration:none}
+.mtxwrap{overflow-x:auto;margin-top:14px}
+table.mtx{width:100%;min-width:760px;border-collapse:collapse;font-size:11.5px;table-layout:fixed}
+table.mtx th,table.mtx td{border:1px solid var(--border);padding:7px 9px;vertical-align:top;text-align:left;line-height:1.45}
+table.mtx thead th{font-size:11px;background:#0b0f14;white-space:nowrap;color:#f0f6fc}
+table.mtx td{color:var(--muted)}
+table.mtx td:first-child,table.mtx th:first-child{width:84px;font-weight:700;color:var(--cyan-fg);font-family:'SF Mono',Monaco,Consolas,monospace;font-size:10.5px}
+table.mtx tbody tr:nth-child(odd) td{background:#10151c}
+.dash{color:var(--dim)}
+/* language toggle */
+.langtoggle{position:fixed;top:14px;right:16px;z-index:50;display:flex;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:var(--card);font-size:12px;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.langtoggle button{background:none;border:none;color:var(--muted);padding:6px 13px;cursor:pointer;font:inherit}
+.langtoggle button.active{background:var(--accent);color:#06121f;font-weight:700}
+.e{display:none}
+body.en .e{display:inline}
+body.en .z{display:none}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="langtoggle">
+  <button data-l="zh" class="active" onclick="setLang('zh')">中文</button>
+  <button data-l="en" onclick="setLang('en')">EN</button>
+</div>
+
+<header class="page">
+  <div class="wrap">
+    <h1>PMI Platform — <span class="z">團隊路線圖摘要</span><span class="e">Team Roadmap Brief</span></h1>
+    <p class="sub">
+      <span class="z">五個階段 P0 → P3+ 的高層摘要，給團隊對齊用。<strong style="color:var(--fg)">現在的主目標：MVP 端到端真實數字。</strong></span>
+      <span class="e">A high-level brief of the five phases P0 → P3+ for team alignment. <strong style="color:var(--fg)">Current focus: the MVP end-to-end milestone.</strong></span>
+    </p>
+  </div>
+</header>
+
+<div class="wrap">
+  <a class="nav-back" href="index.html"><span class="z">← 回文件入口</span><span class="e">← Back to index</span></a>
+
+  <h2><span class="z">高層架構</span><span class="e">High-level architecture</span></h2>
+  <p style="font-size:12.5px;color:var(--muted);margin:0 0 4px"><span class="z">每個 component 的資料流（實線）與相依／觸發關係（虛線）。</span><span class="e">Each component's data flow (solid) and dependency / trigger links (dashed).</span></p>
+  <div class="card" style="padding:14px 16px">
+    <svg viewBox="0 0 1000 432" width="100%" role="img" aria-label="High-level architecture &amp; data flow" style="display:block;max-width:100%">
+      <defs>
+        <marker id="as" markerWidth="11" markerHeight="11" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#58a6ff"/></marker>
+        <marker id="as2" markerWidth="11" markerHeight="11" refX="1" refY="3" orient="auto"><path d="M7,0 L0,3 L7,6 Z" fill="#58a6ff"/></marker>
+        <marker id="ad" markerWidth="11" markerHeight="11" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#6e7681"/></marker>
+      </defs>
+
+      <!-- ===== boxes ===== -->
+      <!-- A external -->
+      <rect x="30" y="24" width="250" height="46" rx="9" fill="#161b22" stroke="#2d333b"/>
+      <text class="z" x="155" y="44" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-weight="700">外部預測市場</text>
+      <text class="e" x="155" y="44" text-anchor="middle" fill="#e6edf3" font-size="12.5" font-weight="700">External markets</text>
+      <text x="155" y="60" text-anchor="middle" fill="#8b949e" font-size="9.5">Polymarket · Kalshi · …</text>
+      <!-- B ingest -->
+      <rect x="30" y="108" width="250" height="56" rx="9" fill="#3a2a10" stroke="#bb8009"/>
+      <text x="155" y="132" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="700">pmi-ingest</text>
+      <text class="z" x="155" y="150" text-anchor="middle" fill="#8b949e" font-size="9.5">抓外部資料（poller / 爬蟲 / WS / 鏈上）</text>
+      <text class="e" x="155" y="150" text-anchor="middle" fill="#8b949e" font-size="9.5">ingest data (poller / scraper / WS / chain)</text>
+      <!-- D workers -->
+      <rect x="30" y="250" width="250" height="56" rx="9" fill="#161b22" stroke="#1f6feb"/>
+      <text x="155" y="274" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="700">pmi-workers</text>
+      <text class="z" x="155" y="292" text-anchor="middle" fill="#8b949e" font-size="9.5">排程跑分（cron → Arq/Temporal）</text>
+      <text class="e" x="155" y="292" text-anchor="middle" fill="#8b949e" font-size="9.5">scheduler (cron → Arq/Temporal)</text>
+      <!-- C postgres hub -->
+      <rect x="375" y="150" width="250" height="104" rx="10" fill="#0d2c4d" stroke="#1f6feb"/>
+      <text x="500" y="180" text-anchor="middle" fill="#79c0ff" font-size="14" font-weight="700">PostgreSQL</text>
+      <text class="z" x="500" y="200" text-anchor="middle" fill="#e6edf3" font-size="11">中央資料庫</text>
+      <text class="e" x="500" y="200" text-anchor="middle" fill="#e6edf3" font-size="11">central database</text>
+      <text x="500" y="222" text-anchor="middle" fill="#8b949e" font-size="9.5">markets · prices · scores</text>
+      <text x="500" y="237" text-anchor="middle" fill="#8b949e" font-size="9.5">audit · embeddings (pgvector → Milvus)</text>
+      <!-- E core -->
+      <rect x="375" y="300" width="250" height="74" rx="10" fill="#2a2151" stroke="#8957e5"/>
+      <text x="500" y="322" text-anchor="middle" fill="#bc8cff" font-size="13" font-weight="700">pmi-core</text>
+      <text class="z" x="500" y="340" text-anchor="middle" fill="#e6edf3" font-size="9.5">共用引擎：schema · DSL · 評分</text>
+      <text class="e" x="500" y="340" text-anchor="middle" fill="#e6edf3" font-size="9.5">shared engine: schema · DSL · scoring</text>
+      <text class="z" x="500" y="358" text-anchor="middle" fill="#8b949e" font-size="9">被 ingest / workers / api 共用</text>
+      <text class="e" x="500" y="358" text-anchor="middle" fill="#8b949e" font-size="9">used by ingest / workers / api</text>
+      <!-- G api -->
+      <rect x="700" y="150" width="270" height="56" rx="9" fill="#12351f" stroke="#2ea043"/>
+      <text x="835" y="174" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="700">pmi-api</text>
+      <text class="z" x="835" y="192" text-anchor="middle" fill="#8b949e" font-size="9.5">對外讀取 API（FastAPI）</text>
+      <text class="e" x="835" y="192" text-anchor="middle" fill="#8b949e" font-size="9.5">read-only API (FastAPI)</text>
+      <!-- H web -->
+      <rect x="700" y="40" width="128" height="52" rx="9" fill="#0c2f33" stroke="#1f9aa8"/>
+      <text x="764" y="62" text-anchor="middle" fill="#e6edf3" font-size="12" font-weight="700">pmi-web</text>
+      <text class="z" x="764" y="79" text-anchor="middle" fill="#8b949e" font-size="9">前端</text>
+      <text class="e" x="764" y="79" text-anchor="middle" fill="#8b949e" font-size="9">frontend</text>
+      <!-- I mcp -->
+      <rect x="842" y="40" width="128" height="52" rx="9" fill="#161b22" stroke="#444c56"/>
+      <text x="906" y="62" text-anchor="middle" fill="#e6edf3" font-size="12" font-weight="700">pmi-mcp</text>
+      <text class="z" x="906" y="79" text-anchor="middle" fill="#8b949e" font-size="9">AI 工具</text>
+      <text class="e" x="906" y="79" text-anchor="middle" fill="#8b949e" font-size="9">AI tools</text>
+      <!-- F mlflow -->
+      <rect x="700" y="312" width="270" height="50" rx="9" fill="#0c2f33" stroke="#1f9aa8"/>
+      <text x="835" y="334" text-anchor="middle" fill="#56d4dd" font-size="13" font-weight="700">mlflow</text>
+      <text class="z" x="835" y="351" text-anchor="middle" fill="#8b949e" font-size="9.5">鏡像 prompt / run / eval（DB 才是真相）</text>
+      <text class="e" x="835" y="351" text-anchor="middle" fill="#8b949e" font-size="9.5">mirror prompt / run / eval (DB is truth)</text>
+      <!-- Milvus (future vector DB) -->
+      <rect x="700" y="236" width="270" height="56" rx="9" fill="#161b22" stroke="#8957e5" stroke-dasharray="6 4"/>
+      <text x="835" y="258" text-anchor="middle" fill="#bc8cff" font-size="13" font-weight="700">Milvus</text>
+      <text class="z" x="835" y="276" text-anchor="middle" fill="#8b949e" font-size="9.5">向量庫 · embeddings（之後接手，P2+）</text>
+      <text class="e" x="835" y="276" text-anchor="middle" fill="#8b949e" font-size="9.5">vector DB · embeddings (takes over, P2+)</text>
+
+      <!-- ===== arrows ===== -->
+      <!-- A->B -->
+      <line x1="155" y1="70" x2="155" y2="106" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#as)"/>
+      <text class="z" x="168" y="92" fill="#79c0ff" font-size="9.5">抓</text>
+      <text class="e" x="168" y="92" fill="#79c0ff" font-size="9.5">pull</text>
+      <!-- B->C -->
+      <line x1="280" y1="130" x2="373" y2="182" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#as)"/>
+      <text class="z" x="300" y="142" fill="#79c0ff" font-size="9">寫入 markets + prices</text>
+      <text class="e" x="300" y="142" fill="#79c0ff" font-size="9">write markets + prices</text>
+      <!-- C<->E (read markets / write scores) -->
+      <line x1="500" y1="254" x2="500" y2="298" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#as)" marker-start="url(#as2)"/>
+      <text class="z" x="512" y="280" fill="#79c0ff" font-size="9">讀市場 / 寫分數</text>
+      <text class="e" x="512" y="280" fill="#79c0ff" font-size="9">read markets / write scores</text>
+      <!-- D to E : workers imports pmi-core to run scoring (dashed = depends/invokes) -->
+      <line x1="195" y1="308" x2="373" y2="334" stroke="#6e7681" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ad)"/>
+      <text class="z" x="214" y="326" fill="#8b949e" font-size="9">引入 pmi-core 跑分</text>
+      <text class="e" x="214" y="326" fill="#8b949e" font-size="9">imports pmi-core to score</text>
+      <!-- C->G read -->
+      <line x1="625" y1="186" x2="698" y2="180" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#as)"/>
+      <text class="z" x="630" y="172" fill="#79c0ff" font-size="9">讀（唯讀）</text>
+      <text class="e" x="630" y="172" fill="#79c0ff" font-size="9">read (read-only)</text>
+      <!-- G->H, G->I serve -->
+      <line x1="770" y1="150" x2="766" y2="94" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#as)"/>
+      <line x1="895" y1="150" x2="903" y2="94" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#as)"/>
+      <text x="835" y="126" text-anchor="middle" fill="#79c0ff" font-size="9">serve</text>
+      <!-- E->F mirror -->
+      <line x1="625" y1="337" x2="698" y2="337" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#as)"/>
+      <text class="z" x="662" y="329" fill="#79c0ff" font-size="9">鏡像</text>
+      <text class="e" x="662" y="329" fill="#79c0ff" font-size="9">mirror</text>
+      <!-- E<->Milvus vectors -->
+      <line x1="625" y1="316" x2="698" y2="270" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#as)" marker-start="url(#as2)"/>
+      <text class="z" x="636" y="292" fill="#79c0ff" font-size="9">寫 / 查 向量</text>
+      <text class="e" x="636" y="292" fill="#79c0ff" font-size="9">write / query vectors</text>
+
+      <!-- ===== legend ===== -->
+      <line x1="40" y1="404" x2="70" y2="404" stroke="#58a6ff" stroke-width="2.5" marker-end="url(#as)"/>
+      <text class="z" x="76" y="408" fill="#8b949e" font-size="10">資料流</text>
+      <text class="e" x="76" y="408" fill="#8b949e" font-size="10">data flow</text>
+      <line x1="190" y1="404" x2="220" y2="404" stroke="#6e7681" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ad)"/>
+      <text class="z" x="226" y="408" fill="#8b949e" font-size="10">觸發 / 相依</text>
+      <text class="e" x="226" y="408" fill="#8b949e" font-size="10">triggers / depends</text>
+    </svg>
+  </div>
+
+  <h2><span class="z">各套件是什麼 · 何時動它</span><span class="e">What each component is &amp; when to touch it</span></h2>
+  <div class="mtxwrap">
+    <table class="mtx">
+      <thead>
+        <tr>
+          <th><span class="z">套件</span><span class="e">Package</span></th>
+          <th style="color:#f0f6fc"><span class="z">幹嘛的</span><span class="e">What it does</span></th>
+          <th style="color:#f0f6fc"><span class="z">什麼時候該動它</span><span class="e">When to touch it</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>pmi-core</td>
+          <td><span class="z">平台大腦：資料 schema · index DSL · 評分引擎 · CLI</span><span class="e">Platform brain: data schema · index DSL · scoring engine · CLI</span></td>
+          <td><span class="z">改 schema、加／改 factor 或聚合算法、改 index 定義邏輯、加 CLI 指令</span><span class="e">When changing schema, adding/altering factors or aggregation, index-definition logic, or CLI commands</span></td>
+        </tr>
+        <tr>
+          <td>pmi-ingest</td>
+          <td><span class="z">把外部市場資料抓進來：REST poller · 爬蟲 · WS · 鏈上</span><span class="e">Pulls external market data in: REST pollers · scrapers · WS · on-chain</span></td>
+          <td><span class="z">新增一個資料源、改抓取邏輯、加深度訊號</span><span class="e">When adding a data source, changing fetch logic, or adding deep signals</span></td>
+        </tr>
+        <tr>
+          <td>pmi-api</td>
+          <td><span class="z">對外的讀取 API (FastAPI)，給前端 / MCP / 外部 agent</span><span class="e">Read-only API (FastAPI) for the web, MCP and external agents</span></td>
+          <td><span class="z">加新端點、改回傳格式、加 auth</span><span class="e">When adding endpoints, changing response shape, or adding auth</span></td>
+        </tr>
+        <tr>
+          <td>pmi-workers</td>
+          <td><span class="z">排程器：定時跑 ingest → score → serve（cron → Arq/Temporal）</span><span class="e">Scheduler: runs ingest → score → serve on a timer (cron → Arq/Temporal)</span></td>
+          <td><span class="z">改排程、加背景工作（backtest、embedding、batch）</span><span class="e">When changing schedules or adding background jobs (backtest, embedding, batch)</span></td>
+        </tr>
+        <tr>
+          <td>pmi-web</td>
+          <td><span class="z">前端 (Next.js) 儀表板 / 盤面</span><span class="e">Frontend (Next.js) dashboards / boards</span></td>
+          <td><span class="z">加頁面、改 UI、接新端點</span><span class="e">When adding pages, changing UI, or wiring new endpoints</span></td>
+        </tr>
+        <tr>
+          <td>pmi-mcp</td>
+          <td><span class="z">給 AI agent 用的工具層 (MCP server)</span><span class="e">Tool layer for AI agents (MCP server)</span></td>
+          <td><span class="z">要讓 Claude / ChatGPT 直接讀或建指數時</span><span class="e">When letting Claude / ChatGPT read or build indexes directly</span></td>
+        </tr>
+        <tr>
+          <td>mlflow</td>
+          <td><span class="z">鏡像 prompt / run / eval 的 UI 層（DB 才是真相）</span><span class="e">UI mirror of prompts / runs / evals (the DB is the source of truth)</span></td>
+          <td><span class="z">基本不用動；要看實驗 / 版本比較時</span><span class="e">Rarely touched; use it to compare experiments / versions</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2><span class="z">時間軸</span><span class="e">Timeline — Phases P0 → P3+</span></h2>
+
+  <div class="card" style="padding:14px 16px">
+    <svg viewBox="0 0 1000 150" width="100%" role="img" aria-label="Phase timeline" style="display:block;max-width:100%">
+      <defs>
+        <linearGradient id="tlg" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#2ea043"/><stop offset="0.26" stop-color="#bb8009"/>
+          <stop offset="0.52" stop-color="#1f6feb"/><stop offset="0.78" stop-color="#8957e5"/><stop offset="1" stop-color="#444c56"/>
+        </linearGradient>
+      </defs>
+      <line x1="90" y1="94" x2="890" y2="94" stroke="url(#tlg)" stroke-width="5" stroke-linecap="round"/>
+
+      <text x="90" y="44" text-anchor="middle" fill="#56d364" font-size="12.5" font-weight="700">✅ P0</text>
+      <text class="z" x="90" y="63" text-anchor="middle" fill="#e6edf3" font-size="11.5">技術地基</text>
+      <text class="e" x="90" y="63" text-anchor="middle" fill="#e6edf3" font-size="11.5">Foundation</text>
+      <circle cx="90" cy="94" r="9" fill="#2ea043" stroke="#0d1117" stroke-width="2"/>
+      <text class="z" x="90" y="120" text-anchor="middle" fill="#56d364" font-size="11" font-weight="700">已完成</text>
+      <text class="e" x="90" y="120" text-anchor="middle" fill="#56d364" font-size="11" font-weight="700">Done</text>
+      <text x="90" y="135" text-anchor="middle" fill="#8b949e" font-size="9.5">design · container · cloud · models</text>
+
+      <text class="z" x="290" y="20" text-anchor="middle" fill="#e3b341" font-size="11.5" font-weight="700">▼ 現在 Now</text>
+      <text class="e" x="290" y="20" text-anchor="middle" fill="#e3b341" font-size="11.5" font-weight="700">▼ Now</text>
+      <text x="290" y="44" text-anchor="middle" fill="#e3b341" font-size="12.5" font-weight="700">🟡 MVP</text>
+      <text class="z" x="290" y="63" text-anchor="middle" fill="#e6edf3" font-size="11.5">Micah → 平台</text>
+      <text class="e" x="290" y="63" text-anchor="middle" fill="#e6edf3" font-size="11.5">Micah → platform</text>
+      <circle cx="290" cy="94" r="14" fill="none" stroke="#bb8009" stroke-width="1.5" opacity="0.55"/>
+      <circle cx="290" cy="94" r="9" fill="#bb8009" stroke="#0d1117" stroke-width="2"/>
+      <text x="290" y="120" text-anchor="middle" fill="#e3b341" font-size="11" font-weight="700">2026-06</text>
+      <text x="290" y="135" text-anchor="middle" fill="#8b949e" font-size="9.5">maga · senate · election</text>
+
+      <text x="490" y="44" text-anchor="middle" fill="#79c0ff" font-size="12.5" font-weight="700">🔵 P1</text>
+      <text class="z" x="490" y="63" text-anchor="middle" fill="#e6edf3" font-size="11.5">加速 + 驗證</text>
+      <text class="e" x="490" y="63" text-anchor="middle" fill="#e6edf3" font-size="11.5">Accelerate</text>
+      <circle cx="490" cy="94" r="9" fill="#1f6feb" stroke="#0d1117" stroke-width="2"/>
+      <text class="z" x="490" y="120" text-anchor="middle" fill="#79c0ff" font-size="11" font-weight="700">2–4 週</text>
+      <text class="e" x="490" y="120" text-anchor="middle" fill="#79c0ff" font-size="11" font-weight="700">2–4 wks</text>
+      <text x="490" y="135" text-anchor="middle" fill="#8b949e" font-size="9.5">multi-version · backtest · multi-algo</text>
+
+      <text x="690" y="44" text-anchor="middle" fill="#bc8cff" font-size="12.5" font-weight="700">🟣 P2</text>
+      <text class="z" x="690" y="63" text-anchor="middle" fill="#e6edf3" font-size="11.5">深度訊號</text>
+      <text class="e" x="690" y="63" text-anchor="middle" fill="#e6edf3" font-size="11.5">Deep signals</text>
+      <circle cx="690" cy="94" r="9" fill="#8957e5" stroke="#0d1117" stroke-width="2"/>
+      <text class="z" x="690" y="120" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="700">~1.5 月</text>
+      <text class="e" x="690" y="120" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="700">~1.5 mo</text>
+      <text x="690" y="135" text-anchor="middle" fill="#8b949e" font-size="9.5">chain · Tier 2 · multigraph</text>
+
+      <text x="890" y="44" text-anchor="middle" fill="#8b949e" font-size="12.5" font-weight="700">P3+</text>
+      <text class="z" x="890" y="63" text-anchor="middle" fill="#e6edf3" font-size="11.5">平台效應</text>
+      <text class="e" x="890" y="63" text-anchor="middle" fill="#e6edf3" font-size="11.5">Platform</text>
+      <circle cx="890" cy="94" r="9" fill="#444c56" stroke="#0d1117" stroke-width="2"/>
+      <text class="z" x="890" y="120" text-anchor="middle" fill="#8b949e" font-size="11" font-weight="700">~3 月+</text>
+      <text class="e" x="890" y="120" text-anchor="middle" fill="#8b949e" font-size="11" font-weight="700">~3 mo+</text>
+      <text class="z" x="890" y="135" text-anchor="middle" fill="#8b949e" font-size="9.5">快速迭代 · MCP · market</text>
+      <text class="e" x="890" y="135" text-anchor="middle" fill="#8b949e" font-size="9.5">iterate · MCP · market</text>
+    </svg>
+
+    <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:2px"><span class="z">時程比例（甘特視圖）</span><span class="e">Proportional (Gantt) view</span></div>
+      <svg viewBox="0 0 1000 98" width="100%" role="img" aria-label="Gantt-style proportional timeline" style="display:block;max-width:100%">
+        <defs><marker id="gtt" markerWidth="10" markerHeight="10" refX="2" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#6e7681"/></marker></defs>
+        <line x1="393" y1="34" x2="393" y2="92" stroke="#2d333b" stroke-width="1"/>
+        <line x1="636" y1="34" x2="636" y2="92" stroke="#2d333b" stroke-width="1"/>
+        <line x1="879" y1="34" x2="879" y2="92" stroke="#2d333b" stroke-width="1"/>
+        <text class="z" x="393" y="26" text-anchor="middle" fill="#8b949e" font-size="10">7月</text>
+        <text class="e" x="393" y="26" text-anchor="middle" fill="#8b949e" font-size="10">Jul</text>
+        <text class="z" x="636" y="26" text-anchor="middle" fill="#8b949e" font-size="10">8月</text>
+        <text class="e" x="636" y="26" text-anchor="middle" fill="#8b949e" font-size="10">Aug</text>
+        <text class="z" x="879" y="26" text-anchor="middle" fill="#8b949e" font-size="10">9月</text>
+        <text class="e" x="879" y="26" text-anchor="middle" fill="#8b949e" font-size="10">Sep</text>
+        <line x1="150" y1="30" x2="150" y2="96" stroke="#e3b341" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text class="z" x="150" y="26" text-anchor="middle" fill="#e3b341" font-size="10" font-weight="700">▲ 現在 6月</text>
+        <text class="e" x="150" y="26" text-anchor="middle" fill="#e3b341" font-size="10" font-weight="700">▲ Now Jun</text>
+        <rect x="70" y="54" width="80" height="28" rx="5" fill="#12351f" stroke="#2ea043"/>
+        <text x="110" y="72" text-anchor="middle" fill="#56d364" font-size="10" font-weight="700">P0 ✓</text>
+        <rect x="152" y="54" width="58" height="28" rx="5" fill="#bb8009"/>
+        <text x="181" y="72" text-anchor="middle" fill="#1a1205" font-size="10" font-weight="700">MVP</text>
+        <rect x="212" y="54" width="179" height="28" rx="5" fill="#1f6feb"/>
+        <text class="z" x="301" y="72" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="700">P1 · 加速驗證 (2–4 週)</text>
+        <text class="e" x="301" y="72" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="700">P1 · accelerate (2–4 wks)</text>
+        <rect x="393" y="54" width="125" height="28" rx="5" fill="#8957e5"/>
+        <text class="z" x="455" y="72" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="700">P2 (~1.5月)</text>
+        <text class="e" x="455" y="72" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="700">P2 (~1.5 mo)</text>
+        <rect x="520" y="54" width="378" height="28" rx="5" fill="#3a3f47" stroke="#444c56"/>
+        <text class="z" x="700" y="72" text-anchor="middle" fill="#e6edf3" font-size="10.5" font-weight="700">P3+ 平台效應 (~3月+)</text>
+        <text class="e" x="700" y="72" text-anchor="middle" fill="#e6edf3" font-size="10.5" font-weight="700">P3+ platform (~3 mo+)</text>
+        <line x1="898" y1="68" x2="936" y2="68" stroke="#6e7681" stroke-width="2" marker-end="url(#gtt)"/>
+      </svg>
+    </div>
+  </div>
+
+  <h2><span class="z">各階段</span><span class="e">Phases</span></h2>
+
+  <div class="grid">
+    <div class="card" style="border-color:var(--green-border)">
+      <div class="chead"><span class="badge b-green">✅ P0</span><strong><span class="z">技術地基</span><span class="e">Technical Foundation</span></strong></div>
+      <ul>
+        <li><span class="z">系統設計</span><span class="e">Architecture design</span></li>
+        <li><span class="z">容器化（docker compose）</span><span class="e">Containerised (docker compose)</span></li>
+        <li><span class="z">雲端遷移（runbook 已備）</span><span class="e">Cloud migration (runbook ready)</span></li>
+        <li><span class="z">資料遷移</span><span class="e">Data migration</span></li>
+        <li><span class="z">資料模型（16 張表 · append-only audit）</span><span class="e">Data models (16 tables · append-only audit)</span></li>
+        <li><span class="z">計算模型（DSL + 評分引擎）</span><span class="e">Calculation models (DSL + scoring engine)</span></li>
+      </ul>
+    </div>
+
+    <div class="card focus">
+      <div class="chead"><span class="badge b-orange">🟡 MVP</span><strong><span class="z">進行中 — 現在主目標</span><span class="e">In Progress — current focus</span></strong></div>
+      <div class="big"><span class="z">Micah POC → Data Platform：把現有的一模一樣 migrate 到 pmi platform 上</span><span class="e">Micah POC → Data Platform: migrate the existing setup as-is onto pmi platform</span></div>
+      <ul>
+        <li><span class="z">Micah 目前已有的（maga / senate / election 指數、爬蟲、評估、UI）<strong>原封不動</strong>搬到 pmi platform</span><span class="e">Move Micah's existing maga / senate / election indexes, scrapers, evaluation and UI onto pmi platform <strong>as-is</strong></span></li>
+        <li><span class="z">部署從 <strong>Render 搬到 AWS 生態系</strong></span><span class="e">Migrate hosting from <strong>Render to the AWS ecosystem</strong></span></li>
+        <li><span class="z">全鏈路真資料：爬蟲 → LLM 評估 → 產出 index → UI，沿用 Micah 邏輯、跑在新架構上</span><span class="e">Real data across the chain: scrape → LLM eval → index → UI, same logic on the new architecture</span></li>
+        <li><span class="z">三個 index 都能在畫面上看到真數字（對得上 Micah）</span><span class="e">Real numbers on screen for all three indexes, matching Micah</span></li>
+      </ul>
+    </div>
+
+    <div class="card" style="border-color:var(--blue-border)">
+      <div class="chead"><span class="badge b-blue">🔵 P1</span><strong><span class="z">加速 + 驗證</span><span class="e">Accelerate &amp; Validate</span></strong></div>
+      <ul>
+        <li><span class="z">多版本共存：改 weight/factor 會存成新版本，舊版仍能算，歷史可比</span><span class="e">Multi-version: editing weights/factors creates a new version; old versions still compute, history stays comparable</span></li>
+        <li><span class="z">多演算法框架：同一組市場可換不同算法，產出不同指數變體來比較</span><span class="e">Multi-algorithm framework: swap algorithms over the same markets to produce comparable index variants</span></li>
+        <li><span class="z">多演算法 benchmark：同一指數用多種算法回測比分，挑出最好的</span><span class="e">Multi-algorithm benchmark: backtest one index under several algorithms and pick the best</span></li>
+        <li><span class="z">一鍵回測：改完立刻看過去 90 天會跑成什麼樣</span><span class="e">One-click backtest: instantly see how the last 90 days would have run</span></li>
+        <li><span class="z">三個 category UI：maga、war、economy 各一個盤面</span><span class="e">Three category dashboards: maga, war, economy</span></li>
+      </ul>
+      <p class="lead"><span class="z">讓「改一版 index → 立刻看歷史表現差異」變成分鐘級循環。</span><span class="e">Make "tweak an index → see the historical difference" a minutes-long loop.</span></p>
+    </div>
+
+    <div class="card" style="border-color:var(--purple-border)">
+      <div class="chead"><span class="badge b-purple">🟣 P2</span><strong><span class="z">深度訊號</span><span class="e">Deep signals</span></strong></div>
+      <ul>
+        <li><span class="z"><strong>廣泛驗證特徵</strong>：系統化測各種訊號／因子，找出哪些真的讓指數更準</span><span class="e"><strong>Broadly validate features</strong>: systematically test signals/factors to find which actually improve the index</span></li>
+        <li><span class="z">看「誰在交易」：從鏈上 + 訂單簿分出大戶 vs 散戶，加進指數判斷</span><span class="e">See who's trading: split whales vs retail from on-chain + orderbook and feed it into the index</span></li>
+        <li><span class="z">更聰明的 AI 評估：模糊的市場會自己上網查、讀結算條件再打分</span><span class="e">Smarter AI eval: ambiguous markets search the web and read resolution criteria before scoring</span></li>
+        <li><span class="z">耐久的工作流：長任務（回測、整表重算）跑到一半掛了能接續</span><span class="e">Durable workflows: long jobs (backtests, full recompute) resume after a crash</span></li>
+        <li><span class="z">更快的分析資料庫，等現在這套撐不住查詢再上</span><span class="e">A faster analytics DB, added once the current setup can't keep up</span></li>
+        <li><span class="z">用「關係圖」算指數：市場之間互斥／翻轉／邏輯一致，自動推出來</span><span class="e">Score via a relationship graph: mutual-exclusion / flips / logical consistency derived automatically</span></li>
+        <li><span class="z">夜間批次計算 + 成本上限，省 LLM 帳單</span><span class="e">Nightly batch compute + cost caps to cut the LLM bill</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;border-color:var(--gray-border)">
+    <div class="chead"><span class="badge b-gray">P3+</span><strong><span class="z">平台效應</span><span class="e">Platform play</span></strong></div>
+    <div class="grid" style="margin-top:2px">
+      <div>
+        <p style="font-size:13px;color:var(--accent);font-weight:600;margin-bottom:4px"><span class="z">核心</span><span class="e">Core</span></p>
+        <ul>
+          <li><strong><span class="z">因應不同市場策略，幾分鐘就生一個新指數</span><span class="e">Spin up a new index in minutes for each market strategy</span></strong></li>
+          <li><span class="z">分鐘級循環：定義 → 預覽 → 上線</span><span class="e">Minutes-long loop: define → preview → ship</span></li>
+        </ul>
+      </div>
+      <div>
+        <p style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:4px"><span class="z">延伸</span><span class="e">Extensions</span></p>
+        <ul>
+          <li><span class="z">AI 直接接平台：一句話拿指數、建指數</span><span class="e">AI plugs straight in: get or build an index in one sentence</span></li>
+          <li><span class="z">拖拉式建指數介面 + 回測沙盒</span><span class="e">Drag-and-drop index builder + backtest playground</span></li>
+          <li><span class="z">指數市集：第三方發布、多租戶隔離</span><span class="e">Index marketplace: third-party publishing, multi-tenant isolation</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2><span class="z">各套件分階段</span><span class="e">Per-package, by phase</span></h2>
+  <div class="mtxwrap">
+    <table class="mtx">
+      <thead>
+        <tr>
+          <th><span class="z">套件</span><span class="e">Package</span></th>
+          <th style="color:var(--green-fg)"><span class="z">P0 ✅ 技術地基</span><span class="e">P0 ✅ Foundation</span></th>
+          <th style="color:var(--orange-fg)"><span class="z">MVP 🟡 端到端真數字</span><span class="e">MVP 🟡 End-to-end</span></th>
+          <th style="color:var(--blue-fg)"><span class="z">P1 加速 + 驗證</span><span class="e">P1 Accelerate</span></th>
+          <th style="color:var(--purple-fg)"><span class="z">P2 深度訊號</span><span class="e">P2 Deep signals</span></th>
+          <th style="color:var(--gray-fg)"><span class="z">P3+ 平台效應</span><span class="e">P3+ Platform play</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>pmi-core</td>
+          <td><span class="z">schema 16 表 · DSL→IR · 評分引擎 · CLI · MLflow client</span><span class="e">16-table schema · DSL→IR · scoring engine · CLI · MLflow client</span></td>
+          <td><span class="z">war/maga/senate/election index def + 真 LLM · 國家/區域多層聚合</span><span class="e">war/maga/senate/election index defs + real LLM · country/region multi-level aggregation</span></td>
+          <td><span class="z">多版本 diff · 多演算法框架 (formula registry) · backtest 引擎</span><span class="e">multi-version diff · multi-algorithm framework (formula registry) · backtest engine</span></td>
+          <td><span class="z">關係圖引擎 (typed multigraph) · Tier 2 agentic 評估 · 廣泛特徵驗證</span><span class="e">relationship-graph engine (typed multigraph) · Tier 2 agentic eval · broad feature validation</span></td>
+          <td><span class="z">受限自訂公式 · 指數市集 schema</span><span class="e">sandboxed custom formulas · marketplace schema</span></td>
+        </tr>
+        <tr>
+          <td>pmi-ingest</td>
+          <td>Polymarket REST poller + source health</td>
+          <td><span class="z">多源真資料：Kalshi/PredictIt/ForecastEx/Metaculus/Manifold + Robinhood/Coinbase 爬蟲</span><span class="e">multi-source real data: Kalshi/PredictIt/ForecastEx/Metaculus/Manifold + Robinhood/Coinbase scrapers</span></td>
+          <td><span class="z">歷史價格 backfill (餵 backtest) · WS trades smoke</span><span class="e">historical price backfill (feeds backtest) · WS trades smoke</span></td>
+          <td><span class="z">鏈上 indexer (大戶/UMA) · CLOB 訂單簿深度 · WS 真接</span><span class="e">on-chain indexer (cohort/UMA) · CLOB orderbook depth · live WS</span></td>
+          <td><span class="z">更多資料源接入</span><span class="e">more data sources</span></td>
+        </tr>
+        <tr>
+          <td>pmi-api</td>
+          <td><span class="z">讀取端點 /indexes /score /history</span><span class="e">read endpoints /indexes /score /history</span></td>
+          <td><span class="z">maga/senate/election 端點回真資料 (/senate-board, /maga/by-state)</span><span class="e">maga/senate/election endpoints return real data (/senate-board, /maga/by-state)</span></td>
+          <td><span class="z">backtest / diff / explain breakdown 端點</span><span class="e">backtest / diff / explain-breakdown endpoints</span></td>
+          <td><span class="z">深度訊號端點 (cohort/orderbook)</span><span class="e">deep-signal endpoints (cohort/orderbook)</span></td>
+          <td><span class="z">GraphQL / WebSocket · 多租戶隔離</span><span class="e">GraphQL / WebSocket · multi-tenant isolation</span></td>
+        </tr>
+        <tr>
+          <td>pmi-workers</td>
+          <td>supercronic cron runner</td>
+          <td><span class="z">ingest → score → serve 自動排程</span><span class="e">ingest → score → serve auto-scheduling</span></td>
+          <td><span class="z">backtest job · Tier 0 embedding job</span><span class="e">backtest job · Tier 0 embedding job</span></td>
+          <td><span class="z">Temporal 耐久工作流 · 夜間批次 · 成本上限 · A/B · shadow 跑特徵驗證</span><span class="e">Temporal durable workflows · nightly batch · cost caps · A/B &amp; shadow feature validation</span></td>
+          <td class="dash">—</td>
+        </tr>
+        <tr>
+          <td>pmi-web</td>
+          <td>SSR dashboard (index/score/history)</td>
+          <td><span class="z">/micah/war · /micah/senate · maga 盤面接真資料</span><span class="e">/micah/war · /micah/senate · maga boards on real data</span></td>
+          <td><span class="z">builder 雛形 · maga/war/economy 盤面 · explain breakdown · 回測圖</span><span class="e">builder prototype · maga/war/economy boards · explain breakdown · backtest charts</span></td>
+          <td><span class="z">大戶/訂單簿視覺</span><span class="e">whale/orderbook visualisations</span></td>
+          <td><span class="z">拖拉式 builder UI · 回測沙盒 · in-app chat</span><span class="e">drag-and-drop builder UI · backtest playground · in-app chat</span></td>
+        </tr>
+        <tr>
+          <td>pmi-mcp</td>
+          <td class="dash">stub (P3)</td>
+          <td class="dash">—</td>
+          <td><span class="z">Tier-A 讀工具 (list/get index/score/history)</span><span class="e">Tier-A read tools (list/get index/score/history)</span></td>
+          <td><span class="z">Tier-B 分析工具 (explain/compare/backtest)</span><span class="e">Tier-B analysis tools (explain/compare/backtest)</span></td>
+          <td><span class="z">完整 Tier A/B/C + 每日簡報 agent</span><span class="e">full Tier A/B/C + daily-briefing agent</span></td>
+        </tr>
+        <tr>
+          <td>mlflow</td>
+          <td><span class="z">prompt/run/eval lineage 鏡像</span><span class="e">prompt/run/eval lineage mirror</span></td>
+          <td><span class="z">持續鏡像每次 tick + factor eval</span><span class="e">keep mirroring every tick + factor eval</span></td>
+          <td><span class="z">多版本 / 多演算法 run 比較</span><span class="e">multi-version / multi-algorithm run comparison</span></td>
+          <td><span class="z">特徵 / 模型 A-B 比較</span><span class="e">feature / model A-B comparison</span></td>
+          <td class="dash">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    <a href="index.html"><span class="z">← 文件入口</span><span class="e">← Docs index</span></a> &nbsp;·&nbsp;
+    <span class="z">逐項狀態與細節看完整 <a href="roadmap-bilingual.html">roadmap-bilingual.html</a>。</span>
+    <span class="e">full item-by-item detail in <a href="roadmap-bilingual.html">roadmap-bilingual.html</a>.</span><br>
+    <span style="color:var(--dim)"><span class="z">Team brief · 高層摘要，刻意省略 SHIP-/CORR- 逐項細節。</span><span class="e">Team brief · high-level, intentionally omits item-level SHIP-/CORR- detail.</span></span>
+  </footer>
+</div>
+
+<script>
+function setLang(l){
+  document.body.classList.toggle('en', l === 'en');
+  document.documentElement.lang = (l === 'en') ? 'en' : 'zh-Hant';
+  document.querySelectorAll('.langtoggle button').forEach(function(b){
+    b.classList.toggle('active', b.dataset.l === l);
+  });
+}
+</script>
+</body>
+</html>

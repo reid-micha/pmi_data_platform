@@ -485,6 +485,7 @@ async def _models_register_async(
     description: str | None,
     created_by: str | None,
     mlflow_register: bool,
+    tools_config: dict | None = None,
 ) -> dict:
     from pmi_core import mlflow_client
     from pmi_core.models import CoreFactorModel, CorePrompt
@@ -531,6 +532,7 @@ async def _models_register_async(
             prompt_id=prompt_row.id,
             llm_model_id=llm_model_id,
             temperature=temperature,
+            tools_config=tools_config,
             stage="staging",
             is_active=False,
             description=description,
@@ -613,8 +615,21 @@ def models_list(factor: str | None) -> None:
 @click.option("--factor", "factor_id", required=True)
 @click.option("--prompt-name", required=True, help="e.g. factors/directly_about_war")
 @click.option("--prompt-version", required=True, type=int)
-@click.option("--llm", "llm_model_id", required=True, help="e.g. gpt-4o-mini-2024-07-18")
+@click.option(
+    "--llm",
+    "llm_model_id",
+    required=True,
+    help="e.g. gpt-4o-mini-2024-07-18, or agentic/gpt-4o for a Tier 2 tool-loop model.",
+)
 @click.option("--temperature", default=None, type=float)
+@click.option(
+    "--tools-config",
+    default=None,
+    help=(
+        'JSON for Tier 2 agentic models, e.g. \'{"tools":["recent_trades"],'
+        '"max_steps":4}\'. Ignored by single-shot (gpt-*/ollama/*) models.'
+    ),
+)
 @click.option("--description", default=None)
 @click.option("--created-by", default=None)
 @click.option(
@@ -629,11 +644,20 @@ def models_register(
     prompt_version: int,
     llm_model_id: str,
     temperature: float | None,
+    tools_config: str | None,
     description: str | None,
     created_by: str | None,
     no_mlflow: bool,
 ) -> None:
     """Register a new factor model in 'staging'. Use `models promote` to activate."""
+    parsed_tools_config: dict | None = None
+    if tools_config:
+        try:
+            parsed_tools_config = json.loads(tools_config)
+        except json.JSONDecodeError as exc:
+            raise click.ClickException(f"--tools-config is not valid JSON: {exc}") from exc
+        if not isinstance(parsed_tools_config, dict):
+            raise click.ClickException("--tools-config must be a JSON object")
     result = asyncio.run(
         _models_register_async(
             factor_id=factor_id,
@@ -644,6 +668,7 @@ def models_register(
             description=description,
             created_by=created_by,
             mlflow_register=not no_mlflow,
+            tools_config=parsed_tools_config,
         )
     )
     click.echo(json.dumps(result, indent=2))

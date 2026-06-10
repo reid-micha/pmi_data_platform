@@ -74,6 +74,8 @@ class OllamaProvider:
         rendered_prompt: str,
         factor: FactorSpec,
         temperature: float | None = None,
+        market: Any | None = None,  # noqa: ARG002 — Tier 2 context, ignored single-shot
+        tools_config: dict | None = None,  # noqa: ARG002 — see AgenticProvider
     ) -> LLMResponse:
         # Lazy import so test environments without the SDK stay importable.
         from openai import APIConnectionError, APIError, APIStatusError, RateLimitError

@@ -5,13 +5,14 @@ single function regardless of which model is bound. Implementations live in
 sibling modules and are selected by `get_provider(model_id)`.
 
 Currently registered providers:
-    - `stub-*`   → `pmi_core.engine.factor_evaluator._stub_score` (in-evaluator)
-    - `gpt-*`    → `pmi_core.llm.openai_client.OpenAIProvider`
-    - `ollama/*` → `pmi_core.llm.ollama_client.OllamaProvider` (local models)
+    - `stub-*`    → `pmi_core.engine.factor_evaluator._stub_score` (in-evaluator)
+    - `gpt-*`     → `pmi_core.llm.openai_client.OpenAIProvider` (Tier 1, single-shot)
+    - `ollama/*`  → `pmi_core.llm.ollama_client.OllamaProvider` (local models)
+    - `agentic/*` → `pmi_core.llm.agentic_client.AgenticProvider` (Tier 2, tool loop)
 
 Adding a new provider:
     1. Drop `pmi_core/llm/<name>_client.py` implementing `LLMProvider`.
-    2. Add a prefix → factory entry to `_PROVIDER_REGISTRY` in `base.py`.
+    2. Add a `model_id.startswith(...)` → factory branch in `get_provider` (base.py).
     3. No factor / evaluator code changes required.
 """
 

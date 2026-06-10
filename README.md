@@ -5,15 +5,20 @@
 設計文件留在 workspace root 的 [`../pmi-platform-proposal/`](../pmi-platform-proposal/)；
 vision / north-star 在 [`../CLAUDE.md`](../CLAUDE.md) / [`../AGENTS.md`](../AGENTS.md)。
 
-跨領域 TODO 分兩本維護：[`./TODO-跑出來.md`](./TODO-跑出來.md)（ship-it / DX）
-與 [`./TODO-跑得對.md`](./TODO-跑得對.md)（correctness / 數值正確性）。
+跨領域 TODO 分四本維護：[`./TODO-跑出來.md`](./TODO-跑出來.md)（ship-it / DX）、
+[`./TODO-跑得對.md`](./TODO-跑得對.md)（correctness / 數值正確性）、
+[`./TODO-真實e2e.md`](./TODO-真實e2e.md)（筆電真實 e2e）與
+[`./TODO-next-version.md`](./TODO-next-version.md)（typed multigraph 架構方向）。
 
 開發 how-to：新增 / 改一個 PMI index 從 YAML 到 serving 的完整流程
 看 [`./HOWTO-新增index.md`](./HOWTO-新增index.md)。
 
-實作現況的 data-flow 架構圖（含 ✅/🟡/❌ 狀態，對應上述兩本 TODO 的 SHIP-* / CORR-* ID）：
-[`./docs/architecture-current.html`](./docs/architecture-current.html)（snapshot 2026-05-29）。
-所有說明文件已集中在 [`./docs/`](./docs/)，入口頁 [`./docs/index.html`](./docs/index.html)。
+所有說明文件已集中在 [`./docs/`](./docs/)，入口頁 [`./docs/index.html`](./docs/index.html)
+（snapshot 2026-06-07，頂部有現況快照 banner）。四份核心文件（雙語、共用 dark-theme）：
+[`architecture-current.html`](./docs/architecture-current.html)（五層 data-flow，每個節點 ✅/🟡/❌ 並對位 SHIP-* / CORR-* ID）、
+[`roadmap-bilingual.html`](./docs/roadmap-bilingual.html)（四軌 SHIP / CORR / E2E / NEXT 逐項狀態 + P0–P3 時間軸）、
+[`business-overview.html`](./docs/business-overview.html)（產品概覽，少術語）、
+[`pipeline-comparison.html`](./docs/pipeline-comparison.html)（現況單迴圈 vs typed-multigraph 雙迴圈）。
 
 ---
 
@@ -105,7 +110,7 @@ cp pmi_data_platform/.env.example pmi_data_platform/.env   # one-time, fill secr
 just db-up                                          # Postgres + extensions
 just mlflow-up                                      # MLflow tracking + Prompt Registry :5500
 just pmi-build                                      # build pmi-core + pmi-ingest + pmi-api images
-just pmi-migrate                                    # apply alembic (0001 schema + 0002 mlflow links + 0003 factor models)
+just pmi-migrate                                    # apply alembic head 0007 (0001 schema → 0002 mlflow → 0003 factor models → 0004 polymarket deep signals → 0005 price-snapshot unique → 0006 nullable score → 0007 unsized embeddings)
 just pmi-seed                                       # load 13 synthetic markets (war + 2026 senate/house) + register every index_def
 just pmi-score                                      # one pipeline tick → ts_index_scores + MLflow runs
 just api-up                                         # start FastAPI on :8001

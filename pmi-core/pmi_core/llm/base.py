@@ -87,6 +87,8 @@ class LLMProvider(Protocol):
         rendered_prompt: str,
         factor: FactorSpec,
         temperature: float | None = None,
+        market: Any | None = None,
+        tools_config: dict | None = None,
     ) -> LLMResponse:
         """Run the rendered prompt through the LLM and return a normalised result.
 
@@ -95,6 +97,10 @@ class LLMProvider(Protocol):
           - parse the JSON envelope via `parse_factor_response`
           - populate token counts + `cost_usd` from the provider's billing meter
           - raise `ParseError` if the response can't be coerced into the expected shape
+
+        `market` and `tools_config` are Tier 2 (agentic) context: single-shot
+        providers (OpenAI/Ollama) accept and ignore them; `AgenticProvider` binds
+        its tools to `market` and reads its tool list / budget from `tools_config`.
         """
         ...
 
@@ -267,6 +273,14 @@ def get_provider(model_id: str) -> LLMProvider:
     # CoreFactorModel row, with no new provider class.
     # `ollama/<model>` routes to a local Ollama worker (own endpoint, free,
     # coexists with OpenAI-direct) — see PMI_OLLAMA_BASE_URL in settings.
+    # `agentic/<base_model>` (e.g. `agentic/gpt-4o`) → Tier 2 multi-step
+    # tool-calling provider. Checked before the gpt-/openai- prefixes so the
+    # base model name inside the id doesn't get routed to the single-shot
+    # OpenAIProvider. The agent loop reuses OpenAIProvider's transport.
+    if model_id.startswith("agentic/"):
+        from pmi_core.llm.agentic_client import AgenticProvider
+
+        return AgenticProvider(model_id=model_id)
     if model_id.startswith("ollama/"):
         from pmi_core.llm.ollama_client import OllamaProvider
 
@@ -277,6 +291,6 @@ def get_provider(model_id: str) -> LLMProvider:
         return OpenAIProvider(model_id=model_id)
     raise UnknownModelError(
         f"no provider registered for model_id={model_id!r}. "
-        f"Known prefixes: gpt-*, openai/*, local/*, self-hosted/*, ollama/*. "
-        f"(stub-* is handled in-evaluator, not via get_provider.)"
+        f"Known prefixes: agentic/*, gpt-*, openai/*, local/*, self-hosted/*, "
+        f"ollama/*. (stub-* is handled in-evaluator, not via get_provider.)"
     )

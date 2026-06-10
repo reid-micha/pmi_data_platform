@@ -24,18 +24,3943 @@
   <div id="root"></div>
 
   <!-- Data first, then components, then views, then app -->
-  <script src="data.js"></script>
-  <script src="data-senate.js"></script>
-  <script src="pmi-model.js"></script>
-  <script type="text/babel" src="components.jsx"></script>
-  <script type="text/babel" src="map.jsx"></script>
-  <script type="text/babel" src="views.jsx"></script>
-  <script type="text/babel" src="views-ask.jsx"></script>
-  <script type="text/babel" src="views-pro.jsx"></script>
-  <script type="text/babel" src="views-pro-analyst.jsx"></script>
-  <script type="text/babel" src="views-pro-analyst2.jsx"></script>
-  <script type="text/babel" src="views-pro-micro.jsx"></script>
-  <script type="text/babel" src="views-senate.jsx"></script>
-  <script type="text/babel" src="app.jsx"></script>
+  <script >
+/* Micah sample data — states, exchanges, contracts, time series */
+
+window.MICAH = (() => {
+  // ---------- Exchanges (the prediction markets) ----------
+  const exchanges = {
+    kalshi:      { name: 'Kalshi',      color: '#00D08C', glyph: 'K', label: 'Kalshi' },
+    polymarket:  { name: 'Polymarket',  color: '#1652F0', glyph: 'P', label: 'Polymarket' },
+    robinhood:   { name: 'Robinhood',   color: '#CCFF00', glyph: 'R', label: 'Robinhood', dark: true },
+    metaculus:   { name: 'Metaculus',   color: '#111111', glyph: 'M', label: 'Metaculus' },
+    coinbase:    { name: 'Coinbase',    color: '#1652F0', glyph: 'C', label: 'Coinbase' },
+    manifold:    { name: 'Manifold',    color: '#4E2DE0', glyph: 'M', label: 'Manifold' },
+    predictit:   { name: 'PredictIt',   color: '#E66A2C', glyph: 'P', label: 'PredictIt' },
+    pinata:      { name: 'Pinata',      color: '#111111', glyph: 'P', label: 'Pinata' },
+    crowncoin:   { name: 'CrownCoin',   color: '#4E2DE0', glyph: '♛', label: 'CrownCoin' },
+    insightpred: { name: 'InsightPred', color: '#FFD500', glyph: 'i', label: 'Insight', dark: true },
+    forecast:    { name: 'Forecast',    color: '#111111', glyph: 'F', label: 'Forecast' },
+  };
+
+  // ---------- US states with sample PMI heat values (0=Dem, 100=Rep) ----------
+  // value 0..100 — heat scale, mirroring the screenshot's distribution
+  const states = {
+    AL: { name: 'Alabama',        value: 78, contracts: 280 },
+    AK: { name: 'Alaska',         value: 82, contracts: 90  },
+    AZ: { name: 'Arizona',        value: 72, contracts: 540 },
+    AR: { name: 'Arkansas',       value: 18, contracts: 110 },
+    CA: { name: 'California',     value: 5,  contracts: 1820 },
+    CO: { name: 'Colorado',       value: 48, contracts: 410 },
+    CT: { name: 'Connecticut',    value: 62, contracts: 220 },
+    DE: { name: 'Delaware',       value: 64, contracts: 100 },
+    FL: { name: 'Florida',        value: 6,  contracts: 1310 },
+    GA: { name: 'Georgia',        value: 60, contracts: 720 },
+    HI: { name: 'Hawaii',         value: 12, contracts: 80 },
+    ID: { name: 'Idaho',          value: 22, contracts: 120 },
+    IL: { name: 'Illinois',       value: 52, contracts: 640 },
+    IN: { name: 'Indiana',        value: 80, contracts: 270 },
+    IA: { name: 'Iowa',           value: 26, contracts: 240 },
+    KS: { name: 'Kansas',         value: 82, contracts: 180 },
+    KY: { name: 'Kentucky',       value: 20, contracts: 200 },
+    LA: { name: 'Louisiana',      value: 88, contracts: 230 },
+    ME: { name: 'Maine',          value: 58, contracts: 130 },
+    MD: { name: 'Maryland',       value: 33, contracts: 320 },
+    MA: { name: 'Massachusetts',  value: 42, contracts: 380 },
+    MI: { name: 'Michigan',       value: 70, contracts: 620 },
+    MN: { name: 'Minnesota',      value: 64, contracts: 360 },
+    MS: { name: 'Mississippi',    value: 20, contracts: 140 },
+    MO: { name: 'Missouri',       value: 24, contracts: 290 },
+    MT: { name: 'Montana',        value: 14, contracts: 120 },
+    NE: { name: 'Nebraska',       value: 20, contracts: 150 },
+    NV: { name: 'Nevada',         value: 76, contracts: 380 },
+    NH: { name: 'New Hampshire',  value: 65, contracts: 160 },
+    NJ: { name: 'New Jersey',     value: 60, contracts: 410 },
+    NM: { name: 'New Mexico',     value: 78, contracts: 180 },
+    NY: { name: 'New York',       value: 48, contracts: 920 },
+    NC: { name: 'North Carolina', value: 86, contracts: 670 },
+    ND: { name: 'North Dakota',   value: 22, contracts: 100 },
+    OH: { name: 'Ohio',           value: 78, contracts: 540 },
+    OK: { name: 'Oklahoma',       value: 22, contracts: 200 },
+    OR: { name: 'Oregon',         value: 42, contracts: 290 },
+    PA: { name: 'Pennsylvania',   value: 80, contracts: 760 },
+    RI: { name: 'Rhode Island',   value: 44, contracts: 100 },
+    SC: { name: 'South Carolina', value: 76, contracts: 250 },
+    SD: { name: 'South Dakota',   value: 18, contracts: 100 },
+    TN: { name: 'Tennessee',      value: 22, contracts: 280 },
+    TX: { name: 'Texas',          value: 92, contracts: 1450 },
+    UT: { name: 'Utah',           value: 84, contracts: 200 },
+    VT: { name: 'Vermont',        value: 38, contracts: 90 },
+    VA: { name: 'Virginia',       value: 16, contracts: 510 },
+    WA: { name: 'Washington',     value: 36, contracts: 480 },
+    WV: { name: 'West Virginia',  value: 14, contracts: 130 },
+    WI: { name: 'Wisconsin',      value: 70, contracts: 480 },
+    WY: { name: 'Wyoming',        value: 18, contracts: 80 },
+    DC: { name: 'D.C.',           value: 2,  contracts: 60 },
+  };
+
+  // ---------- PMI Indexes (rows in the list) ----------
+  const indexes = [
+    {
+      id: 'md-maga', title: 'Maryland MAGA Index', kind: 'state', state: 'MD',
+      score: 32.8, scoreType: 'score', heat: 33, contracts: 1150,
+      tags: ['Maryland'], excs: ['coinbase','polymarket','metaculus','kalshi'], extras: 5,
+    },
+    {
+      id: 'mi-question', title: 'Will the Democratic candidate win the 2026 Michigan gubernatorial race?',
+      kind: 'question', state: 'MI', score: 58, scoreType: 'prob', heat: 70, contracts: 620,
+      tags: ['Michigan','Governor'], excs: ['robinhood','metaculus','kalshi','manifold'], extras: 5,
+    },
+    {
+      id: 'fl-maga', title: 'Florida MAGA Index', kind: 'state', state: 'FL',
+      score: 72.8, scoreType: 'score', heat: 88, contracts: 440,
+      tags: ['Florida'], excs: ['coinbase','predictit','metaculus','manifold'], extras: 5,
+    },
+    {
+      id: 'ga-3p', title: "Will a third-party candidate receive more than 5% in the 2026 Georgia governor's race?",
+      kind: 'question', state: 'GA', score: 88, scoreType: 'prob', heat: 5, contracts: 720,
+      tags: ['Michigan','Governor'], excs: ['kalshi','polymarket','pinata','manifold'], extras: 5,
+    },
+    {
+      id: 'md-hogan', title: 'Will incumbent Larry Hogan win re-election as governor of Maryland?',
+      kind: 'question', state: 'MD', score: 42, scoreType: 'prob', heat: 65, contracts: 650,
+      tags: ['Governor'], excs: ['kalshi','predictit','polymarket','robinhood'], extras: 5,
+    },
+    {
+      id: 'pa-maga', title: 'Pennsylvania MAGA Index', kind: 'state', state: 'PA',
+      score: 80, scoreType: 'score', heat: 80, contracts: 760,
+      tags: ['Pennsylvania'], excs: ['kalshi','polymarket','metaculus','coinbase'], extras: 5,
+    },
+    {
+      id: 'tx-gov', title: 'Texas Governor MAGA Index', kind: 'state', state: 'TX',
+      score: 90, scoreType: 'score', heat: 92, contracts: 980,
+      tags: ['Texas','Governor'], excs: ['polymarket','metaculus','coinbase','manifold'], extras: 5,
+    },
+  ];
+
+  // ---------- Component contracts for a single PMI ----------
+  const componentContracts = [
+    { title: 'Will the Democratic candidate lead in <State> gubernatorial polling average in October 2026?', rel: 'Direct', exc: 'metaculus', volume: 28098, prob: 10.0 },
+    { title: 'Will the Democratic candidate win Wayne County by ≥10% margin in the 2026 <State> gubernatorial election?', rel: 'Direct', exc: 'polymarket', volume: 22102, prob: 20.0 },
+    { title: 'Will the Democratic Party have a lead in the generic <State> congressional ballot in October 2026?', rel: 'Indirect', exc: 'robinhood', volume: 1230, prob: 20.0 },
+    { title: 'Will U.S. unemployment be below 5% in October 2026?', rel: 'Indirect', exc: 'kalshi', volume: 1125, prob: 20.0 },
+  ];
+
+  // ---------- 14-day time series (Mar 1 -> Mar 14) ----------
+  // Generate a slightly noisy upward curve, end ≈ 93
+  function makeSeries(seed = 1, end = 93, start = 40) {
+    const out = [];
+    let v = start;
+    for (let i = 0; i < 28; i++) {
+      const trend = (end - start) * (i / 27);
+      // pseudo-noise
+      const n = Math.sin(seed * (i + 1) * 1.7) * 6 + Math.cos(seed * (i + 1) * 0.9) * 3;
+      out.push(Math.max(0, Math.min(100, start + trend + n)));
+    }
+    out[out.length - 1] = end;  // anchor end
+    return out;
+  }
+  const series14 = makeSeries(1, 93, 40);
+
+  // ---------- War Index holdings (Israel offensive question cards) ----------
+  const warHoldings = [
+    { exc: 'polymarket', title: 'Will Israel launch a major ground offensive in Lebanon by March 31?', rel: 'Indirect', volume: '$47.7M', yes: 100 },
+    { exc: 'kalshi',     title: 'Will Israel launch a major ground offensive in Lebanon by March 31?', rel: 'Indirect', volume: '$47.7M', yes: 100 },
+    { exc: 'robinhood',  title: 'Will Israel launch a major ground offensive in Lebanon by March 31?', rel: 'Indirect', volume: '$47.7M', yes: 100 },
+    { exc: 'coinbase',   title: 'Will Israel launch a major ground offensive in Lebanon by March 31?', rel: 'Indirect', volume: '$47.7M', yes: 100 },
+  ];
+
+  // ---------- Northeast Corridor (right rail of map) ----------
+  const northeast = ['VT','NH','MA','RI','CT','NJ','DE','MD','DC'];
+
+  return { exchanges, states, indexes, componentContracts, series14, makeSeries, warHoldings, northeast };
+})();
+
+</script>
+  <script >
+/* Micah — 2026 US Senate sample data.
+ *
+ * Each race carries:
+ *   state        — 2-letter code (lookup into MICAH.states)
+ *   inc          — incumbent party 'R' | 'D'
+ *   incName      — short label (incumbent, "(ret.)" if retiring, "(special)" if appointed)
+ *   matchup      — short candidate matchup string for the row body
+ *   probR        — market-implied probability the seat goes Republican (0-100)
+ *   d14          — 14-day Δ in probR (signed)
+ *   volume       — $ traded in the past day across the holding contracts
+ *   contracts    — count of component contracts
+ *   excs         — list of exchange ids with live markets (subset)
+ *
+ * These are illustrative for the design — not a live forecast.
+ */
+window.MICAH_SENATE = (() => {
+  const races = [
+    // ---- Safe R (probR >= 90) ----
+    { state: 'AL', inc: 'R', incName: 'Tuberville',         matchup: 'Tuberville (R) — open seat (gov run)', probR: 96, d14: +0.4, volume: 38000,  contracts: 22, excs: ['kalshi','polymarket','metaculus'] },
+    { state: 'AR', inc: 'R', incName: 'Cotton',             matchup: 'Cotton (R) — no major challenger',     probR: 96, d14: -0.1, volume: 11000,  contracts: 9,  excs: ['kalshi','polymarket'] },
+    { state: 'ID', inc: 'R', incName: 'Risch',              matchup: 'Risch (R) — no major challenger',      probR: 97, d14:  0.0, volume:  7000,  contracts: 5,  excs: ['kalshi','metaculus'] },
+    { state: 'KS', inc: 'R', incName: 'Marshall',           matchup: 'Marshall (R) — no major challenger',   probR: 92, d14: -0.3, volume:  8000,  contracts: 7,  excs: ['kalshi','polymarket'] },
+    { state: 'LA', inc: 'R', incName: 'Cassidy',            matchup: 'Cassidy (R) vs. Kennedy (R) primary',  probR: 90, d14: +1.2, volume: 14000,  contracts: 10, excs: ['kalshi','polymarket','predictit'] },
+    { state: 'MS', inc: 'R', incName: 'Hyde-Smith',         matchup: 'Hyde-Smith (R) — no major challenger', probR: 90, d14: +0.2, volume:  9000,  contracts: 7,  excs: ['kalshi'] },
+    { state: 'OK', inc: 'R', incName: 'Mullin',             matchup: 'Mullin (R) — no major challenger',     probR: 96, d14: -0.1, volume:  8000,  contracts: 6,  excs: ['kalshi','metaculus'] },
+    { state: 'SD', inc: 'R', incName: 'Rounds',             matchup: 'Rounds (R) — no major challenger',     probR: 95, d14:  0.0, volume:  7000,  contracts: 5,  excs: ['kalshi'] },
+    { state: 'TN', inc: 'R', incName: 'Hagerty',            matchup: 'Hagerty (R) — no major challenger',    probR: 92, d14: -0.2, volume: 11000,  contracts: 8,  excs: ['kalshi','polymarket'] },
+    { state: 'WV', inc: 'R', incName: 'Capito',             matchup: 'Capito (R) — no major challenger',     probR: 94, d14: +0.1, volume:  9000,  contracts: 7,  excs: ['kalshi'] },
+    { state: 'WY', inc: 'R', incName: 'Lummis',             matchup: 'Lummis (R) — no major challenger',     probR: 97, d14:  0.0, volume:  5000,  contracts: 4,  excs: ['kalshi'] },
+
+    // ---- Likely R (75-89) ----
+    { state: 'AK', inc: 'R', incName: 'Sullivan',           matchup: 'Sullivan (R) vs. Galvin (D)',          probR: 88, d14: -1.1, volume: 22000,  contracts: 14, excs: ['kalshi','polymarket','metaculus'] },
+    { state: 'KY', inc: 'R', incName: 'McConnell (ret.)',   matchup: 'Cameron (R) vs. Beshear (D)',          probR: 78, d14: -2.4, volume: 41000,  contracts: 22, excs: ['kalshi','polymarket','predictit','metaculus'] },
+    { state: 'MT', inc: 'R', incName: 'Daines',             matchup: 'Daines (R) vs. Bullock (D)',           probR: 84, d14: -0.8, volume: 28000,  contracts: 16, excs: ['kalshi','polymarket'] },
+    { state: 'NE', inc: 'R', incName: 'Ricketts',           matchup: 'Ricketts (R) vs. Domina (D)',          probR: 88, d14: +0.3, volume: 11000,  contracts: 8,  excs: ['kalshi','polymarket'] },
+    { state: 'SC', inc: 'R', incName: 'Graham',             matchup: 'Graham (R) vs. Cunningham (D)',        probR: 86, d14: -0.5, volume: 23000,  contracts: 15, excs: ['kalshi','polymarket','predictit'] },
+    { state: 'TX', inc: 'R', incName: 'Cornyn',             matchup: 'Cornyn (R) vs. Paxton (R) primary',    probR: 78, d14: -3.7, volume:184000,  contracts: 72, excs: ['kalshi','polymarket','metaculus','manifold','predictit'], marquee: true },
+
+    // ---- Toss-ups (41-59) — the headline races ----
+    { state: 'NC', inc: 'R', incName: 'Tillis',             matchup: 'Tillis (R) vs. Cooper (D)',            probR: 53, d14: +1.8, volume:298000,  contracts:112, excs: ['kalshi','polymarket','metaculus','manifold','predictit','robinhood'], marquee: true },
+    { state: 'IA', inc: 'R', incName: 'Ernst',              matchup: 'Ernst (R) vs. Franken (D)',            probR: 58, d14: -1.2, volume:112000,  contracts: 54, excs: ['kalshi','polymarket','metaculus','manifold'], marquee: true },
+    { state: 'GA', inc: 'D', incName: 'Ossoff',             matchup: 'Ossoff (D) vs. Carter (R)',            probR: 52, d14: +2.1, volume:284000,  contracts: 98, excs: ['kalshi','polymarket','metaculus','manifold','coinbase'], marquee: true },
+    { state: 'MI', inc: 'D', incName: 'Peters (ret.)',      matchup: 'Stevens (D) vs. Rogers (R)',           probR: 49, d14: +0.6, volume:262000,  contracts:104, excs: ['kalshi','polymarket','metaculus','robinhood'], marquee: true },
+    { state: 'NH', inc: 'D', incName: 'Shaheen (ret.)',     matchup: 'Pappas (D) vs. Brown (R)',             probR: 47, d14: -0.4, volume:114000,  contracts: 52, excs: ['kalshi','polymarket','metaculus'], marquee: true },
+    { state: 'OH', inc: 'R', incName: 'Husted (special)',   matchup: 'Husted (R) vs. Brown (D)',             probR: 46, d14: -2.6, volume:231000,  contracts: 94, excs: ['kalshi','polymarket','metaculus','manifold','coinbase'], marquee: true, special: true },
+    { state: 'ME', inc: 'R', incName: 'Collins',            matchup: 'Collins (R) vs. Mills (D)',            probR: 46, d14: -1.0, volume:221000,  contracts: 87, excs: ['kalshi','polymarket','metaculus','manifold','predictit'], marquee: true },
+
+    // ---- Lean D (26-40) ----
+    { state: 'MN', inc: 'D', incName: 'Smith (ret.)',       matchup: 'Flanagan (D) vs. Schultz (R)',         probR: 36, d14: +0.9, volume: 64000,  contracts: 38, excs: ['kalshi','polymarket','metaculus'] },
+    { state: 'VA', inc: 'D', incName: 'Warner',             matchup: 'Warner (D) vs. Youngkin (R)',          probR: 28, d14: +3.1, volume: 92000,  contracts: 42, excs: ['kalshi','polymarket','metaculus','manifold'] },
+
+    // ---- Likely D (11-25) ----
+    { state: 'CO', inc: 'D', incName: 'Hickenlooper',       matchup: 'Hickenlooper (D) vs. Ganahl (R)',      probR: 18, d14: +0.4, volume: 51000,  contracts: 28, excs: ['kalshi','polymarket'] },
+    { state: 'NJ', inc: 'D', incName: 'Booker',             matchup: 'Booker (D) — no major challenger',     probR: 14, d14: -0.2, volume: 22000,  contracts: 16, excs: ['kalshi','polymarket'] },
+    { state: 'NM', inc: 'D', incName: 'Luján',              matchup: 'Luján (D) — no major challenger',      probR: 22, d14: +0.1, volume: 14000,  contracts: 11, excs: ['kalshi'] },
+
+    // ---- Safe D (<= 10) ----
+    { state: 'DE', inc: 'D', incName: 'Coons',              matchup: 'Coons (D) — no major challenger',      probR:  6, d14:  0.0, volume:  9000,  contracts: 6,  excs: ['kalshi'] },
+    { state: 'IL', inc: 'D', incName: 'Durbin (ret.)',      matchup: 'Krishnamoorthi (D) vs. open R',        probR: 10, d14: -0.4, volume: 38000,  contracts: 23, excs: ['kalshi','polymarket','manifold'] },
+    { state: 'MA', inc: 'D', incName: 'Markey',             matchup: 'Markey (D) — no major challenger',     probR:  5, d14:  0.0, volume: 12000,  contracts: 9,  excs: ['kalshi'] },
+    { state: 'OR', inc: 'D', incName: 'Merkley',            matchup: 'Merkley (D) — no major challenger',    probR: 14, d14: +0.2, volume: 13000,  contracts: 10, excs: ['kalshi'] },
+    { state: 'RI', inc: 'D', incName: 'Reed',               matchup: 'Reed (D) — no major challenger',       probR:  8, d14:  0.0, volume:  7000,  contracts: 5,  excs: ['kalshi'] },
+  ];
+
+  // -------- categorize --------
+  // probR thresholds (mirrors PMI heat scale bands)
+  function bandOf(p) {
+    if (p <= 10) return 'safe-d';
+    if (p <= 25) return 'likely-d';
+    if (p <= 40) return 'lean-d';
+    if (p <  60) return 'tossup';
+    if (p <  75) return 'lean-r';
+    if (p <  90) return 'likely-r';
+    return 'safe-r';
+  }
+  races.forEach(r => r.band = bandOf(r.probR));
+
+  // -------- pre-2026 holdover seats (NOT on the ballot this cycle) --------
+  // Senate 2024 → R 53, D 47.  Of those, our races include 21 R and 13 D up for re-election.
+  // Therefore holdover R = 53 - 21 = 32, holdover D = 47 - 13 = 34.
+  const holdover = { R: 32, D: 34 };
+
+  // -------- seat balance counts (all 100 seats, including holdover) --------
+  const counts = { 'safe-d':0, 'likely-d':0, 'lean-d':0, 'tossup':0, 'lean-r':0, 'likely-r':0, 'safe-r':0 };
+  races.forEach(r => { counts[r.band] += 1; });
+  counts['safe-d'] += holdover.D;
+  counts['safe-r'] += holdover.R;
+
+  // Bookkeeping: "in the bag" totals (everything except tossup, attributed to expected winner)
+  const dSecured =
+    counts['safe-d'] + counts['likely-d'] + counts['lean-d'];
+  const rSecured =
+    counts['safe-r'] + counts['likely-r'] + counts['lean-r'];
+  const tossups = counts['tossup'];
+
+  // -------- top-line PMI for the Senate index --------
+  // Aggregate prob of R holding 51+ seats — derived in pmi-model from individual race probs
+  // (we hard-code an illustrative number here so the design works standalone).
+  const pmiGOPMajority = 84.2;
+  const pmiDemMajority = 15.8;
+
+  // 14-day series of P(R ≥ 51) — climbs slightly over the window
+  const series14 = (window.MICAH && window.MICAH.makeSeries)
+    ? window.MICAH.makeSeries(7, 84, 73)
+    : Array.from({length:28}, (_,i) => 73 + (84-73) * (i/27));
+
+  // Top toss-up rail (sorted by closest-to-50)
+  const tossupRail = races
+    .filter(r => r.band === 'tossup')
+    .slice()
+    .sort((a,b) => Math.abs(a.probR - 50) - Math.abs(b.probR - 50));
+
+  // Marquee table-rows (rendered as PMIRows beneath the chart)
+  const marquee = races.filter(r => r.marquee).slice().sort((a,b) => Math.abs(a.probR - 50) - Math.abs(b.probR - 50));
+
+  // Map of state -> probR for the choropleth (states without a 2026 race omitted)
+  const raceByState = Object.fromEntries(races.map(r => [r.state, r]));
+  const probByState = Object.fromEntries(races.map(r => [r.state, r.probR]));
+
+  return {
+    races,
+    raceByState,
+    probByState,
+    counts,
+    holdover,
+    dSecured,
+    rSecured,
+    tossups,
+    pmiGOPMajority,
+    pmiDemMajority,
+    series14,
+    tossupRail,
+    marquee,
+    bandOf,
+  };
+})();
+
+</script>
+  <script >
+/* PMI Model — REAL Polymarket War Index data (wired 2026-05-30).
+   Source: pmi-api /indexes/polymarket-war-index/score over live ingest.
+   Headline pmiScore = REAL aggregator output (47.1078) across 181 components
+   (universe: 449 war markets selected from 18682 live-ingested markets).
+   Contracts below = top 13 LLM-confirmed (directly_about_war=1, real gpt-4o-mini)
+   components by 24h volume, with real last_price (yes) + real volume.
+   NOTE: cond{} = empty — real conditional-impact matrix not yet computed (TODO E2E-UI-2);
+   brier = proxy from real LLM confidence (1-conf)^2 — real brier needs resolution history (TODO). */
+
+window.PMI_MODEL = (function () {
+  const contracts = [
+    { sym: 'IRAN-CF-MAY29', q: 'US announces new Iran agreement/ceasefire extension by May 29?',              yes: 0.1300, vol: 5.464e+05, w: 29, cat: 'Geopolitics',  brier: 0.010 },
+    { sym: 'NUKE-26',       q: 'Will any nuclear weapon be detonated in conflict in 2026?',                   yes: 0.0300, vol: 5.100e+05, w: 27, cat: 'Geopolitics',  brier: 0.010 },
+    { sym: 'TAIWAN-26',     q: 'Will the PRC launch an armed invasion of Taiwan before 2028?',                yes: 0.0900, vol: 2.400e+05, w: 13, cat: 'Geopolitics',  brier: 0.003 },
+    { sym: 'IRAN-CF-JUNE3', q: 'US announces new Iran agreement/ceasefire extension by June 3?',              yes: 0.4900, vol: 1.558e+05, w:  8, cat: 'Geopolitics',  brier: 0.010 },
+    { sym: 'IRAN-CF-MAY30', q: 'US announces new Iran agreement/ceasefire extension by May 30?',              yes: 0.2700, vol: 1.369e+05, w:  7, cat: 'Geopolitics',  brier: 0.010 },
+    { sym: 'UKR-RU-CF',     q: 'Will there be a Ukraine-Russia ceasefire by end of 2026?',                    yes: 0.4200, vol: 1.250e+05, w:  7, cat: 'Geopolitics',  brier: 0.010 },
+    { sym: 'IRAN-ISR-MSL',  q: 'Will Iran launch a missile strike against Israel in Q3 2026?',                yes: 0.3100, vol: 7.800e+04, w:  4, cat: 'Geopolitics',  brier: 0.003 },
+    { sym: 'NATO-ART5',     q: 'Will NATO invoke Article 5 in 2026?',                                         yes: 0.0700, vol: 6.500e+04, w:  3, cat: 'Geopolitics',  brier: 0.023 },
+    { sym: 'LEB-CF',        q: 'Israel announces Lebanon ceasefire extension by May 31?',                     yes: 0.1200, vol: 1.325e+04, w:  1, cat: 'Geopolitics',  brier: 0.010 },
+    { sym: 'LEB-CF-2',      q: 'Israel announces Lebanon ceasefire extension by June 7?',                     yes: 0.3200, vol: 1.270e+03, w:  1, cat: 'Geopolitics',  brier: 0.010 },
+    { sym: 'IRAN-WP',       q: 'Congress passes Iran war powers resolution by June 30?',                      yes: 0.1700, vol: 7.440e+02, w:  1, cat: 'Geopolitics',  brier: 0.010 },
+    { sym: 'IRAN-TROOP',    q: 'Will Trump agree to withdraw troops from the Iranian region by June 30?',     yes: 0.3700, vol: 6.650e+02, w:  1, cat: 'Geopolitics',  brier: 0.010 },
+    { sym: 'LEB-CF-3',      q: 'Israel announces Lebanon ceasefire extension by June 30?',                    yes: 0.6800, vol: 5.300e+01, w:  1, cat: 'Geopolitics',  brier: 0.010 },
+  ];
+  const bySym = Object.fromEntries(contracts.map(c => [c.sym, c]));
+  const W = contracts.reduce((s, c) => s + c.w, 0);
+  const cond = {};  // no real conditional matrix yet — see §5 conditional markets / CORR-8.7
+
+  const pmiYesNaive = contracts.reduce((s, c) => s + c.yes * c.w, 0) / W;
+  let condAdjust = 0;
+  for (const c of contracts) {
+    const m = cond[c.sym] || {};
+    for (const [j, delta] of Object.entries(m)) {
+      const wj = bySym[j]?.w || 0; condAdjust += (wj / W) * c.yes * delta;
+    }
+  }
+  const pmiYesAdj = pmiYesNaive + condAdjust;
+  // REAL headline from the platform aggregator (over all 181 components, not just the shown top 13):
+  const pmiScore = 47.1078;
+  const pmiScoreShown = +(pmiYesAdj * 100).toFixed(2);  // naive over displayed contracts only
+
+  function contribTo(symbol) {
+    const c = bySym[symbol]; if (!c) return null;
+    const wShare = c.w / W; const raw = wShare * c.yes;
+    const m = cond[symbol] || {}; let condC = 0;
+    for (const [j, delta] of Object.entries(m)) { const wj = bySym[j]?.w || 0; condC += (wj / W) * c.yes * delta; }
+    let swingYes = wShare * (1 - c.yes); let swingNo = -wShare * c.yes;
+    for (const [j, delta] of Object.entries(m)) { const wj = bySym[j]?.w || 0; swingYes += (wj/W)*delta*(1-c.yes); swingNo -= (wj/W)*delta*c.yes; }
+    return { wShare, raw, cond: condC, total: raw + condC, swingYes, swingNo };
+  }
+  function influencersOf(symbol) { const out=[]; for (const [a,links] of Object.entries(cond)) { if (links[symbol]!==undefined) out.push({from:a,delta:links[symbol],pYes:bySym[a]?.yes??0}); } return out.sort((x,y)=>Math.abs(y.delta)-Math.abs(x.delta)); }
+  function influenceesOf(symbol) { const m=cond[symbol]||{}; return Object.entries(m).map(([to,delta])=>({to,delta,pYes:bySym[to]?.yes??0})).sort((x,y)=>Math.abs(y.delta)-Math.abs(x.delta)); }
+
+  return {
+    contracts, bySym, cond, W,
+    pmiYesNaive, condAdjust, pmiYesAdj, pmiScore, pmiScoreShown,
+    contribTo, influencersOf, influenceesOf,
+    pmiName: 'Polymarket War Index',
+    meta: { score: 47.1078, components: 181, universe: 449, ingested: 18682, asOf: '2026-05-30T01:02:20Z', source: 'pmi-api (real gpt-4o-mini, $0.2915)' },
+  };
+})();
+
+</script>
+  <script type="text/babel">
+/* Shared UI primitives — Header, Footer, StatCard, etc. */
+
+const { useState, useEffect, useRef, useMemo } = React;
+
+// Color stop interpolation for the heat scale 0-100
+function heatColor(v) {
+  // Anchor stops drawn from CSS vars (kept in JS for SVG fills)
+  const stops = [
+    [0,   [22, 52, 138]],   // #16348A deep dem
+    [15,  [45, 91, 204]],   // #2D5BCC
+    [30,  [111, 143, 219]], // #6F8FDB
+    [45,  [184, 197, 227]], // #B8C5E3
+    [50,  [233, 226, 220]], // #E9E2DC neutral
+    [55,  [236, 201, 207]], // #ECC9CF
+    [70,  [220, 139, 149]], // #DC8B95
+    [85,  [181, 55, 71]],   // #B53747
+    [100, [139, 30, 45]],   // #8B1E2D deep rep
+  ];
+  let lo = stops[0], hi = stops[stops.length - 1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (v >= stops[i][0] && v <= stops[i+1][0]) { lo = stops[i]; hi = stops[i+1]; break; }
+  }
+  const t = (v - lo[0]) / (hi[0] - lo[0] || 1);
+  const c = lo[1].map((x, i) => Math.round(x + (hi[1][i] - x) * t));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+// ---------- Site Header ----------
+function Header({ title = 'MAGA Index', onNavigate }) {
+  return (
+    <header className="site-header">
+      <div className="site-header__inner">
+        <button className="brand-mark" onClick={() => onNavigate && onNavigate({ view: 'world' })}>
+          <span className="brand-mark__title">{title}</span>
+        </button>
+        <div className="site-header__center">
+          <label className="search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input type="text" placeholder="Search" />
+          </label>
+        </div>
+        <div className="site-header__right">
+          <span className="powered-by">Powered by</span>
+          <img src="assets/micah-logo.svg" alt="Micah" className="powered-logo" />
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ---------- Footer ----------
+function Footer({ title = 'MAGA Index' }) {
+  return (
+    <footer className="site-footer">
+      <div className="site-footer__left">
+        <span className="powered-by">Powered by</span>
+        <img src="assets/micah-logo.svg" alt="Micah" className="powered-logo" />
+      </div>
+      <div className="site-footer__right t-display-caps" style={{fontSize: '22px'}}>{title}</div>
+    </footer>
+  );
+}
+
+// ---------- Crop marks frame (the dotted square in mocks) ----------
+function CropFrame({ children }) {
+  return (
+    <div className="crop-frame">
+      <span className="crop crop-tl">+</span>
+      <span className="crop crop-tr">+</span>
+      <span className="crop crop-bl">+</span>
+      <span className="crop crop-br">+</span>
+      {children}
+    </div>
+  );
+}
+
+// ---------- Score Tile (the large colored stat) ----------
+function ScoreTile({ value, label = 'PMI Score', tone = 'red', size = 'lg', info = true }) {
+  // tone: 'red' | 'blue' | 'lavender' | 'soft-red' | 'soft-blue' | 'neutral'
+  const tones = {
+    'red':         { bg: 'var(--red-strong)',  fg: 'var(--ink-inverse)' },
+    'blue':        { bg: 'var(--blue-strong)', fg: 'var(--ink-inverse)' },
+    'soft-red':    { bg: 'var(--red-soft)',    fg: 'var(--ink-1)' },
+    'soft-blue':   { bg: 'var(--blue-soft)',   fg: 'var(--ink-1)' },
+    'lavender':    { bg: 'var(--lavender)',    fg: 'var(--ink-1)' },
+    'neutral':     { bg: 'var(--surface-tint)', fg: 'var(--ink-1)' },
+  };
+  const t = tones[tone] || tones.neutral;
+  return (
+    <div className={`score-tile score-tile--${size}`} style={{ background: t.bg, color: t.fg }}>
+      <div className="score-tile__value">{value}</div>
+      <div className="score-tile__label">
+        {label}
+        {info && <InfoCircle />}
+      </div>
+    </div>
+  );
+}
+
+// ---------- Stat Card (32K Contracts, 88 PMI Holdings, etc.) ----------
+function StatCard({ value, label, live, info, children }) {
+  return (
+    <div className="stat-card">
+      <div className="stat-card__value">
+        <span>{value}</span>
+        {children}
+      </div>
+      <div className="stat-card__label">
+        {live && <span className="live-dot" />}
+        {label}
+        {info && <InfoCircle />}
+      </div>
+    </div>
+  );
+}
+
+function InfoCircle() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{verticalAlign:'-2px', marginLeft:4, opacity:.55}}>
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 11v6"/><circle cx="12" cy="7.5" r="0.7" fill="currentColor"/>
+    </svg>
+  );
+}
+
+// ---------- Exchange Chip (small colored circle with glyph) ----------
+function ExchangeChip({ id, size = 22 }) {
+  const ex = window.MICAH.exchanges[id];
+  if (!ex) return null;
+  return (
+    <span className="ex-chip" style={{ width: size, height: size, background: ex.color, color: ex.dark ? '#11192C' : '#fff' }} title={ex.name}>
+      {ex.glyph}
+    </span>
+  );
+}
+
+// Stack of exchange chips with "+N" overflow
+function ExchangeStack({ ids, extras = 0, size = 22 }) {
+  return (
+    <span className="ex-stack">
+      {ids.map((id, i) => (
+        <span key={id+i} className="ex-stack__slot" style={{ width: size, height: size }}>
+          <ExchangeChip id={id} size={size} />
+        </span>
+      ))}
+      {extras > 0 && (
+        <span className="ex-stack__more" style={{ height: size, lineHeight: size + 'px' }}>+{extras}</span>
+      )}
+    </span>
+  );
+}
+
+// ---------- Tag (chip with rounded outline) ----------
+function Tag({ children, tone = 'neutral' }) {
+  return <span className={`tag tag--${tone}`}>{children}</span>;
+}
+
+// ---------- Segmented control ----------
+function Segmented({ options, value, onChange, size = 'md' }) {
+  return (
+    <div className={`segmented segmented--${size}`}>
+      {options.map(o => (
+        <button
+          key={o.value}
+          className={`segmented__btn ${o.value === value ? 'is-active' : ''}`}
+          onClick={() => onChange && onChange(o.value)}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------- Share button ----------
+function ShareBtn() {
+  return (
+    <button className="icon-btn" aria-label="Share">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12V19 a2 2 0 0 0 2 2 h10 a2 2 0 0 0 2-2 v-7"/>
+        <path d="M16 6 L12 2 L8 6"/><path d="M12 2 V15"/>
+      </svg>
+    </button>
+  );
+}
+
+// ---------- Page Title block ----------
+function PageTitle({ caps = false, title, body, breadcrumb, onShare }) {
+  return (
+    <div className="page-title">
+      {breadcrumb && <div className="breadcrumb">{breadcrumb}</div>}
+      <div className="page-title__row">
+        <h1 className={caps ? 't-display-caps' : 't-display'}>{title}</h1>
+        <ShareBtn />
+      </div>
+      {body && <p className="page-title__body t-body">{body}</p>}
+    </div>
+  );
+}
+
+// ---------- PMI list row ----------
+function PMIRow({ row, onClick }) {
+  const M = window.MICAH;
+  const { score, scoreType, heat, title, tags, excs, extras, contracts } = row;
+  const dotted = heat >= 50 ? 'dotted-red' : 'dotted-blue';
+  const tone =
+    heat >= 85 ? 'red' :
+    heat >= 60 ? 'soft-red' :
+    heat >= 40 ? 'lavender' :
+    heat >= 20 ? 'soft-blue' : 'blue';
+  return (
+    <div className="pmi-row" onClick={onClick} role="button" tabIndex={0}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick && onClick(); }}>
+      <span className={`pmi-row__dots ${dotted}`} aria-hidden></span>
+      <span className="pmi-row__score">
+        <ScoreTile
+          value={scoreType === 'prob' ? `${score}%` : score}
+          label={scoreType === 'prob' ? 'PMI Probability' : 'PMI Score'}
+          tone={tone}
+          size="sm"
+          info={false}
+        />
+      </span>
+      <span className="pmi-row__body">
+        <span className="pmi-row__title">{title}</span>
+        <span className="pmi-row__tags">
+          {tags.map(t => <Tag key={t}>{t}</Tag>)}
+        </span>
+      </span>
+      <span className="pmi-row__right">
+        <ExchangeStack ids={excs} extras={extras} size={26} />
+        <span className="pmi-row__contracts">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          {contracts.toLocaleString()} Contracts
+        </span>
+      </span>
+      <ShareBtn />
+    </div>
+  );
+}
+
+// ---------- Heat scale legend ----------
+function HeatScale() {
+  return (
+    <div className="heat-scale">
+      <div className="heat-scale__head">
+        <span className="t-body-sm" style={{color:'var(--ink-1)', fontWeight:600}}>PMI Heat Scale · 0 → 100</span>
+      </div>
+      <div className="heat-scale__row">
+        <span className="t-label">Leaning Democrat</span>
+        <span className="t-label" style={{textAlign:'right'}}>Leaning Republican</span>
+      </div>
+      <div className="heat-scale__bar" />
+      <div className="heat-scale__ticks">
+        {[0,25,50,75,100].map(n => <span key={n} className="t-label">{n}</span>)}
+      </div>
+    </div>
+  );
+}
+
+// ---------- Tooltip (small info popover, persistent) ----------
+function Tooltip({ title, children, style }) {
+  return (
+    <div className="tooltip" style={style}>
+      <div className="tooltip__title">{title}</div>
+      <div className="tooltip__body">{children}</div>
+    </div>
+  );
+}
+
+// Export
+Object.assign(window, {
+  Header, Footer, CropFrame, ScoreTile, StatCard, InfoCircle,
+  ExchangeChip, ExchangeStack, Tag, Segmented, ShareBtn,
+  PageTitle, PMIRow, HeatScale, Tooltip, heatColor,
+});
+
+</script>
+  <script type="text/babel">
+/* US Map + Time Chart — D3 powered, React rendered */
+
+const { useEffect: _useEffect, useRef: _useRef, useState: _useState, useMemo: _useMemo } = React;
+
+// ---------- USA Map ----------
+function UsaMap({ width = 720, height = 460, onSelect, focusedState,
+                  dataByCode = null, dimMissing = false, tipFormatter = null }) {
+  const [topo, setTopo] = _useState(null);
+  const [hover, setHover] = _useState(null);
+  const M = window.MICAH;
+
+  _useEffect(() => {
+    // Load atlas only once
+    if (window.__usAtlas) { setTopo(window.__usAtlas); return; }
+    fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+      .then(r => r.json())
+      .then(data => { window.__usAtlas = data; setTopo(data); })
+      .catch(e => console.error('atlas load', e));
+  }, []);
+
+  const projData = _useMemo(() => {
+    if (!topo || !window.topojson || !window.d3) return null;
+    const features = window.topojson.feature(topo, topo.objects.states).features;
+    const projection = window.d3.geoAlbersUsa().fitSize([width, height], { type: 'FeatureCollection', features });
+    const pathGen = window.d3.geoPath(projection);
+    // Manual label-position offsets for states whose geometric centroid
+    // falls outside the land (concave shapes / panhandles / island states).
+    // Values are pixel offsets applied AFTER centroid projection.
+    const offsets = {
+      FL: [22, 22],   // shift label SE into the peninsula
+      MI: [12, 22],   // lower peninsula
+      LA: [-8, -4],   // pull west of the delta
+      MD: [10, 4],    // skinny eastern arm — nudge right
+      ID: [0, 8],     // top tapers — nudge down
+      OK: [10, 4],    // panhandle pulls centroid west
+      WV: [-4, 4],
+      AK: [0, 0],
+      HI: [0, 0],
+    };
+    return features.map(f => {
+      const name = f.properties.name;
+      const code = stateNameToCode(name);
+      const s = M.states[code];
+      let c = pathGen.centroid(f);
+      const off = offsets[code];
+      if (off && c && !isNaN(c[0])) c = [c[0] + off[0], c[1] + off[1]];
+      const baseVal = s ? s.value : 50;
+      const overrideVal = dataByCode ? dataByCode[code] : undefined;
+      const value = overrideVal !== undefined ? overrideVal : baseVal;
+      const hasData = dataByCode ? (overrideVal !== undefined) : true;
+      return { id: f.id, code, name, d: pathGen(f), centroid: c, value, hasData };
+    });
+  }, [topo, width, height, dataByCode]);
+
+  if (!projData) {
+    return (
+      <div className="map-skel" style={{ width, height }}>
+        <span className="t-label">Loading map…</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="usa-map" style={{ position: 'relative' }}>
+      <svg viewBox={`0 0 ${width} ${height}`} className="usa-map__svg" preserveAspectRatio="xMidYMid meet">
+        {projData.map(p => {
+          const focused = focusedState && focusedState === p.code;
+          const dim = dimMissing && !p.hasData;
+          const fill = dim ? '#E1DCD0' : window.heatColor(p.value);
+          let op = 1;
+          if (focusedState && !focused) op = 0.45;
+          else if (dim) op = 0.55;
+          return (
+            <path
+              key={p.id}
+              d={p.d}
+              fill={fill}
+              stroke={focused ? '#11192C' : '#FBFAF6'}
+              strokeWidth={focused ? 2 : 0.8}
+              opacity={op}
+              onMouseEnter={() => setHover(p)}
+              onMouseLeave={() => setHover(null)}
+              onClick={() => !dim && onSelect && onSelect(p.code)}
+              style={{ cursor: dim ? 'default' : 'pointer', transition: 'opacity .2s' }}
+            />
+          );
+        })}
+        {/* state abbreviations on hover-friendly states */}
+        {projData.map(p => {
+          if (!p.centroid || isNaN(p.centroid[0])) return null;
+          // hide labels for tiny states to avoid clutter
+          const tiny = ['RI','CT','NJ','DE','MD','MA','NH','VT','DC'];
+          if (tiny.includes(p.code)) return null;
+          return (
+            <text key={p.id+'_t'} x={p.centroid[0]} y={p.centroid[1]+3}
+              textAnchor="middle"
+              fontSize={p.code === 'CA' || p.code === 'TX' ? 11 : 9}
+              fill={p.value > 65 || p.value < 25 ? '#FBFAF6' : '#11192C'}
+              style={{ fontWeight: 600, fontFamily: 'Inter, sans-serif', pointerEvents: 'none' }}>
+              {p.code}
+            </text>
+          );
+        })}
+      </svg>
+      {hover && (
+        <div className="map-tip" style={{ position:'absolute', left: 8, bottom: 8 }}>
+          <div className="map-tip__name">{hover.name}</div>
+          <div className="map-tip__val">
+            {tipFormatter ? tipFormatter(hover) :
+             (dimMissing && !hover.hasData ? 'Not on 2026 ballot' : `PMI ${hover.value}`)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function stateNameToCode(name) {
+  const map = {
+    'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+    'Colorado':'CO','Connecticut':'CT','Delaware':'DE','District of Columbia':'DC',
+    'Florida':'FL','Georgia':'GA','Hawaii':'HI','Idaho':'ID','Illinois':'IL',
+    'Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY','Louisiana':'LA',
+    'Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN',
+    'Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV',
+    'New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY',
+    'North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR',
+    'Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD',
+    'Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA',
+    'Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
+  };
+  return map[name] || name.slice(0,2).toUpperCase();
+}
+
+// ---------- Time Chart (14-day PMI line) ----------
+function TimeChart({ data = [], width = 720, height = 460, color = '#3A4C6A', yLabel = 'PMI Score', noData = false, plain = false }) {
+  const padding = { top: 30, right: 40, bottom: 50, left: 60 };
+  const innerW = width - padding.left - padding.right;
+  const innerH = height - padding.top - padding.bottom;
+  const maxY = 100;
+  const minY = 0;
+
+  const xStep = data.length > 1 ? innerW / (data.length - 1) : 0;
+  const points = data.map((v, i) => [padding.left + i * xStep, padding.top + innerH - (v - minY) / (maxY - minY) * innerH]);
+
+  const linePath = points.length ? `M ${points.map(p => p.join(',')).join(' L ')}` : '';
+
+  const yTicks = [0, 20, 40, 60, 80, 100];
+
+  return (
+    <div className="time-chart">
+      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
+        {/* Y-axis ticks + horizontal grid */}
+        {yTicks.map(t => {
+          const y = padding.top + innerH - (t / maxY) * innerH;
+          return (
+            <g key={t}>
+              <line x1={padding.left} x2={width - padding.right} y1={y} y2={y}
+                stroke="#E1DCD0" strokeWidth="1" />
+              <text x={padding.left - 12} y={y + 4} textAnchor="end"
+                fontSize="11" fill="#6B7180" fontFamily="Inter, sans-serif">
+                {t}
+              </text>
+            </g>
+          );
+        })}
+        {/* Y axis label */}
+        {!plain && (
+          <text x={-(padding.top + innerH/2)} y={20} transform={`rotate(-90)`} textAnchor="middle"
+            fontSize="12" fill="#6B7180" fontFamily="Inter, sans-serif">
+            {yLabel}
+          </text>
+        )}
+        {/* X labels (Mar 1 / Mar 7 / Mar 14) */}
+        {!noData && data.length > 0 && (
+          <>
+            <text x={padding.left} y={height - 18} fontSize="12" fill="#6B7180" fontFamily="Inter, sans-serif">Mar 1</text>
+            <text x={padding.left + innerW/2} y={height - 18} fontSize="12" fill="#6B7180" textAnchor="middle" fontFamily="Inter, sans-serif">Mar 7</text>
+            <text x={width - padding.right} y={height - 18} fontSize="12" fill="#6B7180" textAnchor="end" fontFamily="Inter, sans-serif">Mar 14</text>
+          </>
+        )}
+        {/* Line */}
+        {!noData && (
+          <path d={linePath} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        )}
+        {/* No data state — concentric rings */}
+        {noData && (
+          <g>
+            {[40, 70, 110, 150].map(r => (
+              <circle key={r} cx={padding.left + innerW/2} cy={padding.top + innerH/2} r={r}
+                fill="none" stroke="#E1DCD0" strokeWidth="1" />
+            ))}
+            <g transform={`translate(${padding.left + innerW/2 - 14}, ${padding.top + innerH/2 - 14})`}>
+              <rect width="28" height="28" rx="6" fill="#F8F6F1" stroke="#E1DCD0" />
+              <path d="M9 19 L13 13 L16 16 L20 10" stroke="#6B7180" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" transform="translate(0,0)"/>
+            </g>
+            <text x={padding.left + innerW/2} y={padding.top + innerH/2 + 50}
+              textAnchor="middle" fontSize="14" fill="#11192C" fontWeight="600" fontFamily="Inter, sans-serif">
+              No data available
+            </text>
+            <text x={padding.left + innerW/2} y={padding.top + innerH/2 + 70}
+              textAnchor="middle" fontSize="12" fill="#6B7180" fontFamily="Inter, sans-serif">
+              Data will appear once activity is recorded.
+            </text>
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+}
+
+// Northeast Corridor right-rail column (small horizontal cells)
+function NortheastRail({ states }) {
+  const M = window.MICAH;
+  return (
+    <div className="ne-rail">
+      <div className="ne-rail__title t-label">NORTHEAST CORRIDOR</div>
+      <div className="ne-rail__list">
+        {states.map(code => {
+          const s = M.states[code];
+          const v = s ? s.value : 50;
+          const c = window.heatColor(v);
+          const dark = v > 65 || v < 25;
+          return (
+            <div key={code} className="ne-rail__cell" style={{ background: c, color: dark ? '#FBFAF6' : '#11192C' }}>
+              {code}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { UsaMap, TimeChart, NortheastRail, stateNameToCode });
+
+</script>
+  <script type="text/babel">
+/* Views — WorldView, StateView, QuestionView, WarIndexView */
+
+const { useState: vState } = React;
+
+// ---------- WORLD VIEW (National MAGA Index) ----------
+function WorldView({ onNavigate, brand }) {
+  const [mode, setMode] = vState('map');         // 'map' | 'chart'
+  const [filter, setFilter] = vState('all');     // all / state / governor / senate / house
+  const M = window.MICAH;
+
+  return (
+    <div className="view">
+      <CropFrame>
+        <PageTitle
+          caps={brand === 'caps'}
+          title="National MAGA Index"
+          body="Micah aggregates contracts from multiple prediction market exchanges to structure and power the MAGA Index—a prediction market index (PMI) tracking sentiment and probabilities around political outcomes, policy direction, and narratives associated with the MAGA movement. As more data is incorporated, the index gains stronger predictive power."
+        />
+
+        <div className="row-between" style={{ marginTop: 'var(--s-6)' }}>
+          <Segmented
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { value: 'all', label: 'All' },
+              { value: 'state', label: 'By State' },
+              { value: 'governor', label: 'By Governor' },
+              { value: 'senate', label: 'By Senate' },
+              { value: 'house', label: 'By House' },
+            ]}
+          />
+        </div>
+
+        <div className="row-between" style={{ marginTop: 'var(--s-6)' }}>
+          <span className="t-eyebrow">LIVE · 50 STATES + DC · UPDATED MAY 04</span>
+          <Segmented
+            value={mode}
+            onChange={setMode}
+            options={[{ value: 'map', label: 'Map' }, { value: 'chart', label: '14-Day Graph' }]}
+          />
+        </div>
+
+        <div className="world-grid" style={{ marginTop: 'var(--s-5)' }}>
+          <div className="world-grid__stats">
+            <ScoreTile value="93" label="PMI Score" tone="red" size="lg" />
+            <StatCard value="32K" label="Live Contracts" live />
+            <StatCard value="11" label="Prediction Market Exchanges">
+              <ExchangeStack ids={['kalshi','polymarket','robinhood','coinbase']} extras={7} size={22} />
+            </StatCard>
+            <StatCard value="88" label="PMI Holdings" info />
+          </div>
+
+          <div className="world-grid__viz">
+            {mode === 'map' ? (
+              <>
+                <div className="world-grid__map">
+                  <UsaMap width={760} height={500} onSelect={(code) => onNavigate({ view: 'state', state: code })} />
+                </div>
+                <div className="world-grid__rail">
+                  <NortheastRail states={M.northeast} />
+                </div>
+              </>
+            ) : (
+              <div className="world-grid__map">
+                <TimeChart data={M.series14} width={900} height={500} color="#3A4C6A" yLabel="PMI Score" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {mode === 'map' && (
+          <div style={{ marginTop: 'var(--s-6)', paddingLeft: 'calc(220px + var(--s-8))' }}>
+            <HeatScale />
+          </div>
+        )}
+
+        {/* PMI LIST */}
+        <div className="section" style={{ marginTop: 'var(--s-12)' }}>
+          <h2 className={brand === 'caps' ? 't-display-caps' : 't-display'} style={{ fontSize: 36 }}>
+            Prediction Markets Indexes (PMIs)
+          </h2>
+          <p className="t-body" style={{ marginTop: 'var(--s-2)', maxWidth: 820 }}>
+            PMIs aggregate &amp; structure related prediction market contracts into one index. PMIs are powered by more data, resulting in stronger predictive power. Micah PMIs' account for many variables, such as volume and relevancy.
+          </p>
+          <div style={{ marginTop: 'var(--s-5)' }}>
+            <Segmented
+              value="all"
+              onChange={() => {}}
+              options={[
+                { value: 'all', label: 'All' },
+                { value: 'state', label: 'By State' },
+                { value: 'governor', label: 'By Governor' },
+                { value: 'senate', label: 'By Senate' },
+                { value: 'house', label: 'By House' },
+              ]}
+            />
+          </div>
+          <div className="pmi-list" style={{ marginTop: 'var(--s-5)' }}>
+            {M.indexes.map(r => (
+              <PMIRow
+                key={r.id}
+                row={r}
+                onClick={() => onNavigate(r.kind === 'state'
+                  ? { view: 'state', state: r.state }
+                  : { view: 'question', id: r.id })}
+              />
+            ))}
+          </div>
+        </div>
+      </CropFrame>
+    </div>
+  );
+}
+
+// ---------- STATE VIEW (Maryland MAGA Index / Texas Gov...) ----------
+function StateView({ stateCode = 'MD', onNavigate, brand, showTooltips = false }) {
+  const M = window.MICAH;
+  const s = M.states[stateCode];
+  const [tab, setTab] = vState('elections');  // 'elections' | 'holdings'
+  const heat = s ? s.value : 50;
+  const tileTone =
+    heat >= 75 ? 'red' :
+    heat >= 55 ? 'soft-red' :
+    heat >= 45 ? 'lavender' :
+    heat >= 25 ? 'soft-blue' : 'blue';
+  const series = M.makeSeries(stateCode.charCodeAt(0) + stateCode.charCodeAt(1), Math.round(heat) + 5, Math.max(15, heat - 30));
+
+  return (
+    <div className="view">
+      <CropFrame>
+        <div className="breadcrumb">
+          <button className="breadcrumb__link" onClick={() => onNavigate({ view: 'world' })}>World</button>
+          <span className="breadcrumb__sep">›</span>
+          <span>By State</span>
+        </div>
+
+        <PageTitle
+          caps={brand === 'caps'}
+          title={`${s ? s.name : stateCode} MAGA Index`}
+          body="An aggregated, data-driven estimate of market-implied probabilities across major political outcomes and themes tied to the MAGA movement, derived from active prediction market contracts and exchange signals."
+        />
+
+        <div className="state-grid" style={{ marginTop: 'var(--s-6)', position:'relative' }}>
+          <div className="state-grid__stats">
+            <ScoreTile value={Math.round(heat)} label="PMI Score" tone={tileTone} />
+            <StatCard value="32K" label="Live Contracts" live />
+            <StatCard value="11" label="Prediction Market Exchanges">
+              <ExchangeStack ids={['kalshi','polymarket','robinhood','coinbase']} extras={7} size={22} />
+            </StatCard>
+            <StatCard value="88" label="PMI Holdings" info />
+          </div>
+          <div className="state-grid__chart">
+            <TimeChart data={series} width={760} height={460} color="#3A4C6A" yLabel="PMI Probability (%)" />
+          </div>
+
+          {showTooltips && (
+            <>
+              <Tooltip title="PMI Score" style={{ position:'absolute', top: 100, left: 200, width: 280 }}>
+                The Prediction Market Index (PMI) Score is calculated by aggregating and structuring related prediction market contracts (PMI Holdings). A higher PMI Score reflects a greater likelihood of MAGA-aligned political outcomes and narratives materializing.
+              </Tooltip>
+              <Tooltip title="PMI Holdings" style={{ position:'absolute', top: 410, left: 200, width: 320 }}>
+                PMI Holdings are the component prediction market contracts that make up a PMI. A PMI's holdings are structured using Micah's proprietary software and algorithms to create a PMI Score for multi-factor indexes, and a PMI Probability (%) for single-factor indexes.
+              </Tooltip>
+            </>
+          )}
+        </div>
+
+        <div style={{ marginTop: 'var(--s-8)' }}>
+          <Segmented
+            value={tab}
+            onChange={setTab}
+            options={[{ value: 'elections', label: 'By Election Type' }, { value: 'holdings', label: 'PMI Holdings' }]}
+          />
+        </div>
+
+        {tab === 'elections' ? (
+          <div className="pmi-list" style={{ marginTop: 'var(--s-5)' }}>
+            {M.indexes.filter(i => i.kind === 'question').slice(0, 3).map(r => {
+              const title = r.title.replace('<State>', s ? s.name : stateCode);
+              return (
+                <PMIRow
+                  key={r.id}
+                  row={{ ...r, title }}
+                  onClick={() => onNavigate({ view: 'question', id: r.id, state: stateCode })}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <HoldingsTable rows={M.componentContracts} replaceState={s ? s.name : stateCode} />
+        )}
+      </CropFrame>
+    </div>
+  );
+}
+
+// ---------- Holdings Table (Component Contracts) ----------
+function HoldingsTable({ rows, replaceState }) {
+  return (
+    <div className="holdings-table" style={{ marginTop: 'var(--s-5)' }}>
+      <div className="holdings-table__head t-label">
+        <span>Component Contracts</span>
+        <span>Relationship</span>
+        <span>Prediction Market Exchange</span>
+        <span style={{textAlign:'right'}}>Volume</span>
+        <span style={{textAlign:'right'}}>Probability of Yes</span>
+      </div>
+      {rows.map((r, i) => (
+        <div key={i} className="holdings-table__row">
+          <a className="holdings-table__title" href="#" onClick={e => e.preventDefault()}>
+            {r.title.replace('<State>', replaceState)}
+          </a>
+          <span><Tag tone={r.rel === 'Direct' ? 'direct' : 'indirect'}>{r.rel}</Tag></span>
+          <span className="holdings-table__exc">
+            <ExchangeChip id={r.exc} size={26} />
+            <span>{window.MICAH.exchanges[r.exc].name}</span>
+          </span>
+          <span style={{textAlign:'right', fontWeight:600}}>${r.volume.toLocaleString()}</span>
+          <span style={{textAlign:'right', fontWeight:600}}>{r.prob.toFixed(1)}%</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------- QUESTION VIEW (single contract) ----------
+function QuestionView({ id, onNavigate, brand, noData = false }) {
+  const M = window.MICAH;
+  const idx = M.indexes.find(x => x.id === id) || M.indexes[1];
+  const title = idx.title.replace('<State>', 'Michigan');
+  const heat = idx.heat;
+  const tone = heat >= 60 ? 'red' : (heat >= 40 ? 'lavender' : 'blue');
+  const score = `${idx.score}%`;
+  const [view, setView] = vState('grid'); // list | grid
+
+  return (
+    <div className="view">
+      <CropFrame>
+        <PageTitle caps={brand === 'caps'} title={title} />
+
+        <div className="state-grid" style={{ marginTop: 'var(--s-6)' }}>
+          <div className="state-grid__stats">
+            <ScoreTile value={score} label="PMI Probability" tone={tone} />
+            <StatCard value="32K" label="Live Contracts" live />
+            <StatCard value="11" label="Prediction Market Exchanges">
+              <ExchangeStack ids={['kalshi','polymarket','robinhood','coinbase']} extras={7} size={22} />
+            </StatCard>
+            <StatCard value="88" label="PMI Holdings" info />
+          </div>
+          <div className="state-grid__chart">
+            <TimeChart
+              data={noData ? [] : M.series14}
+              width={760}
+              height={460}
+              color="#3A4C6A"
+              yLabel="PMI Probability (%)"
+              noData={noData}
+              plain={noData}
+            />
+          </div>
+        </div>
+
+        <div className="section" style={{ marginTop: 'var(--s-10)' }}>
+          <div className="row-between">
+            <h3 className="t-h3">PMI Holdings</h3>
+            <div className="view-toggle">
+              <button className={`view-toggle__btn ${view === 'list' ? 'is-active' : ''}`} onClick={() => setView('list')} aria-label="List">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg>
+              </button>
+              <button className={`view-toggle__btn ${view === 'grid' ? 'is-active' : ''}`} onClick={() => setView('grid')} aria-label="Grid">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              </button>
+            </div>
+          </div>
+          {view === 'list' ? (
+            <HoldingsTable rows={M.componentContracts} replaceState="Michigan" />
+          ) : (
+            <HoldingsGrid rows={M.componentContracts} />
+          )}
+        </div>
+      </CropFrame>
+    </div>
+  );
+}
+
+function HoldingsGrid({ rows }) {
+  return (
+    <div className="holdings-grid">
+      {rows.map((r, i) => (
+        <div key={i} className="holdings-card">
+          <div className="holdings-card__head">
+            <ExchangeChip id={r.exc} size={26} />
+            <a href="#" onClick={e=>e.preventDefault()} className="holdings-card__title">
+              {r.title.replace('<State>', 'Michigan')}
+            </a>
+          </div>
+          <div className="holdings-card__row">
+            <Tag tone={r.rel === 'Direct' ? 'direct' : 'indirect'}>{r.rel}</Tag>
+          </div>
+          <div className="holdings-card__row holdings-card__row--foot">
+            <span className="t-label">Volume: <strong style={{color:'var(--ink-1)'}}>${r.volume.toLocaleString()}</strong></span>
+            <span className="holdings-card__yes">Yes: <strong>{r.prob.toFixed(1)}%</strong></span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------- WAR INDEX VIEW ----------
+function WarIndexView({ onNavigate }) {
+  const M = window.MICAH;
+  return (
+    <div className="view">
+      <CropFrame>
+        <div className="breadcrumb">
+          <button className="breadcrumb__link" onClick={() => onNavigate({ view: 'world' })}>World</button>
+          <span className="breadcrumb__sep">›</span>
+          <span>By State</span>
+        </div>
+        <PageTitle
+          title="Maryland MAGA Index"
+          body="An aggregated, data-driven estimate of market-implied probabilities across major political outcomes and themes tied to the MAGA movement, derived from active prediction market contracts and exchange signals."
+        />
+        <div className="state-grid" style={{ marginTop: 'var(--s-6)' }}>
+          <div className="state-grid__stats">
+            <ScoreTile value="93" label="PMI Score" tone="blue" />
+            <StatCard value="897" label="Contracts" />
+            <StatCard value="11" label="Prediction Market Exchanges">
+              <ExchangeStack ids={['kalshi','polymarket','robinhood','coinbase']} extras={7} size={22} />
+            </StatCard>
+            <StatCard value="88" label="PMI Holdings" info />
+          </div>
+          <div className="state-grid__chart">
+            <TimeChart data={M.series14} width={760} height={460} color="#3A4C6A" yLabel="PMI Score" />
+          </div>
+        </div>
+
+        <h3 className="t-h3" style={{ marginTop: 'var(--s-10)' }}>PMI Holdings</h3>
+        <div className="war-grid" style={{ marginTop: 'var(--s-5)' }}>
+          {M.warHoldings.map((h, i) => (
+            <div key={i} className="holdings-card">
+              <div className="holdings-card__head">
+                <ExchangeChip id={h.exc} size={26} />
+                <a href="#" onClick={e=>e.preventDefault()} className="holdings-card__title">{h.title}</a>
+              </div>
+              <div className="holdings-card__row"><Tag tone="indirect">{h.rel}</Tag></div>
+              <div className="holdings-card__row holdings-card__row--foot">
+                <span className="t-label">Volume: <strong style={{color:'var(--ink-1)'}}>{h.volume}</strong></span>
+                <span className="holdings-card__yes">Yes: <strong>{h.yes}.0%</strong></span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CropFrame>
+    </div>
+  );
+}
+
+Object.assign(window, { WorldView, StateView, QuestionView, WarIndexView });
+
+</script>
+  <script type="text/babel">
+/* AskView — the AI-native counter-design.
+   Keeps Micah brand DNA (serif, warm paper, heat scale, exchange chips)
+   but rebuilds interaction around natural-language Q&A, AI-synthesized
+   narratives, citation chips, and AI-surfaced spotlights. */
+
+const { useState: askState, useEffect: askEffect, useRef: askRef } = React;
+
+// ---------- AI helper — wraps window.claude.complete with safe fallback ---
+async function askClaude(prompt, fallback) {
+  try {
+    if (!window.claude || !window.claude.complete) return fallback;
+    const out = await window.claude.complete(prompt);
+    return (out || '').trim() || fallback;
+  } catch (e) {
+    console.warn('claude failed', e);
+    return fallback;
+  }
+}
+
+// ---------- Streaming-text effect (reveals tokens word by word) ----------
+function useStreamingText(text, speedMs = 18) {
+  const [out, setOut] = askState('');
+  askEffect(() => {
+    setOut('');
+    if (!text) return;
+    const words = text.split(/(\s+)/);  // keep whitespace
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setOut(words.slice(0, i).join(''));
+      if (i >= words.length) clearInterval(id);
+    }, speedMs);
+    return () => clearInterval(id);
+  }, [text]);
+  return out;
+}
+
+// ---------- Sparkle icon (the "AI" mark — used very sparingly) ----------
+function Sparkle({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 3 L13.6 9.2 L20 11 L13.6 12.8 L12 19 L10.4 12.8 L4 11 L10.4 9.2 Z" fill={color}/>
+      <path d="M19 3 L19.8 5.4 L22 6 L19.8 6.6 L19 9 L18.2 6.6 L16 6 L18.2 5.4 Z" fill={color} opacity=".55"/>
+    </svg>
+  );
+}
+
+// ---------- Live thinking dots ----------
+function ThinkingDots() {
+  return (
+    <span className="thinking-dots" aria-label="thinking">
+      <span></span><span></span><span></span>
+    </span>
+  );
+}
+
+// ---------- Cited contract chip (small footnote-style citation) ----------
+function CiteChip({ n, exc, label, onClick }) {
+  return (
+    <button className="cite-chip" onClick={onClick} title={label}>
+      <sup className="cite-chip__n">[{n}]</sup>
+      <ExchangeChip id={exc} size={18} />
+      <span className="cite-chip__label">{label}</span>
+    </button>
+  );
+}
+
+// ---------- Probability dial — heat-scaled radial gauge ----------
+function ProbDial({ value = 50, size = 140, label = 'Composite probability' }) {
+  const r = size / 2 - 10;
+  const c = 2 * Math.PI * r;
+  const off = c * (1 - value / 100);
+  const color = window.heatColor(value);
+  const sw = 14;
+  return (
+    <div className="prob-dial" style={{ width: size, height: size }}>
+      <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
+        <circle cx={size/2} cy={size/2} r={r} stroke="var(--surface-rule)" strokeWidth={sw} fill="none" />
+        <circle cx={size/2} cy={size/2} r={r}
+          stroke={color} strokeWidth={sw} fill="none"
+          strokeDasharray={c} strokeDashoffset={off}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${size/2} ${size/2})`}
+          style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(.2,.7,.2,1), stroke .8s' }} />
+      </svg>
+      <div className="prob-dial__center">
+        <div className="prob-dial__value">{Math.round(value)}<small>%</small></div>
+        <div className="prob-dial__label">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Confidence bar ----------
+function ConfidenceBar({ low, mid, high }) {
+  const minV = Math.max(0, Math.min(low, high) - 6);
+  const maxV = Math.min(100, Math.max(low, high) + 6);
+  const span = maxV - minV;
+  const lp = ((low - minV) / span) * 100;
+  const hp = ((high - minV) / span) * 100;
+  const mp = ((mid - minV) / span) * 100;
+  return (
+    <div className="conf-bar">
+      <div className="conf-bar__head t-label">
+        <span>{low}%</span>
+        <span style={{ fontWeight: 600, color: 'var(--ink-1)' }}>{mid}% est.</span>
+        <span>{high}%</span>
+      </div>
+      <div className="conf-bar__track">
+        <div className="conf-bar__band" style={{ left: lp + '%', width: (hp - lp) + '%' }} />
+        <div className="conf-bar__mark" style={{ left: mp + '%' }} />
+      </div>
+      <div className="conf-bar__foot t-label">90% confidence interval · derived from 4 sources</div>
+    </div>
+  );
+}
+
+// ---------- Today brief block (the editorial opener) ----------
+function TodayBrief() {
+  const [headline, setHeadline] = askState('Markets pull right as gubernatorial bets concentrate in three Sun-Belt races.');
+  const [lead, setLead] = askState(
+    'The National MAGA Index closed at 93 yesterday — its highest reading in 14 days — pushed up by a surge in Texas and Florida governor contracts. Contrarian volume is consolidating around a single Georgia third-party question. Recession contracts on Kalshi remain flat.'
+  );
+  const [loading, setLoading] = askState(false);
+
+  async function regen() {
+    setLoading(true);
+    const h = await askClaude(
+      'In one short editorial sentence (under 18 words, no quotes), write the lead headline for a prediction-market dashboard on May 28, 2026. The MAGA Index is 93, near its 14-day high, with Texas and Florida governor contracts driving the rise.',
+      headline
+    );
+    const l = await askClaude(
+      'In 2-3 short editorial sentences, summarize today on a prediction-market aggregator: MAGA Index 93 (14d high), driven by TX & FL governor contracts; volume consolidating in a Georgia third-party question; Kalshi recession contracts flat. Neutral analytical tone. Plain text, no markdown.',
+      lead
+    );
+    setHeadline(h); setLead(l); setLoading(false);
+  }
+
+  const streamedH = useStreamingText(headline, 14);
+  const streamedL = useStreamingText(lead, 10);
+
+  return (
+    <div className="brief">
+      <div className="brief__head">
+        <span className="t-eyebrow">TODAY · MAY 28 · LIVE</span>
+        <button className="text-btn" onClick={regen} disabled={loading}>
+          <Sparkle size={12} /> {loading ? 'Regenerating…' : 'Regenerate'}
+        </button>
+      </div>
+      <h1 className="brief__head-line t-display">{streamedH}</h1>
+      <p className="brief__lead t-body">{streamedL}</p>
+      <div className="brief__sources">
+        <span className="t-label" style={{ marginRight: 8 }}>Synthesized from</span>
+        <ExchangeStack ids={['polymarket','kalshi','robinhood','metaculus','coinbase']} extras={6} size={20} />
+      </div>
+    </div>
+  );
+}
+
+// ---------- The Composer (the AI prompt input) ----------
+function Composer({ onSubmit, busy }) {
+  const [val, setVal] = askState('');
+  const examples = [
+    'How likely is a recession before Q4 2026?',
+    'Will Trump pardon any Jan 6 defendants this year?',
+    'Build a Sun-Belt governors index',
+    'What moved the MAGA Index in the last week?',
+  ];
+  function go(q) {
+    if (busy) return;
+    const t = (q ?? val).trim();
+    if (!t) return;
+    setVal(t);
+    onSubmit(t);
+  }
+  return (
+    <div className="composer">
+      <div className="composer__row">
+        <span className="composer__icon"><Sparkle size={18} color="var(--ink-2)" /></span>
+        <input
+          className="composer__input"
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          placeholder="Ask Micah anything — type a question or describe an index…"
+          onKeyDown={e => { if (e.key === 'Enter') go(); }}
+        />
+        <button className="composer__send" onClick={() => go()} disabled={busy}>
+          {busy ? <ThinkingDots /> : <>Ask <span style={{opacity:.6}}>↵</span></>}
+        </button>
+      </div>
+      <div className="composer__examples">
+        {examples.map(e => (
+          <button key={e} className="example-pill" onClick={() => go(e)} disabled={busy}>{e}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------- The Answer card (after the user asks) ----------
+function AnswerCard({ question, onClose }) {
+  const [phase, setPhase] = askState('thinking');  // thinking | ready | error
+  const [data, setData] = askState(null);
+  const [followups, setFollowups] = askState([]);
+
+  askEffect(() => {
+    let alive = true;
+    setPhase('thinking'); setData(null); setFollowups([]);
+
+    (async () => {
+      // Ask Claude for a structured JSON answer
+      const prompt = `You are Micah, a prediction-markets aggregator. The user asked: "${question}".
+Respond ONLY with strict JSON (no prose, no markdown fences). The schema is:
+{
+  "title": "<a short rephrased headline-form version of the question, max 14 words>",
+  "probability": <integer 0-100, the composite likelihood>,
+  "low": <integer 0-100>, "high": <integer 0-100>,  // a 90% CI band
+  "summary": "<one-paragraph 60-90 word neutral analytical summary in plain prose>",
+  "drivers": [ "<short driver 1 (under 14 words)>", "<driver 2>", "<driver 3>" ],
+  "citations": [
+    { "n": 1, "exc": "polymarket", "title": "<short contract title>" },
+    { "n": 2, "exc": "kalshi", "title": "<short contract title>" },
+    { "n": 3, "exc": "metaculus", "title": "<short contract title>" }
+  ],
+  "followups": [ "<followup q 1>", "<followup q 2>", "<followup q 3>" ]
+}
+The "exc" field must be one of: polymarket, kalshi, robinhood, metaculus, coinbase, manifold, predictit.
+Be analytical and neutral. Do not invent specific real-person quotes.`;
+
+      const fallback = JSON.stringify({
+        title: 'Composite likelihood for the user question',
+        probability: 38, low: 28, high: 49,
+        summary: 'Aggregated market signal suggests modest probability. Direct contracts on Polymarket and Kalshi are trading in the high-30s, while indirect contracts on Metaculus skew slightly lower. Volume is concentrated in a small number of high-conviction contracts, so the composite reading is somewhat sensitive to single-source moves.',
+        drivers: [
+          'Polymarket direct contract trading at 41% with $2.1M open interest',
+          'Kalshi short-dated proxy at 35%, mild upward drift over 7 days',
+          'Metaculus community forecast diverging downward (28%)'
+        ],
+        citations: [
+          { n: 1, exc: 'polymarket', title: 'Direct outcome contract — May resolution' },
+          { n: 2, exc: 'kalshi',     title: 'Short-dated proxy market'                },
+          { n: 3, exc: 'metaculus',  title: 'Community forecast (1y horizon)'         },
+          { n: 4, exc: 'robinhood',  title: 'Adjacent macro question'                 },
+        ],
+        followups: [
+          'How has the probability moved over the last 14 days?',
+          'Which contract has the highest single-source weight?',
+          'What would need to happen for this to cross 50%?'
+        ]
+      });
+
+      const raw = await askClaude(prompt, fallback);
+      if (!alive) return;
+      let parsed = null;
+      try { parsed = JSON.parse(raw); }
+      catch { try { parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]); } catch { parsed = JSON.parse(fallback); } }
+      // ensure ints
+      parsed.probability = Math.max(0, Math.min(100, Math.round(parsed.probability || 50)));
+      parsed.low  = Math.max(0, Math.min(100, Math.round(parsed.low  ?? parsed.probability - 10)));
+      parsed.high = Math.max(0, Math.min(100, Math.round(parsed.high ?? parsed.probability + 10)));
+      setData(parsed);
+      setFollowups(parsed.followups || []);
+      setPhase('ready');
+    })();
+
+    return () => { alive = false; };
+  }, [question]);
+
+  const summary = useStreamingText(data?.summary || '', 8);
+
+  return (
+    <div className="answer">
+      <div className="answer__head">
+        <div className="answer__q">
+          <Sparkle size={14} color="var(--ink-3)" />
+          <span className="t-label" style={{ marginLeft: 6 }}>YOU ASKED</span>
+        </div>
+        <button className="text-btn" onClick={onClose}>Close ✕</button>
+      </div>
+      <div className="answer__qtext t-h3">{question}</div>
+
+      {phase === 'thinking' && (
+        <div className="answer__loading">
+          <ThinkingDots />
+          <span className="t-label" style={{marginLeft:10}}>Pulling contracts across 11 exchanges…</span>
+        </div>
+      )}
+
+      {phase === 'ready' && data && (
+        <div className="answer__body">
+          <div className="answer__left">
+            <div className="t-label" style={{textTransform:'uppercase',letterSpacing:'.08em',marginBottom:8}}>
+              COMPOSITE PMI
+            </div>
+            <ProbDial value={data.probability} label="probability" />
+            <div style={{ marginTop: 14 }}>
+              <ConfidenceBar low={data.low} mid={data.probability} high={data.high} />
+            </div>
+          </div>
+          <div className="answer__right">
+            <div className="answer__rephrased t-h3">{data.title}</div>
+            <p className="answer__summary t-body">{summary || data.summary}</p>
+
+            <div className="answer__drivers">
+              <div className="t-label" style={{textTransform:'uppercase',letterSpacing:'.08em',marginBottom:6}}>WHAT'S DRIVING IT</div>
+              <ul>
+                {(data.drivers || []).map((d, i) => (
+                  <li key={i}><span className="bullet">→</span> {d}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="answer__cites">
+              <div className="t-label" style={{textTransform:'uppercase',letterSpacing:'.08em',marginBottom:6}}>SOURCES</div>
+              <div className="cite-chip-row">
+                {(data.citations || []).map(c => (
+                  <CiteChip key={c.n} n={c.n} exc={c.exc} label={c.title} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {phase === 'ready' && followups.length > 0 && (
+        <div className="answer__followups">
+          <span className="t-label" style={{textTransform:'uppercase',letterSpacing:'.08em',marginRight:8}}>FOLLOW UP</span>
+          {followups.map(f => (
+            <button key={f} className="example-pill" onClick={() => { setData(null); setPhase('thinking'); window.dispatchEvent(new CustomEvent('askMicah', { detail: f })); }}>
+              {f}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Spotlights — AI-surfaced anomalies & insights ----------
+function Spotlights() {
+  const items = [
+    {
+      kind: 'Anomaly',
+      icon: '↑',
+      tone: 'red',
+      headline: 'Florida MAGA Index +5.4 in 24h',
+      body: 'Driven by a single Polymarket contract on the 2026 gubernatorial primary that added $1.8M of open interest overnight.',
+      excs: ['polymarket','kalshi'],
+      heat: 86,
+    },
+    {
+      kind: 'Correlation',
+      icon: '⇄',
+      tone: 'neutral',
+      headline: 'TX & FL Gov moving together',
+      body: 'Correlation between Texas and Florida governor contracts has tightened to r=0.81 over the last week, the highest since Feb.',
+      excs: ['polymarket','metaculus','robinhood'],
+      heat: 50,
+    },
+    {
+      kind: 'Volume',
+      icon: '⇡',
+      tone: 'blue',
+      headline: 'Surge in GA third-party question',
+      body: '720 new contracts in 48h on the Georgia third-party threshold question. PMI Probability ticked from 81% to 88%.',
+      excs: ['kalshi','manifold'],
+      heat: 12,
+    },
+  ];
+  return (
+    <section className="spotlights">
+      <div className="row-between">
+        <h2 className="t-h2" style={{ fontSize: 28 }}>
+          <Sparkle size={18} color="var(--ink-1)" /> &nbsp; Surfaced for you
+        </h2>
+        <span className="t-label">Auto-curated · refreshes every 6 h</span>
+      </div>
+      <div className="spotlights__grid">
+        {items.map((s, i) => (
+          <div key={i} className={`spot spot--${s.tone}`}>
+            <div className="spot__head">
+              <span className="spot__kind">{s.icon} &nbsp;{s.kind}</span>
+              <span className="spot__heat" style={{ background: window.heatColor(s.heat) }} />
+            </div>
+            <h3 className="spot__h">{s.headline}</h3>
+            <p className="spot__body t-body-sm">{s.body}</p>
+            <div className="spot__foot">
+              <ExchangeStack ids={s.excs} extras={2} size={20} />
+              <button className="text-btn">Explain →</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ---------- Build-your-own PMI (NL composer) ----------
+function CustomPMI() {
+  const [theme, setTheme] = askState('');
+  const [busy, setBusy]   = askState(false);
+  const [out, setOut]     = askState(null);
+
+  async function build() {
+    if (!theme.trim() || busy) return;
+    setBusy(true);
+    const prompt = `You compose Micah prediction-market indexes from a theme. The theme is: "${theme}".
+Output ONLY strict JSON (no markdown):
+{
+  "name": "<3-5 word index name>",
+  "tagline": "<one sentence 12-20 words explaining what it tracks>",
+  "components": [
+    {"exc":"polymarket","weight":<int 0-100>,"title":"<short contract title>"},
+    {"exc":"kalshi",    "weight":<int 0-100>,"title":"<short contract title>"},
+    {"exc":"metaculus", "weight":<int 0-100>,"title":"<short contract title>"},
+    {"exc":"robinhood", "weight":<int 0-100>,"title":"<short contract title>"}
+  ],
+  "score": <int 0-100>
+}
+Weights sum to 100. exc values: polymarket, kalshi, robinhood, metaculus, coinbase, manifold, predictit.`;
+    const fb = JSON.stringify({
+      name: 'Themed Composite',
+      tagline: 'Aggregates relevant contracts into a single tracked probability for the requested theme.',
+      components: [
+        { exc:'polymarket', weight:35, title:'Direct outcome contract'      },
+        { exc:'kalshi',     weight:25, title:'Short-dated proxy market'     },
+        { exc:'metaculus',  weight:20, title:'Long-horizon community forecast' },
+        { exc:'robinhood',  weight:20, title:'Adjacent macro question'      },
+      ],
+      score: 42,
+    });
+    const raw = await askClaude(prompt, fb);
+    let parsed; try { parsed = JSON.parse(raw); } catch { try { parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]); } catch { parsed = JSON.parse(fb); } }
+    setOut(parsed);
+    setBusy(false);
+  }
+
+  return (
+    <section className="custom-pmi">
+      <div className="row-between">
+        <h2 className="t-h2" style={{ fontSize: 28 }}>
+          <Sparkle size={18} color="var(--ink-1)" /> &nbsp; Compose your own index
+        </h2>
+      </div>
+      <p className="t-body" style={{ maxWidth: 700, marginTop: 6 }}>
+        Describe a theme. Micah picks the contracts, weights them by relevance and volume, and gives you a single tracked probability.
+      </p>
+
+      <div className="composer" style={{ marginTop: 16 }}>
+        <div className="composer__row">
+          <input
+            className="composer__input"
+            placeholder="e.g. AI regulation by 2027 · Sun-Belt governorships · Fed cuts to 3.5%"
+            value={theme}
+            onChange={e => setTheme(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') build(); }}
+          />
+          <button className="composer__send" onClick={build} disabled={busy || !theme.trim()}>
+            {busy ? <ThinkingDots /> : <>Compose</>}
+          </button>
+        </div>
+      </div>
+
+      {out && (
+        <div className="custom-pmi__out">
+          <div className="custom-pmi__head">
+            <div>
+              <div className="t-eyebrow">YOUR INDEX</div>
+              <h3 className="t-h2" style={{ fontSize: 32, marginTop: 4 }}>{out.name}</h3>
+              <p className="t-body" style={{ maxWidth: 600 }}>{out.tagline}</p>
+            </div>
+            <ProbDial value={out.score} size={120} label="composite" />
+          </div>
+          <div className="custom-pmi__components">
+            {out.components.map((c, i) => (
+              <div key={i} className="cpmi-row">
+                <ExchangeChip id={c.exc} size={26} />
+                <span className="cpmi-row__title">{c.title}</span>
+                <span className="cpmi-row__weight-bar">
+                  <span style={{ width: c.weight + '%', background: 'var(--ink-1)' }} />
+                </span>
+                <span className="cpmi-row__weight t-label">{c.weight}%</span>
+              </div>
+            ))}
+          </div>
+          <div className="custom-pmi__cta">
+            <button className="text-btn">Save as PMI</button>
+            <button className="text-btn">Add alerts</button>
+            <button className="text-btn">Share</button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ============================================================
+// AskView — main composition
+// ============================================================
+function AskView({ onNavigate }) {
+  const [question, setQuestion] = askState(null);
+  const [busy, setBusy] = askState(false);
+
+  // listen for follow-up triggers from the AnswerCard
+  askEffect(() => {
+    const h = (ev) => setQuestion(ev.detail);
+    window.addEventListener('askMicah', h);
+    return () => window.removeEventListener('askMicah', h);
+  }, []);
+
+  function handleAsk(q) {
+    setQuestion(q);
+    // scroll to answer
+    setTimeout(() => {
+      const el = document.querySelector('.answer');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }
+
+  return (
+    <div className="view ask-view">
+      <CropFrame>
+        <TodayBrief />
+
+        <div className="ask-block">
+          <Composer onSubmit={handleAsk} busy={busy} />
+          {question && (
+            <AnswerCard question={question} onClose={() => setQuestion(null)} />
+          )}
+        </div>
+
+        <Spotlights />
+
+        <CustomPMI />
+      </CropFrame>
+    </div>
+  );
+}
+
+Object.assign(window, { AskView });
+
+</script>
+  <script type="text/babel">
+/* Research Desk — focused single-topic view with dimension switches.
+   Editorial style. Pick ONE contract, then swap between
+   Price · Analogues · Calibration · Venues · Correlations · Notes. */
+
+const { useState: rState, useEffect: rEffect, useMemo: rMemo } = React;
+
+// ============================================================
+// Data (kept stable)
+// ============================================================
+const RESEARCH_DATA = (() => {
+  const universe = [
+    { sym: 'TX-GOV-26',   short:'TX Gov 2026',           desc: 'Republican wins',          mkt: 0.820, fair: 0.847, vol: 1842310, brier: 0.18, polls: 0.84, news: 12, category: 'Politics' },
+    { sym: 'FL-GOV-26',   short:'FL Gov 2026',           desc: 'Republican wins',          mkt: 0.780, fair: 0.812, vol: 2401200, brier: 0.16, polls: 0.81, news:  9, category: 'Politics' },
+    { sym: 'MI-GOV-26',   short:'MI Gov 2026',           desc: 'Democratic candidate wins',mkt: 0.580, fair: 0.612, vol:  892140, brier: 0.21, polls: 0.59, news: 14, category: 'Politics' },
+    { sym: 'GA-3P-26',    short:'GA 3rd-party',          desc: 'Third party >5% in 2026',  mkt: 0.880, fair: 0.831, vol:  720500, brier: 0.32, polls: 0.79, news:  5, category: 'Politics' },
+    { sym: 'REC-Q4-26',   short:'US Recession',          desc: 'Recession by Q4 2026',     mkt: 0.420, fair: 0.388, vol: 3120800, brier: 0.14, polls: null, news: 28, category: 'Macro' },
+    { sym: 'FED-50-OCT',  short:'Fed -50bp',             desc: 'Fed cuts ≥50bp by October',mkt: 0.310, fair: 0.342, vol: 1408200, brier: 0.12, polls: null, news: 22, category: 'Macro' },
+    { sym: 'MAGA-IDX',    short:'MAGA Composite',        desc: 'National political index',  mkt: 0.930, fair: 0.918, vol: 8419700, brier: 0.15, polls: 0.91, news: 41, category: 'Politics' },
+    { sym: 'BTC-100K-EOY',short:'BTC >$100k',            desc: 'Bitcoin closes above $100k',mkt: 0.670, fair: 0.704, vol: 2104500, brier: 0.13, polls: null, news: 17, category: 'Crypto' },
+  ];
+
+  function mkSeries(n, base, drift, noise, seed) {
+    const out = []; let v = base;
+    for (let i = 0; i < n; i++) {
+      const trend = drift * (i / n);
+      const s = Math.sin((seed + i) * 0.4) * noise;
+      const r = (Math.cos((seed + i) * 1.1) - 0.5) * noise * 0.6;
+      v = base + trend + s + r;
+      out.push(Math.max(0.05, Math.min(0.97, v)));
+    }
+    return out;
+  }
+  const series = {
+    market: mkSeries(60, 0.785, 0.04, 0.013, 1.0),
+    fair:   mkSeries(60, 0.815, 0.025, 0.005, 2.0),
+    polls:  mkSeries(60, 0.825, 0.02, 0.014, 3.0),
+  };
+  const events = [
+    { x: 8,  label: 'GOP primary debate, Houston',      pol: 'up'   },
+    { x: 18, label: 'Quinnipiac TX poll release',       pol: 'down' },
+    { x: 27, label: 'Federal indictment dropped',       pol: 'down' },
+    { x: 36, label: 'Polymarket whale +$1.8M long',     pol: 'up'   },
+    { x: 47, label: 'Reuters scoop · cabinet reshuffle',pol: 'up'   },
+    { x: 55, label: 'CPI prints hotter than expected',  pol: 'flat' },
+  ];
+
+  const decomp = [
+    { exc: 'polymarket', price: 0.823, weight: 38, vol: '$4.2M', confidence: 'high' },
+    { exc: 'kalshi',     price: 0.819, weight: 26, vol: '$2.8M', confidence: 'high' },
+    { exc: 'robinhood',  price: 0.821, weight: 14, vol: '$870K', confidence: 'med'  },
+    { exc: 'manifold',   price: 0.815, weight:  9, vol: '$220K', confidence: 'low'  },
+    { exc: 'metaculus',  price: 0.827, weight:  8, vol: '$110K', confidence: 'med'  },
+    { exc: 'predictit',  price: 0.812, weight:  5, vol:  '$95K', confidence: 'low'  },
+  ];
+
+  const calCategories = ['Politics', 'Macro', 'Geopolitics', 'Crypto', 'Sports'];
+  const calExchanges  = ['polymarket','kalshi','robinhood','metaculus','manifold','predictit'];
+  function mkCalibration() {
+    const m = {};
+    calExchanges.forEach((e, ei) => {
+      m[e] = {};
+      calCategories.forEach((c, ci) => {
+        const v = 0.08 + Math.abs(Math.sin((ei + 1) * (ci + 3) * 1.7)) * 0.22;
+        m[e][c] = +v.toFixed(3);
+      });
+    });
+    return m;
+  }
+  const calibration = mkCalibration();
+
+  const eventStudy = {
+    summary: 'Across 4 analogous Texas gubernatorial cycles, prediction-market prices at T-180 days have consistently underpriced the eventual Republican win probability by 19-28 percentage points. Mean miss: +23pp.',
+    analogues: [
+      { year: 2022, label: 'Abbott vs O\'Rourke',  mktAt: 0.74, error: +0.26 },
+      { year: 2018, label: 'Abbott vs Valdez',     mktAt: 0.81, error: +0.19 },
+      { year: 2014, label: 'Abbott vs Davis',      mktAt: 0.79, error: +0.21 },
+      { year: 2010, label: 'Perry vs White',       mktAt: 0.72, error: +0.28 },
+    ],
+  };
+
+  const correlations = [
+    { sym: 'FL-GOV-26',    label: 'FL Gov · Republican wins',     r:  0.81, n: 142 },
+    { sym: 'MAGA-IDX',     label: 'MAGA Composite Index',         r:  0.74, n: 142 },
+    { sym: 'GA-3P-26',     label: 'GA third-party >5%',           r: -0.42, n: 142 },
+    { sym: 'REC-Q4-26',    label: 'US Recession by Q4 2026',      r: -0.31, n: 142 },
+    { sym: 'FED-50-OCT',   label: 'Fed cuts ≥50bp by October',    r: -0.18, n: 142 },
+  ];
+
+  return { universe, series, events, decomp, calCategories, calExchanges, calibration, eventStudy, correlations };
+})();
+window.RESEARCH_DATA = RESEARCH_DATA;
+
+// ============================================================
+// Format helpers
+// ============================================================
+const rFmt = {
+  px:  v => (v * 100).toFixed(1) + '¢',
+  pxF: v => (v * 100).toFixed(2) + '¢',
+  pp:  v => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + 'pp',
+};
+
+function brierFill(v) {
+  const t = Math.max(0, Math.min(1, (v - 0.05) / 0.27));
+  const stops = [
+    [0,    [22, 52, 138]],    [0.25, [111, 143, 219]],
+    [0.50, [233, 226, 220]],  [0.75, [220, 139, 149]], [1.00, [139, 30, 45]],
+  ];
+  let lo = stops[0], hi = stops[stops.length - 1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t >= stops[i][0] && t <= stops[i+1][0]) { lo = stops[i]; hi = stops[i+1]; break; }
+  }
+  const u = (t - lo[0]) / (hi[0] - lo[0] || 1);
+  const c = lo[1].map((x, i) => Math.round(x + (hi[1][i] - x) * u));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+// ============================================================
+// Hero — single focused stats row
+// ============================================================
+function Hero({ contract }) {
+  const edge = contract.fair - contract.mkt;
+  const edgeTone = edge > 0.01 ? 'pos' : edge < -0.01 ? 'neg' : 'flat';
+  return (
+    <div className="rd2-hero">
+      <div className="rd2-hero__cell">
+        <div className="t-label">Market price</div>
+        <div className="rd2-hero__v">{rFmt.pxF(contract.mkt)}</div>
+        <div className="t-label" style={{color:'var(--ink-3)'}}>implied probability</div>
+      </div>
+      <div className="rd2-hero__cell rd2-hero__cell--fair">
+        <div className="t-label">Micah Fair value</div>
+        <div className="rd2-hero__v">{rFmt.pxF(contract.fair)}</div>
+        <div className="t-label" style={{color:'var(--ink-3)'}}>weighted composite</div>
+      </div>
+      <div className={`rd2-hero__cell rd2-hero__cell--edge rd2-hero__cell--${edgeTone}`}>
+        <div className="t-label">Edge</div>
+        <div className="rd2-hero__v">{rFmt.pp(edge)}</div>
+        <div className="t-label" style={{color:'var(--ink-3)'}}>fair − market</div>
+      </div>
+      <div className="rd2-hero__cell">
+        <div className="t-label">Confidence</div>
+        <div className="rd2-hero__v">0.91</div>
+        <div className="t-label" style={{color:'var(--ink-3)'}}>high · 6 venues</div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Dimension switcher (tabs)
+// ============================================================
+const TABS = [
+  { id: 'price',     label: 'Price history',  hint: '14-day, with poll & news overlay' },
+  { id: 'analogues', label: 'Analogues',      hint: '4 prior election cycles' },
+  { id: 'calib',     label: 'Calibration',    hint: 'Brier by venue × category' },
+  { id: 'venues',    label: 'Venue decomp',   hint: 'Where the fair value comes from' },
+  { id: 'correl',    label: 'Correlations',   hint: 'Top co-movers, 142d window' },
+  { id: 'notes',     label: 'Notes',          hint: 'Hypothesis log for this contract' },
+];
+
+function TabBar({ active, onChange }) {
+  return (
+    <div className="rd2-tabs" role="tablist">
+      {TABS.map(t => (
+        <button
+          key={t.id}
+          role="tab"
+          aria-selected={t.id === active}
+          className={`rd2-tab ${t.id === active ? 'is-active' : ''}`}
+          onClick={() => onChange(t.id)}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB: Price history (multi-line + event markers)
+// ============================================================
+function TabPrice() {
+  const [overlays, setOverlays] = rState({ fair: true, polls: true, events: true, edge: true });
+  const w = 980, h = 380;
+  const pad = { l: 60, r: 78, t: 16, b: 50 };
+  const inner = { w: w - pad.l - pad.r, h: h - pad.t - pad.b };
+  const { market, fair, polls } = RESEARCH_DATA.series;
+  const allMin = Math.min(...market, ...fair, ...polls) - 0.02;
+  const allMax = Math.max(...market, ...fair, ...polls) + 0.02;
+  const range = allMax - allMin;
+  const xStep = inner.w / (market.length - 1);
+  const px2y = v => pad.t + inner.h - ((v - allMin) / range) * inner.h;
+  const idx2x = i => pad.l + i * xStep;
+  const line = (arr) => 'M ' + arr.map((v, i) => idx2x(i) + ',' + px2y(v)).join(' L ');
+
+  const last = { m: market.at(-1), f: fair.at(-1) };
+  const edgeNow = last.f - last.m;
+
+  const [hover, setHover] = rState(null);
+
+  return (
+    <div className="rd2-pane">
+      <div className="rd2-pane__head">
+        <div>
+          <h3 className="t-h3" style={{margin:0}}>14-day implied probability</h3>
+          <p className="t-body-sm" style={{margin:'4px 0 0',color:'var(--ink-3)'}}>
+            Market price is the canonical observation. Toggle overlays to compare.
+          </p>
+        </div>
+        <div className="rd2-overlays">
+          {[
+            { k:'fair',   label:'Micah Fair', dot:'#1A3FA8' },
+            { k:'polls',  label:'Polls',      dot:'#6B7180', dash: true },
+            { k:'edge',   label:'Edge band',  dot:'rgba(26,63,168,.25)' },
+            { k:'events', label:'News events',dot:'#11192C', circle: true },
+          ].map(o => (
+            <label key={o.k} className={`rd2-overlay ${overlays[o.k] ? 'is-on' : ''}`}>
+              <input type="checkbox" checked={overlays[o.k]}
+                     onChange={e => setOverlays({...overlays, [o.k]: e.target.checked})} />
+              <span className={`rd2-overlay__dot ${o.dash ? 'is-dash' : ''} ${o.circle ? 'is-circle' : ''}`} style={{background: o.dot}} />
+              {o.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="rd2-svg">
+        {/* grid */}
+        {[0, 0.25, 0.5, 0.75, 1].map(t => {
+          const y = pad.t + t * inner.h;
+          return (
+            <g key={t}>
+              <line x1={pad.l} x2={w - pad.r} y1={y} y2={y} stroke="#E1DCD0" strokeWidth="1" />
+              <text x={pad.l - 10} y={y + 3} fontSize="11" textAnchor="end" fill="#6B7180" fontFamily="Inter">
+                {((allMax - t * range) * 100).toFixed(0)}¢
+              </text>
+            </g>
+          );
+        })}
+        {[0, 15, 30, 45, 59].map(i => (
+          <text key={i} x={idx2x(i)} y={h - 28} fontSize="11" fill="#6B7180" textAnchor="middle" fontFamily="Inter">
+            T-{60 - i}d
+          </text>
+        ))}
+
+        {/* edge band */}
+        {overlays.edge && overlays.fair && (
+          <path
+            d={line(market) + ' L ' + idx2x(market.length - 1) + ',' + px2y(fair[fair.length - 1])
+              + ' L ' + [...fair].reverse().map((v, i) => idx2x(fair.length - 1 - i) + ',' + px2y(v)).join(' L ') + ' Z'}
+            fill={edgeNow > 0 ? 'rgba(26,63,168,.10)' : 'rgba(139,30,45,.10)'}
+          />
+        )}
+
+        {/* event markers */}
+        {overlays.events && RESEARCH_DATA.events.map((ev, i) => {
+          const x = idx2x(ev.x);
+          const color = ev.pol === 'up' ? '#1A3FA8' : ev.pol === 'down' ? '#8B1E2D' : '#6B7180';
+          return (
+            <g key={i} onMouseEnter={() => setHover({ x, y: pad.t + 6, ev })} onMouseLeave={() => setHover(null)}
+               style={{cursor:'pointer'}}>
+              <line x1={x} x2={x} y1={pad.t + 14} y2={pad.t + inner.h} stroke={color} strokeWidth="1" strokeDasharray="2 3" opacity=".4" />
+              <circle cx={x} cy={pad.t + 6} r={4} fill={color} />
+            </g>
+          );
+        })}
+
+        {/* lines */}
+        {overlays.polls && <path d={line(polls)} fill="none" stroke="#6B7180" strokeWidth="1.5" strokeDasharray="5 4" opacity=".9" />}
+        {overlays.fair  && <path d={line(fair)}  fill="none" stroke="#1A3FA8" strokeWidth="1.8" />}
+        <path d={line(market)} fill="none" stroke="#11192C" strokeWidth="2.4" />
+
+        {/* last labels */}
+        {[{v:last.m,c:'#11192C'}].concat(overlays.fair ? [{v:last.f,c:'#1A3FA8'}] : []).map((p,i) => (
+          <g key={i}>
+            <rect x={w - pad.r + 6} y={px2y(p.v) - 10} width={pad.r - 12} height={20} fill={p.c} rx="3" />
+            <text x={w - pad.r + 13} y={px2y(p.v) + 4} fontSize="11" fontWeight="700" fill="#FBFAF6" fontFamily="Inter">
+              {rFmt.px(p.v)}
+            </text>
+          </g>
+        ))}
+
+        {hover && (
+          <g>
+            <rect x={Math.min(hover.x + 8, w - 240)} y={hover.y + 6} width={230} height={28}
+                  fill="#FBFAF6" stroke="#C9C3B5" rx="3" />
+            <text x={Math.min(hover.x + 16, w - 232)} y={hover.y + 25} fontSize="12" fill="#11192C" fontFamily="Inter">
+              {hover.ev.label}
+            </text>
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB: Analogues
+// ============================================================
+function TabAnalogues() {
+  const study = RESEARCH_DATA.eventStudy;
+  const maxErr = Math.max(...study.analogues.map(a => Math.abs(a.error)));
+  return (
+    <div className="rd2-pane">
+      <blockquote className="rd-quote">{study.summary}</blockquote>
+      <div className="rd-table">
+        <div className="rd-table__row rd-table__row--head">
+          <span>Cycle</span>
+          <span>Market at T-180</span>
+          <span>Resolution</span>
+          <span>Error</span>
+          <span>Distribution</span>
+        </div>
+        {study.analogues.map(a => (
+          <div key={a.year} className="rd-table__row">
+            <span className="rd-analogue__label">
+              <strong>{a.year}</strong>
+              <span className="t-body-sm" style={{color:'var(--ink-3)'}}>{a.label}</span>
+            </span>
+            <span className="rd-table__num">{rFmt.pxF(a.mktAt)}</span>
+            <span className="rd-resolved">
+              <span className="rd-resolved__dot" />Yes · 100¢
+            </span>
+            <span className={`rd-table__num ${a.error >= 0 ? 'rd-num--pos' : 'rd-num--neg'}`}>{rFmt.pp(a.error)}</span>
+            <span className="rd-bar">
+              <span className="rd-bar__mid" />
+              <span className={`rd-bar__fill ${a.error >= 0 ? 'rd-bar__fill--pos' : 'rd-bar__fill--neg'}`}
+                    style={{ width: `${(Math.abs(a.error) / maxErr) * 50}%`, [a.error >= 0 ? 'left' : 'right']: '50%' }} />
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB: Calibration
+// ============================================================
+function TabCalibration() {
+  const { calCategories: cats, calExchanges: exs, calibration: m } = RESEARCH_DATA;
+  return (
+    <div className="rd2-pane">
+      <p className="t-body" style={{color:'var(--ink-2)', maxWidth:760, margin:'0 0 var(--s-4)'}}>
+        Brier score by venue × category — lower is better. Polymarket and Metaculus lead on Politics;
+        Kalshi is strongest on Macro. The selected contract (<strong>TX-GOV-26</strong>) sits in the Politics column.
+      </p>
+      <div className="rd-heatmap">
+        <div className="rd-heatmap__row rd-heatmap__row--head">
+          <span></span>
+          {cats.map(c => <span key={c} className="rd-heatmap__hcell t-label">{c}</span>)}
+        </div>
+        {exs.map(e => (
+          <div key={e} className="rd-heatmap__row">
+            <span className="rd-heatmap__rowlabel">
+              <ExchangeChip id={e} size={18} />
+              <span className="t-body-sm" style={{fontWeight:600}}>{window.MICAH.exchanges[e].name}</span>
+            </span>
+            {cats.map(c => {
+              const v = m[e][c];
+              const bg = brierFill(v);
+              const isLight = v > 0.13 && v < 0.22;
+              return (
+                <span key={c} className="rd-heatmap__cell" style={{background:bg, color:isLight?'var(--ink-1)':'#FBFAF6'}}>
+                  {v.toFixed(2)}
+                </span>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="rd-heatmap__legend t-label">
+        <span>better calibration</span>
+        <div className="rd-heatmap__scale">
+          {[0.06,0.12,0.18,0.24,0.30].map(v => <span key={v} style={{background:brierFill(v)}} />)}
+        </div>
+        <span>worse</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB: Venue decomp + cross-venue board
+// ============================================================
+function TabVenues() {
+  const rows = RESEARCH_DATA.decomp;
+  const weighted = rows.reduce((s, r) => s + r.price * r.weight, 0) / 100;
+  const bestAsk = Math.min(...rows.map(r => r.price + 0.002));
+  const bestBid = Math.max(...rows.map(r => r.price - 0.002));
+  return (
+    <div className="rd2-pane">
+      <div className="rd2-venues-grid">
+        <div>
+          <h4 className="t-h3" style={{margin:'0 0 var(--s-3)', fontSize:18}}>Source decomposition</h4>
+          <div className="rd-decomp">
+            {rows.map(r => (
+              <div key={r.exc} className="rd-decomp__row">
+                <span className="rd-decomp__exc">
+                  <ExchangeChip id={r.exc} size={18} />
+                  <span className="t-body-sm">{window.MICAH.exchanges[r.exc].name}</span>
+                </span>
+                <span className="rd-decomp__bar">
+                  <span style={{width: r.weight + '%'}} className={`rd-decomp__bar-fill rd-decomp__bar-fill--${r.confidence}`} />
+                </span>
+                <span className="rd-decomp__weight">{r.weight}%</span>
+                <span className="rd-decomp__price">{rFmt.px(r.price)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="rd2-venues__foot">
+            <span className="t-label">Weighted composite</span>
+            <span className="rd2-venues__total">{rFmt.pxF(weighted)}</span>
+          </div>
+        </div>
+        <div>
+          <h4 className="t-h3" style={{margin:'0 0 var(--s-3)', fontSize:18}}>Cross-venue board</h4>
+          <div className="rd-table">
+            <div className="rd-table__row rd-table__row--head rd-table__row--venues">
+              <span>Venue</span><span>Bid</span><span>Ask</span><span>Last</span><span>Vol 24h</span><span>Conf.</span>
+            </div>
+            {rows.map(r => {
+              const bid = +(r.price - 0.002).toFixed(3);
+              const ask = +(r.price + 0.002).toFixed(3);
+              return (
+                <div key={r.exc} className="rd-table__row rd-table__row--venues">
+                  <span className="rd-venue__name">
+                    <ExchangeChip id={r.exc} size={20} />
+                    <span>{window.MICAH.exchanges[r.exc].name}</span>
+                  </span>
+                  <span className={`rd-table__num ${bid === bestBid ? 'rd-table__num--best' : ''}`}>{rFmt.px(bid)}</span>
+                  <span className={`rd-table__num ${ask === bestAsk ? 'rd-table__num--best' : ''}`}>{rFmt.px(ask)}</span>
+                  <span className="rd-table__num">{rFmt.px(r.price)}</span>
+                  <span className="rd-table__num rd-table__num--muted">{r.vol}</span>
+                  <span><Tag tone={r.confidence === 'high' ? 'direct' : 'neutral'}>{r.confidence}</Tag></span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB: Correlations
+// ============================================================
+function TabCorrelations() {
+  return (
+    <div className="rd2-pane">
+      <p className="t-body" style={{color:'var(--ink-2)', maxWidth:760, margin:'0 0 var(--s-4)'}}>
+        Pearson correlation against other contracts over a 142-day window. Positive values move together;
+        negative values diverge.
+      </p>
+      <div className="rd-corr" style={{padding:'var(--s-2) 0'}}>
+        {RESEARCH_DATA.correlations.map(c => {
+          const w = Math.abs(c.r);
+          const pos = c.r >= 0;
+          return (
+            <div key={c.sym} className="rd-corr__row" style={{padding:'12px 0'}}>
+              <span className="rd-corr__label">
+                <span className="t-body-sm" style={{fontWeight:600}}>{c.sym}</span>
+                <span className="t-label" style={{color:'var(--ink-3)'}}>{c.label}</span>
+              </span>
+              <span className="rd-corr__bar">
+                <span className="rd-corr__bar-mid" />
+                <span className={`rd-corr__bar-fill ${pos ? 'rd-corr__bar-fill--pos' : 'rd-corr__bar-fill--neg'}`}
+                      style={{width: w * 50 + '%', [pos ? 'left' : 'right']: '50%'}} />
+              </span>
+              <span className={`rd-corr__r ${pos ? 'rd-num--pos' : 'rd-num--neg'}`}>{c.r >= 0 ? '+' : ''}{c.r.toFixed(2)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB: Notes
+// ============================================================
+function TabNotes({ sym }) {
+  const seed = [
+    { id:1, dt:'2026-05-26 14:22', text:'Polymarket whale built +$1.8M long over 48h on TX-GOV-26 — Edge model flagged as low-confidence (single liquidity provider).' },
+    { id:2, dt:'2026-05-25 09:11', text:'Quinnipiac Texas poll shows GOP +9, vs market implying +18. Watching for revert by next poll cycle.' },
+    { id:3, dt:'2026-05-23 17:48', text:'Historical analogues (2014, 2018, 2022) all underpriced GOP at T-180 by 19-28pp. Treat market as upper bound on Dem probability.' },
+  ];
+  const [notes, setNotes] = rState(seed);
+  const [draft, setDraft] = rState('');
+  function pin() {
+    if (!draft.trim()) return;
+    setNotes([{ id: Date.now(), dt: new Date().toISOString().replace('T',' ').slice(0,16), text: draft }, ...notes]);
+    setDraft('');
+  }
+  return (
+    <div className="rd2-pane">
+      <div className="rd2-notes-editor">
+        <textarea
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          placeholder="Pin a hypothesis, observation, or contradicting data point…"
+          rows={3}
+        />
+        <button className="rd-pin-btn" onClick={pin} disabled={!draft.trim()}>Pin note</button>
+      </div>
+      <div className="rd2-notes-list">
+        {notes.map(n => (
+          <article key={n.id} className="rd-note" style={{padding:'var(--s-3) 0'}}>
+            <div className="rd-note__dt t-label">{n.dt}</div>
+            <div className="rd-note__text t-body">{n.text}</div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Contract picker (compact)
+// ============================================================
+function ContractPicker({ value, onChange }) {
+  const [open, setOpen] = rState(false);
+  const sel = RESEARCH_DATA.universe.find(u => u.sym === value);
+  return (
+    <div className={`rd2-picker ${open ? 'is-open' : ''}`}>
+      <button className="rd2-picker__btn" onClick={() => setOpen(!open)}>
+        <span className="t-label" style={{color:'var(--ink-3)'}}>VIEWING</span>
+        <span className="rd2-picker__cur">{sel.sym}<span style={{opacity:.5,margin:'0 6px'}}>·</span>{sel.short}</span>
+        <span className="rd2-picker__caret">{open ? '▴' : '▾'}</span>
+      </button>
+      {open && (
+        <div className="rd2-picker__menu">
+          {RESEARCH_DATA.universe.map(u => {
+            const edge = u.fair - u.mkt;
+            const cls = edge > 0.005 ? 'pos' : edge < -0.005 ? 'neg' : 'flat';
+            return (
+              <button key={u.sym}
+                className={`rd2-picker__item ${u.sym === value ? 'is-active' : ''}`}
+                onClick={() => { onChange(u.sym); setOpen(false); }}>
+                <span style={{minWidth:0}}>
+                  <span className="rd2-picker__sym">{u.sym}</span>
+                  <span className="rd2-picker__desc">{u.short} · {u.desc}</span>
+                </span>
+                <span className={`rd2-picker__edge rd2-picker__edge--${cls}`}>{rFmt.pp(edge)}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// View shell — focused single-topic with dimension switches
+// ============================================================
+function ProView({ brand }) {
+  const [sym, setSym]   = rState('TX-GOV-26');
+  const [tab, setTab]   = rState('price');
+  const [range, setRange] = rState('30D');
+  const contract = RESEARCH_DATA.universe.find(u => u.sym === sym);
+
+  // Reset to price tab when switching contracts
+  rEffect(() => { setTab('price'); }, [sym]);
+
+  return (
+    <div className="rd2-view">
+      <CropFrame>
+        <div className="rd2-topbar">
+          <span className="t-eyebrow">RESEARCH DESK · {contract.category.toUpperCase()}</span>
+          <div className="rd2-topbar__right">
+            <div className="rd-range">
+              {['7D','30D','90D','1Y','ALL'].map(r => (
+                <button key={r} className={`rd-range__btn ${r === range ? 'is-active' : ''}`} onClick={() => setRange(r)}>{r}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="rd2-header">
+          <div className="rd2-header__title">
+            <h1 className={brand === 'caps' ? 't-display-caps' : 't-display'}>{contract.short}</h1>
+            <p className="t-body" style={{marginTop:'var(--s-2)', fontSize:16, color:'var(--ink-2)'}}>
+              {contract.desc}
+            </p>
+          </div>
+          <ContractPicker value={sym} onChange={setSym} />
+        </div>
+
+        <Hero contract={contract} />
+
+        <div className="rd2-dim">
+          <TabBar active={tab} onChange={setTab} />
+          <span className="t-label rd2-dim__hint">{TABS.find(t => t.id === tab).hint}</span>
+        </div>
+
+        <div className="rd2-content">
+          {tab === 'price'     && <TabPrice />}
+          {tab === 'analogues' && <TabAnalogues />}
+          {tab === 'calib'     && <TabCalibration />}
+          {tab === 'venues'    && <TabVenues />}
+          {tab === 'correl'    && <TabCorrelations />}
+          {tab === 'notes'     && <TabNotes sym={sym} />}
+        </div>
+      </CropFrame>
+    </div>
+  );
+}
+
+Object.assign(window, {
+  ProView, TABS, TabBar, TabPrice, TabAnalogues, TabCalibration,
+  TabVenues, TabCorrelations, TabNotes, ContractPicker, Hero,
+  rFmt, brierFill,
+});
+
+</script>
+  <script type="text/babel">
+/* Option A — Research Desk · ANALYST DENSITY MODE
+   Refactored for the PMI model: every contract is Yes/No.
+   Hero shows P(Yes), P(No), weight in PMI, and resolution swing on PMI score. */
+
+const { useState: aaState, useEffect: aaEffect, useMemo: aaMemo } = React;
+
+// ============================================================
+// Extra analyst data — time series, supplementary stats
+// ============================================================
+const ANALYST_DATA = (() => {
+  // Volume time series (60d)
+  const volume = Array.from({length: 60}, (_, i) =>
+    Math.round(1.4e6 + Math.sin(i * 0.6) * 4e5 + Math.cos(i * 1.7) * 2.5e5 + (i > 47 ? 9e5 : 0))
+  );
+  // Spread (bid/ask) basis points
+  const spreadBp = Array.from({length: 60}, (_, i) =>
+    14 + Math.sin(i * 0.3) * 5 + Math.cos(i * 0.8) * 3
+  );
+
+  // Yes-side price (60d) for each contract, seeded by current yes prob.
+  function yesSeries(sym, base) {
+    const seed = sym.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+    return Array.from({length: 60}, (_, i) => {
+      const v = base + Math.sin((seed + i) * 0.4) * 0.035 + Math.cos((seed + i) * 1.1) * 0.012 + (i / 60) * 0.015;
+      return Math.max(0.04, Math.min(0.96, v));
+    });
+  }
+  // Micah Fair (small drift away from market)
+  function fairSeries(sym, base) {
+    const seed = sym.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+    return Array.from({length: 60}, (_, i) => {
+      const v = base + 0.015 + Math.sin((seed + i) * 0.35) * 0.02;
+      return Math.max(0.04, Math.min(0.96, v));
+    });
+  }
+  // Polls CI half-width
+  const pollsCi = Array.from({length: 60}, (_, i) =>
+    0.022 + Math.abs(Math.sin(i * 0.5)) * 0.014
+  );
+
+  // Analogous prior cycles for each contract (used by Analogues tab).
+  // Stable, deterministic.
+  function analoguesFor(sym) {
+    const seed = sym.charCodeAt(0) + sym.charCodeAt(sym.length - 1);
+    const labels = ['2022 cycle','2018 cycle','2014 cycle','2010 cycle','2006 cycle','2002 cycle','1998 cycle','1994 cycle'];
+    return labels.map((l, i) => {
+      const mktAt = 0.5 + Math.sin((seed + i) * 1.1) * 0.18;
+      const resolvedYes = mktAt + 0.06 + Math.sin((seed + i) * 1.7) * 0.12;
+      const error = resolvedYes - mktAt;
+      return {
+        label: l,
+        mktAt: +mktAt.toFixed(3),
+        resolved: resolvedYes > 0.5 ? 'Yes' : 'No',
+        error: +error.toFixed(3),
+        n: Math.round(140 + Math.cos(seed + i) * 90),
+        brier: +(0.08 + Math.abs(Math.sin(seed + i)) * 0.06).toFixed(3),
+      };
+    });
+  }
+
+  // Reliability diagram for calibration
+  const reliability = Array.from({length: 10}, (_, i) => {
+    const bin = (i + 0.5) / 10;
+    const observed = Math.max(0, Math.min(1, bin + (Math.sin(i * 1.3) * 0.06 - 0.03)));
+    const n = Math.round(140 - Math.abs(i - 5) * 18 + Math.cos(i) * 8);
+    return { bin, observed, n };
+  });
+
+  // Depth/slippage curve per venue
+  const depth = [
+    { exc: 'polymarket', curve: [0, 5, 12, 24, 42, 68, 105] },
+    { exc: 'kalshi',     curve: [0, 7, 16, 31, 54, 88, 138] },
+    { exc: 'robinhood',  curve: [0, 9, 22, 45, 80, 132, 210] },
+    { exc: 'manifold',   curve: [0, 18, 48, 110, 220, 410, 720] },
+  ];
+
+  return { volume, spreadBp, pollsCi, yesSeries, fairSeries, analoguesFor, reliability, depth };
+})();
+
+// ============================================================
+// HeroPMI — the canonical hero used by Analyst & Microstructure
+// ============================================================
+function HeroPMI({ sym, density = 'editorial' }) {
+  const M = window.PMI_MODEL;
+  const c = M.bySym[sym];
+  if (!c) return null;
+  const contrib = M.contribTo(sym);
+  const tone = (v) => v > 0 ? 'pos' : v < 0 ? 'neg' : 'flat';
+
+  const base = [
+    { label: 'P(Yes)',           v: (c.yes * 100).toFixed(1) + '¢', sub: 'market implied', tone: 'yes' },
+    { label: 'P(No)',            v: ((1 - c.yes) * 100).toFixed(1) + '¢', sub: 'complement', tone: 'no' },
+    { label: 'Weight in PMI',    v: c.w + '%', sub: M.pmiName, tone: 'fair' },
+    { label: 'Contribution',     v: (contrib.total * 100).toFixed(2) + 'pp', sub: `raw ${(contrib.raw*100).toFixed(2)} + cond ${contrib.cond >= 0 ? '+' : ''}${(contrib.cond*100).toFixed(2)}` },
+  ];
+  const extra = [
+    { label: 'PMI swing · Yes',  v: '+' + (contrib.swingYes * 100).toFixed(2) + 'pp', sub: 'if resolves YES', tone: 'pos' },
+    { label: 'PMI swing · No',   v: (contrib.swingNo * 100).toFixed(2) + 'pp', sub: 'if resolves NO', tone: 'neg' },
+    { label: 'Volume 24h',       v: '$' + (c.vol / 1e6).toFixed(2) + 'M', sub: '+18% vs 7d avg' },
+    { label: 'Open interest',    v: '$' + (c.vol * 1.7 / 1e6).toFixed(1) + 'M', sub: '12,840 contracts' },
+    { label: 'Spread',           v: '14bp', sub: ((c.yes - 0.001) * 100).toFixed(1) + ' / ' + ((c.yes + 0.001) * 100).toFixed(1) },
+    { label: 'Days to resolve',  v: '187', sub: 'Nov 04, 2026' },
+    { label: 'Brier (lifetime)', v: c.brier.toFixed(3), sub: 'vs cat. 0.21' },
+    { label: 'Influences',       v: M.influenceesOf(sym).length + ' / ' + M.influencersOf(sym).length, sub: 'out / in (conditional)' },
+  ];
+  const list = density === 'analyst' ? [...base, ...extra] : base;
+
+  return (
+    <div className={`rd2-hero rd2-hero--pmi rd2-hero--${density}`}>
+      {list.map((cell, i) => (
+        <div key={i} className={`rd2-hero__cell ${cell.tone ? 'rd2-hero__cell--' + cell.tone : ''}`}>
+          <div className="t-label">{cell.label}</div>
+          <div className="rd2-hero__v">{cell.v}</div>
+          <div className="t-label" style={{color:'var(--ink-3)'}}>{cell.sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// Yes/No question banner — sits above the hero
+// ============================================================
+function QuestionBanner({ sym }) {
+  const c = window.PMI_MODEL.bySym[sym];
+  if (!c) return null;
+  return (
+    <div className="rd2-question">
+      <div className="rd2-question__q">{c.q}</div>
+      <div className="rd2-question__bar">
+        <span className="rd2-question__bar-yes" style={{width: (c.yes * 100) + '%'}}>
+          {(c.yes * 100).toFixed(0)}% YES
+        </span>
+        <span className="rd2-question__bar-no" style={{width: ((1 - c.yes) * 100) + '%'}}>
+          {((1 - c.yes) * 100).toFixed(0)}% NO
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PriceDense — Yes line + No (mirror) + Micah Fair + spread + volume
+// ============================================================
+function PriceDense({ sym, density }) {
+  const c = window.PMI_MODEL.bySym[sym];
+  const yes = ANALYST_DATA.yesSeries(sym, c.yes);
+  const fair = ANALYST_DATA.fairSeries(sym, c.yes);
+  const no = yes.map(v => 1 - v);
+
+  const w = 980, h = 460;
+  const pad = { l: 60, r: 78, t: 16, b: 130 };
+  const innerH = h - pad.t - pad.b;
+  const innerW = w - pad.l - pad.r;
+  const xStep = innerW / (yes.length - 1);
+  const px2y = v => pad.t + innerH - v * innerH;  // y axis is full 0..1
+  const idx2x = i => pad.l + i * xStep;
+  const line = (arr) => 'M ' + arr.map((v, i) => idx2x(i) + ',' + px2y(v)).join(' L ');
+
+  const { volume, spreadBp } = ANALYST_DATA;
+  const maxVol = Math.max(...volume);
+  const volH = 80;
+  const volTop = h - pad.b + 14;
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="rd2-svg">
+      {/* Yes / No mid line at 50% */}
+      <line x1={pad.l} x2={w - pad.r} y1={px2y(0.5)} y2={px2y(0.5)} stroke="#C9C3B5" strokeWidth="1" strokeDasharray="4 4" />
+      <text x={pad.l - 10} y={px2y(0.5) + 3} fontSize="10" textAnchor="end" fill="#6B7180" fontFamily="Inter">50%</text>
+
+      {/* gridlines */}
+      {[0, 0.25, 0.5, 0.75, 1].map(t => (
+        <g key={t}>
+          <line x1={pad.l} x2={w - pad.r} y1={pad.t + t * innerH} y2={pad.t + t * innerH}
+                stroke="#E1DCD0" strokeWidth="1" />
+          <text x={pad.l - 10} y={pad.t + t * innerH + 3} fontSize="11" textAnchor="end" fill="#6B7180" fontFamily="Inter">
+            {((1 - t) * 100).toFixed(0)}¢
+          </text>
+        </g>
+      ))}
+
+      {/* spread band around Yes */}
+      {density === 'analyst' && (
+        <path d={'M ' + yes.map((v, i) => idx2x(i) + ',' + px2y(v + spreadBp[i] / 10000)).join(' L ')
+              + ' L ' + [...yes].reverse().map((v, i) =>
+                  idx2x(yes.length - 1 - i) + ',' + px2y(v - spreadBp[yes.length - 1 - i] / 10000)
+                ).join(' L ') + ' Z'}
+              fill="rgba(17,25,44,.10)" />
+      )}
+
+      {/* Micah fair (yes prob, model-adjusted) */}
+      <path d={line(fair)} fill="none" stroke="#1A3FA8" strokeWidth="1.8" strokeDasharray="6 3" />
+
+      {/* No (mirror) line */}
+      <path d={line(no)} fill="none" stroke="#8B1E2D" strokeWidth="2.4" />
+      {/* Yes line */}
+      <path d={line(yes)} fill="none" stroke="#1A3FA8" strokeWidth="2.4" />
+
+      {/* End labels */}
+      {[
+        { v: yes.at(-1),  c: '#1A3FA8', l: 'Yes' },
+        { v: no.at(-1),   c: '#8B1E2D', l: 'No' },
+        { v: fair.at(-1), c: '#1A3FA8', l: 'Fair', dash: true },
+      ].map((p, i) => (
+        <g key={i}>
+          <rect x={w - pad.r + 6} y={px2y(p.v) - 10} width={pad.r - 12} height={20} fill={p.dash ? '#FBFAF6' : p.c} stroke={p.c} rx="3" />
+          <text x={w - pad.r + 13} y={px2y(p.v) + 4} fontSize="11" fontWeight="700" fill={p.dash ? p.c : '#FBFAF6'} fontFamily="Inter">
+            {p.l} {(p.v * 100).toFixed(1)}¢
+          </text>
+        </g>
+      ))}
+
+      {/* volume bars (analyst only) */}
+      {density === 'analyst' && volume.map((v, i) => {
+        const bh = (v / maxVol) * volH;
+        const x = idx2x(i) - xStep * 0.36;
+        return <rect key={i} x={x} y={volTop + (volH - bh)} width={xStep * 0.72} height={bh} fill="#11192C" opacity=".25" />;
+      })}
+      {density === 'analyst' && (
+        <text x={pad.l - 10} y={volTop + 12} fontSize="10" textAnchor="end" fill="#6B7180" fontFamily="Inter">VOL 24h</text>
+      )}
+
+      {[0, 15, 30, 45, 59].map(i => (
+        <text key={i} x={idx2x(i)} y={h - 12} fontSize="11" fill="#6B7180" textAnchor="middle" fontFamily="Inter">
+          T-{60 - i}d
+        </text>
+      ))}
+    </svg>
+  );
+}
+
+// ============================================================
+// AnaloguesDense — reframed: prior cycles where this same Yes/No question resolved
+// ============================================================
+function AnaloguesDense({ sym, density }) {
+  const all = ANALYST_DATA.analoguesFor(sym);
+  const rows = density === 'analyst' ? all : all.slice(0, 4);
+  const errors = all.map(a => a.error);
+  const mean = errors.reduce((s, v) => s + v, 0) / errors.length;
+  const std = Math.sqrt(errors.reduce((s, v) => s + (v - mean) ** 2, 0) / errors.length);
+  const maxErr = Math.max(...rows.map(a => Math.abs(a.error)), 0.001);
+  const yesCount = all.filter(a => a.resolved === 'Yes').length;
+
+  // density histogram
+  const bins = 10;
+  const lo = -0.4, hi = 0.4;
+  const hist = Array(bins).fill(0);
+  all.forEach(a => { const i = Math.min(bins - 1, Math.max(0, Math.floor((a.error - lo) / (hi - lo) * bins))); hist[i]++; });
+  const maxH = Math.max(...hist, 1);
+
+  return (
+    <div className="rd2-pane">
+      <div className="rd-summary-row">
+        <div><span className="t-label">Analogues</span><strong>{all.length}</strong></div>
+        <div><span className="t-label">Resolved Yes</span><strong>{yesCount} / {all.length}</strong></div>
+        <div><span className="t-label">Mean error</span><strong>{mean >= 0 ? '+' : ''}{(mean * 100).toFixed(1)}pp</strong></div>
+        <div><span className="t-label">Std dev</span><strong>{(std * 100).toFixed(1)}pp</strong></div>
+        <div><span className="t-label">Inference</span><strong>{mean > 0.05 ? 'Yes-side underpriced' : mean < -0.05 ? 'Yes-side overpriced' : 'Calibrated'}</strong></div>
+      </div>
+
+      {density === 'analyst' && (
+        <div className="rd-dist">
+          <div className="t-label" style={{marginBottom:8}}>ERROR DISTRIBUTION · {all.length} ANALOGUES</div>
+          <svg viewBox="0 0 800 120" preserveAspectRatio="none" className="rd-dist__svg">
+            {hist.map((cnt, i) => {
+              const x = (i / bins) * 800;
+              const bw = 800 / bins - 4;
+              const bh = (cnt / maxH) * 90;
+              return <rect key={i} x={x + 2} y={100 - bh} width={bw} height={bh} fill="#1A3FA8" opacity=".55" />;
+            })}
+            <line x1={((0 - lo) / (hi - lo)) * 800} x2={((0 - lo) / (hi - lo)) * 800} y1={6} y2={108} stroke="#11192C" strokeDasharray="3 3" />
+            <text x={((0 - lo) / (hi - lo)) * 800 + 6} y={18} fontSize="10" fill="#11192C" fontFamily="Inter">zero error</text>
+            <line x1={((mean - lo) / (hi - lo)) * 800} x2={((mean - lo) / (hi - lo)) * 800} y1={6} y2={108} stroke="#8B1E2D" strokeWidth="2" />
+            <text x={((mean - lo) / (hi - lo)) * 800 + 6} y={32} fontSize="10" fill="#8B1E2D" fontWeight="700" fontFamily="Inter">
+              μ {mean >= 0 ? '+' : ''}{(mean*100).toFixed(0)}pp
+            </text>
+            {[-0.4, -0.2, 0, 0.2, 0.4].map(v => (
+              <text key={v} x={((v - lo) / (hi - lo)) * 800} y={117} fontSize="9" fill="#6B7180" textAnchor="middle" fontFamily="Inter">
+                {v >= 0 ? '+' : ''}{(v * 100).toFixed(0)}pp
+              </text>
+            ))}
+          </svg>
+        </div>
+      )}
+
+      <div className="rd-table rd-table--dense">
+        <div className="rd-table__row rd-table__row--head rd-table__row--analog">
+          <span>Cycle</span><span>Market @ T-180</span><span>Resolved</span><span>Error</span>
+          {density === 'analyst' && <span>n</span>}
+          {density === 'analyst' && <span>Brier</span>}
+          <span>Distribution</span>
+        </div>
+        {rows.map((a, i) => (
+          <div key={a.label + i} className="rd-table__row rd-table__row--analog">
+            <span className="rd-analogue__label">
+              <strong>{a.label}</strong>
+              <span className="t-body-sm" style={{color:'var(--ink-3)'}}>{window.PMI_MODEL.bySym[sym].q.slice(0, 38)}…</span>
+            </span>
+            <span className="rd-table__num">{(a.mktAt * 100).toFixed(1)}¢</span>
+            <span className="rd-resolved">
+              <span className="rd-resolved__dot" style={{background: a.resolved === 'Yes' ? 'var(--blue-strong)' : 'var(--red-strong)'}} />
+              {a.resolved} · 100¢
+            </span>
+            <span className={`rd-table__num ${a.error >= 0 ? 'rd-num--pos' : 'rd-num--neg'}`}>
+              {a.error >= 0 ? '+' : ''}{(a.error * 100).toFixed(1)}pp
+            </span>
+            {density === 'analyst' && <span className="rd-table__num rd-table__num--muted">{a.n}</span>}
+            {density === 'analyst' && <span className="rd-table__num">{a.brier.toFixed(3)}</span>}
+            <span className="rd-bar">
+              <span className="rd-bar__mid" />
+              <span className={`rd-bar__fill ${a.error >= 0 ? 'rd-bar__fill--pos' : 'rd-bar__fill--neg'}`}
+                    style={{ width: `${(Math.abs(a.error) / maxErr) * 50}%`, [a.error >= 0 ? 'left' : 'right']: '50%' }} />
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { ANALYST_DATA, HeroPMI, QuestionBanner, PriceDense, AnaloguesDense });
+
+</script>
+  <script type="text/babel">
+/* Option A — part 2 — PMI-model edition.
+   Conditional-impact panel replaces Correlations.
+   ContractPickerPMI pulls from PMI_MODEL.contracts.
+   ProViewAnalyst shell stitches everything together. */
+
+// ============================================================
+// ContractPickerPMI — uses PMI_MODEL
+// ============================================================
+function ContractPickerPMI({ value, onChange }) {
+  const [open, setOpen] = React.useState(false);
+  const M = window.PMI_MODEL;
+  const sel = M.bySym[value];
+  if (!sel) return null;
+  return (
+    <div className={`rd2-picker ${open ? 'is-open' : ''}`}>
+      <button className="rd2-picker__btn" onClick={() => setOpen(!open)}>
+        <span className="t-label" style={{color:'var(--ink-3)'}}>VIEWING</span>
+        <span className="rd2-picker__cur">{sel.sym}<span style={{opacity:.5,margin:'0 6px'}}>·</span>{(sel.yes*100).toFixed(0)}% Yes</span>
+        <span className="rd2-picker__caret">{open ? '▴' : '▾'}</span>
+      </button>
+      {open && (
+        <div className="rd2-picker__menu">
+          {M.contracts.map(u => (
+            <button key={u.sym}
+              className={`rd2-picker__item ${u.sym === value ? 'is-active' : ''}`}
+              onClick={() => { onChange(u.sym); setOpen(false); }}>
+              <span style={{minWidth:0}}>
+                <span className="rd2-picker__sym">{u.sym} · {u.w}% PMI</span>
+                <span className="rd2-picker__desc">{u.q}</span>
+              </span>
+              <span className="rd2-picker__edge rd2-picker__edge--yes">
+                {(u.yes * 100).toFixed(0)}% Yes
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// CondImpactPane — replaces Correlations
+// Shows: (1) outward — when THIS resolves Yes, how it shifts every other component
+//        (2) inward  — when other components resolve Yes, how they shift THIS
+// ============================================================
+function CondImpactPane({ sym, density }) {
+  const M = window.PMI_MODEL;
+  const out = M.influenceesOf(sym);
+  const inn = M.influencersOf(sym);
+  const maxAbs = Math.max(0.01, ...out.map(x => Math.abs(x.delta)), ...inn.map(x => Math.abs(x.delta)));
+
+  function Row({ kind, sym: s, delta, pYes, target }) {
+    const tgt = M.bySym[target || s];
+    const wShare = tgt ? tgt.w / M.W : 0;
+    const expected = delta * pYes;          // expected P-shift on this row's target
+    const pos = delta >= 0;
+    return (
+      <div className="rd-cond__row">
+        <span className="rd-cond__sym">
+          <span className="t-body-sm" style={{fontWeight:600}}>{s}</span>
+          <span className="t-label" style={{color:'var(--ink-3)'}}>
+            {tgt ? tgt.q : ''}
+          </span>
+        </span>
+        <span className="rd-cond__bar">
+          <span className="rd-cond__bar-mid" />
+          <span className={`rd-cond__bar-fill ${pos ? 'rd-cond__bar-fill--pos' : 'rd-cond__bar-fill--neg'}`}
+                style={{width: (Math.abs(delta) / maxAbs * 50) + '%', [pos ? 'left' : 'right']: '50%'}} />
+        </span>
+        <span className={`rd-cond__delta ${pos ? 'rd-num--pos' : 'rd-num--neg'}`}>
+          {pos ? '+' : ''}{(delta * 100).toFixed(1)}pp
+        </span>
+        {density === 'analyst' && (
+          <span className="rd-cond__meta">
+            <span style={{color:'var(--ink-3)'}}>P(trigger=Yes)</span> {(pYes * 100).toFixed(0)}%
+          </span>
+        )}
+        {density === 'analyst' && (
+          <span className="rd-cond__meta">
+            <span style={{color:'var(--ink-3)'}}>PMI weight</span> {tgt ? tgt.w : 0}%
+          </span>
+        )}
+        {density === 'analyst' && (
+          <span className={`rd-cond__exp ${expected >= 0 ? 'rd-num--pos' : 'rd-num--neg'}`}>
+            {expected >= 0 ? '+' : ''}{(expected * wShare * 100).toFixed(2)}pp
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rd2-pane">
+      <p className="t-body" style={{color:'var(--ink-2)', maxWidth:840, margin:'0 0 var(--s-3)'}}>
+        How <strong>{sym}</strong> connects to the rest of the PMI. <strong>Outward</strong>: if{' '}
+        <strong>{sym}</strong> resolves Yes, every other component's Yes-probability shifts by Δpp.
+        {density === 'analyst' && ' Expected contribution = Δ × P(trigger=Yes) × weight share — the PMI-score swing already priced in.'}
+      </p>
+
+      <div className="rd-cond__group">
+        <div className="rd-cond__h">
+          <span className="t-eyebrow">OUTWARD · {sym} → others</span>
+          <span className="t-label" style={{color:'var(--ink-3)'}}>{out.length} links</span>
+        </div>
+        {density === 'analyst' && (
+          <div className="rd-cond__row rd-cond__row--head">
+            <span className="t-label">TARGET CONTRACT</span>
+            <span className="t-label">SHIFT</span>
+            <span className="t-label" style={{textAlign:'right'}}>Δ</span>
+            <span className="t-label">P(yes)</span>
+            <span className="t-label">w</span>
+            <span className="t-label" style={{textAlign:'right'}}>EXP. PMI Δ</span>
+          </div>
+        )}
+        {out.length === 0
+          ? <div className="rd-cond__empty">No outward links recorded for this contract.</div>
+          : out.map(x => <Row key={x.to} kind="out" sym={x.to} delta={x.delta} pYes={M.bySym[sym].yes} target={x.to} />)
+        }
+      </div>
+
+      <div className="rd-cond__group">
+        <div className="rd-cond__h">
+          <span className="t-eyebrow">INWARD · others → {sym}</span>
+          <span className="t-label" style={{color:'var(--ink-3)'}}>{inn.length} links</span>
+        </div>
+        {density === 'analyst' && (
+          <div className="rd-cond__row rd-cond__row--head">
+            <span className="t-label">TRIGGER CONTRACT</span>
+            <span className="t-label">SHIFT TO {sym}</span>
+            <span className="t-label" style={{textAlign:'right'}}>Δ</span>
+            <span className="t-label">P(yes)</span>
+            <span className="t-label">w</span>
+            <span className="t-label" style={{textAlign:'right'}}>EXP. Δ ON {sym}</span>
+          </div>
+        )}
+        {inn.length === 0
+          ? <div className="rd-cond__empty">No inward links recorded for this contract.</div>
+          : inn.map(x => <Row key={x.from} kind="in" sym={x.from} delta={x.delta} pYes={x.pYes} target={sym} />)
+        }
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// CalibDense — keep Brier-by-venue but headline reframed
+// ============================================================
+function CalibDense({ density }) {
+  const { calCategories: cats, calExchanges: exs, calibration: m } = window.RESEARCH_DATA;
+  const rel = window.ANALYST_DATA.reliability;
+  return (
+    <div className="rd2-pane">
+      <p className="t-body" style={{color:'var(--ink-2)', maxWidth:820, margin:'0 0 var(--s-3)'}}>
+        Brier score by venue × category — lower = better. The aggregate score across all components feeds
+        Micah's confidence weight when blending Yes-probabilities into the PMI.
+      </p>
+      <div className="rd-cal-grid">
+        <div className="rd-heatmap">
+          <div className="rd-heatmap__row rd-heatmap__row--head">
+            <span></span>
+            {cats.map(c => <span key={c} className="rd-heatmap__hcell t-label">{c}</span>)}
+            {density === 'analyst' && <span className="rd-heatmap__hcell t-label">n</span>}
+            {density === 'analyst' && <span className="rd-heatmap__hcell t-label">LogLoss</span>}
+          </div>
+          {exs.map((e, ei) => (
+            <div key={e} className="rd-heatmap__row">
+              <span className="rd-heatmap__rowlabel">
+                <ExchangeChip id={e} size={18} />
+                <span className="t-body-sm" style={{fontWeight:600}}>{window.MICAH.exchanges[e].name}</span>
+              </span>
+              {cats.map(c => {
+                const v = m[e][c];
+                const bg = brierFill(v);
+                const isLight = v > 0.13 && v < 0.22;
+                return (
+                  <span key={c} className="rd-heatmap__cell" style={{background:bg, color:isLight?'var(--ink-1)':'#FBFAF6'}}>
+                    {v.toFixed(2)}
+                  </span>
+                );
+              })}
+              {density === 'analyst' && <span className="rd-heatmap__cell rd-heatmap__cell--num">{Math.round(180 + ei * 41 + Math.sin(ei) * 30)}</span>}
+              {density === 'analyst' && <span className="rd-heatmap__cell rd-heatmap__cell--num">{(0.31 + Math.cos(ei) * 0.05).toFixed(2)}</span>}
+            </div>
+          ))}
+        </div>
+        {density === 'analyst' && (
+          <div className="rd-reliability">
+            <div className="t-label" style={{marginBottom:8}}>RELIABILITY DIAGRAM · ALL POLITICS</div>
+            <svg viewBox="0 0 320 320" className="rd-reliability__svg">
+              <line x1={20} y1={300} x2={300} y2={20} stroke="#11192C" strokeDasharray="4 3" opacity=".4" />
+              {[0, 0.25, 0.5, 0.75, 1].map(t => (
+                <g key={t}>
+                  <line x1={20 + t * 280} x2={20 + t * 280} y1={20} y2={300} stroke="#E1DCD0" />
+                  <line x1={20} x2={300} y1={300 - t * 280} y2={300 - t * 280} stroke="#E1DCD0" />
+                </g>
+              ))}
+              {rel.map((p, i) => (
+                <circle key={i} cx={20 + p.bin * 280} cy={300 - p.observed * 280}
+                        r={Math.sqrt(p.n) * 0.6} fill="#1A3FA8" fillOpacity=".5" stroke="#1A3FA8" strokeWidth="1.2" />
+              ))}
+              <text x={160} y={316} fontSize="10" fill="#6B7180" textAnchor="middle" fontFamily="Inter">predicted P(Yes)</text>
+              <text x={8} y={160} fontSize="10" fill="#6B7180" textAnchor="middle" fontFamily="Inter" transform="rotate(-90 8 160)">observed frequency</text>
+            </svg>
+            <p className="t-body-sm" style={{color:'var(--ink-3)', marginTop:8}}>
+              Bubble = n contracts in bin. Diagonal = perfect calibration.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// VenuesDense — same decomposition, now Yes-side prices
+// ============================================================
+function VenuesDense({ sym, density }) {
+  const c = window.PMI_MODEL.bySym[sym];
+  const base = c.yes;
+  const rows = [
+    { exc: 'polymarket', price: base + 0.003, weight: 38, vol: '$4.2M', confidence: 'high' },
+    { exc: 'kalshi',     price: base - 0.001, weight: 26, vol: '$2.8M', confidence: 'high' },
+    { exc: 'robinhood',  price: base + 0.001, weight: 14, vol: '$870K', confidence: 'med'  },
+    { exc: 'manifold',   price: base - 0.005, weight:  9, vol: '$220K', confidence: 'low'  },
+    { exc: 'metaculus',  price: base + 0.007, weight:  8, vol: '$110K', confidence: 'med'  },
+    { exc: 'predictit',  price: base - 0.008, weight:  5, vol:  '$95K', confidence: 'low'  },
+  ];
+  const weighted = rows.reduce((s, r) => s + r.price * r.weight, 0) / 100;
+  const depth = window.ANALYST_DATA.depth;
+  const slipMax = Math.max(...depth.flatMap(d => d.curve));
+  const sizes = [0, 5, 10, 25, 50, 100, 250];
+  return (
+    <div className="rd2-pane">
+      <div className="rd2-venues-grid">
+        <div>
+          <h4 className="t-h3" style={{margin:'0 0 var(--s-3)', fontSize:18}}>Yes-side venue decomposition</h4>
+          <div className="rd-decomp">
+            {rows.map(r => (
+              <div key={r.exc} className="rd-decomp__row">
+                <span className="rd-decomp__exc">
+                  <ExchangeChip id={r.exc} size={18} />
+                  <span className="t-body-sm">{window.MICAH.exchanges[r.exc].name}</span>
+                </span>
+                <span className="rd-decomp__bar">
+                  <span style={{width: r.weight + '%'}} className={`rd-decomp__bar-fill rd-decomp__bar-fill--${r.confidence}`} />
+                </span>
+                <span className="rd-decomp__weight">{r.weight}%</span>
+                <span className="rd-decomp__price">{(r.price * 100).toFixed(1)}¢</span>
+              </div>
+            ))}
+          </div>
+          <div className="rd2-venues__foot">
+            <span className="t-label">Weighted Yes composite</span>
+            <span className="rd2-venues__total">{(weighted * 100).toFixed(2)}¢</span>
+          </div>
+        </div>
+        <div>
+          <h4 className="t-h3" style={{margin:'0 0 var(--s-3)', fontSize:18}}>
+            {density === 'analyst' ? 'Slippage on Yes-side' : 'Cross-venue board · Yes side'}
+          </h4>
+          {density === 'analyst' ? (
+            <div className="rd-slip">
+              <svg viewBox="0 0 540 320" className="rd-slip__svg">
+                {[0, 0.25, 0.5, 0.75, 1].map(t => (
+                  <g key={t}>
+                    <line x1={60} x2={520} y1={20 + t * 260} y2={20 + t * 260} stroke="#E1DCD0" />
+                    <text x={54} y={24 + t * 260} fontSize="10" textAnchor="end" fill="#6B7180" fontFamily="Inter">
+                      {Math.round(slipMax * (1 - t))}bp
+                    </text>
+                  </g>
+                ))}
+                {sizes.map((s, i) => (
+                  <text key={s} x={60 + (i / (sizes.length - 1)) * 460} y={296}
+                        fontSize="10" textAnchor="middle" fill="#6B7180" fontFamily="Inter">${s}k</text>
+                ))}
+                {depth.map((d, di) => {
+                  const colors = ['#11192C', '#1A3FA8', '#6B7180', '#8B1E2D'];
+                  const path = 'M ' + d.curve.map((v, i) =>
+                    (60 + (i / (sizes.length - 1)) * 460) + ',' + (20 + (1 - v / slipMax) * 260)
+                  ).join(' L ');
+                  return (
+                    <g key={d.exc}>
+                      <path d={path} fill="none" stroke={colors[di]} strokeWidth="2" />
+                      <text x={524} y={20 + (1 - d.curve[d.curve.length - 1] / slipMax) * 260 + 4}
+                            fontSize="10" fill={colors[di]} fontFamily="Inter" fontWeight="600">
+                        {window.MICAH.exchanges[d.exc].name}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          ) : (
+            <div className="rd-table">
+              <div className="rd-table__row rd-table__row--head rd-table__row--venues">
+                <span>Venue</span><span>Bid</span><span>Ask</span><span>Last</span><span>Vol 24h</span><span>Conf.</span>
+              </div>
+              {rows.map(r => (
+                <div key={r.exc} className="rd-table__row rd-table__row--venues">
+                  <span className="rd-venue__name">
+                    <ExchangeChip id={r.exc} size={20} />
+                    <span>{window.MICAH.exchanges[r.exc].name}</span>
+                  </span>
+                  <span className="rd-table__num">{((r.price - 0.002) * 100).toFixed(1)}¢</span>
+                  <span className="rd-table__num">{((r.price + 0.002) * 100).toFixed(1)}¢</span>
+                  <span className="rd-table__num">{(r.price * 100).toFixed(1)}¢</span>
+                  <span className="rd-table__num rd-table__num--muted">{r.vol}</span>
+                  <span><Tag tone={r.confidence === 'high' ? 'direct' : 'neutral'}>{r.confidence}</Tag></span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Tabs — same identifiers but Correlations replaced by Cond. impact
+// ============================================================
+const TABS_PMI = [
+  { id: 'price',     label: 'Yes/No history',  hint: '60-day Yes/No probability with Micah Fair' },
+  { id: 'analogues', label: 'Analogues',       hint: 'Prior cycles where this Yes/No question resolved' },
+  { id: 'calib',     label: 'Calibration',     hint: 'Brier by venue × category' },
+  { id: 'venues',    label: 'Venue decomp',    hint: 'Where the Yes-price comes from' },
+  { id: 'cond',      label: 'Conditional impact', hint: 'How resolving Yes/No shifts other PMI components' },
+  { id: 'notes',     label: 'Notes',           hint: 'Hypothesis log for this contract' },
+];
+
+function TabBarPMI({ active, onChange }) {
+  return (
+    <div className="rd2-tabs" role="tablist">
+      {TABS_PMI.map(t => (
+        <button key={t.id} role="tab" aria-selected={t.id === active}
+          className={`rd2-tab ${t.id === active ? 'is-active' : ''}`}
+          onClick={() => onChange(t.id)}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// ProViewAnalyst shell
+// ============================================================
+function ProViewAnalyst({ brand }) {
+  const [sym, setSym]   = React.useState('TX-GOV-26');
+  const [tab, setTab]   = React.useState('price');
+  const [range, setRange] = React.useState('30D');
+  const [density, setDensity] = React.useState('analyst');
+  const c = window.PMI_MODEL.bySym[sym];
+  if (!c) return null;
+
+  React.useEffect(() => { setTab('price'); }, [sym]);
+
+  return (
+    <div className={`rd2-view rd2-view--${density}`}>
+      <CropFrame>
+        <div className="rd2-topbar">
+          <span className="t-eyebrow">RESEARCH DESK · {c.cat.toUpperCase()} · ANALYST MODE · {window.PMI_MODEL.pmiName.toUpperCase()}</span>
+          <div className="rd2-topbar__right">
+            <div className="rd-density">
+              <span className="t-label" style={{color:'var(--ink-3)', marginRight:8}}>DENSITY</span>
+              {['editorial','analyst'].map(d => (
+                <button key={d}
+                  className={`rd-density__btn ${density === d ? 'is-active' : ''}`}
+                  onClick={() => setDensity(d)}>{d}</button>
+              ))}
+            </div>
+            <div className="rd-range">
+              {['7D','30D','90D','1Y','ALL'].map(r => (
+                <button key={r} className={`rd-range__btn ${r === range ? 'is-active' : ''}`} onClick={() => setRange(r)}>{r}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="rd2-header">
+          <div className="rd2-header__title">
+            <h1 className={brand === 'caps' ? 't-display-caps' : 't-display'} style={{fontSize:'clamp(28px, 3vw, 44px)'}}>{c.q}</h1>
+            <p className="t-body" style={{marginTop:'var(--s-2)', fontSize:14, color:'var(--ink-3)', letterSpacing:'.04em'}}>
+              {c.sym} · WEIGHT {c.w}% IN {window.PMI_MODEL.pmiName.toUpperCase()} · COMPOSITE SCORE {window.PMI_MODEL.pmiScore.toFixed(1)}
+            </p>
+          </div>
+          <ContractPickerPMI value={sym} onChange={setSym} />
+        </div>
+
+        <HeroPMI sym={sym} density={density} />
+
+        <div className="rd2-dim">
+          <TabBarPMI active={tab} onChange={setTab} />
+          <span className="t-label rd2-dim__hint">{TABS_PMI.find(t => t.id === tab).hint}</span>
+        </div>
+
+        <div className="rd2-content">
+          {tab === 'price'     && <div className="rd2-pane"><PriceDense sym={sym} density={density} /></div>}
+          {tab === 'analogues' && <AnaloguesDense sym={sym} density={density} />}
+          {tab === 'calib'     && <CalibDense density={density} />}
+          {tab === 'venues'    && <VenuesDense sym={sym} density={density} />}
+          {tab === 'cond'      && <CondImpactPane sym={sym} density={density} />}
+          {tab === 'notes'     && <TabNotes sym={sym} />}
+        </div>
+      </CropFrame>
+    </div>
+  );
+}
+
+Object.assign(window, { ProViewAnalyst, ContractPickerPMI, CondImpactPane, CalibDense, VenuesDense, TABS_PMI, TabBarPMI });
+
+</script>
+  <script type="text/babel">
+/* Option B — Research Desk · PMI SIMULATOR
+   Drag any contract's P(Yes) and watch the PMI score recompute,
+   with the conditional cascade propagating through dependent components. */
+
+const { useState: sState, useMemo: sMemo } = React;
+
+// ============================================================
+// Scenario math
+// ============================================================
+
+/* Effective weight ε_i = (w_i + Σ_j w_j × cond[i][j]) / W.
+   When P(yesᵢ) shifts by Δp, PMI score shifts by ε_i × Δp. */
+function effectiveWeights() {
+  const M = window.PMI_MODEL;
+  const out = {};
+  for (const c of M.contracts) {
+    let extra = 0;
+    const links = M.cond[c.sym] || {};
+    for (const [j, d] of Object.entries(links)) {
+      const wj = M.bySym[j]?.w || 0;
+      extra += wj * d;
+    }
+    out[c.sym] = (c.w + extra) / M.W;
+  }
+  return out;
+}
+
+function pmiFromBeliefs(beliefs) {
+  const M = window.PMI_MODEL;
+  // PMI = Σ_i (w_i/W) × p_i + Σ_i Σ_j (w_j/W) × p_i × cond[i][j]
+  let naive = 0;
+  let condAdj = 0;
+  for (const c of M.contracts) {
+    const p = beliefs[c.sym];
+    naive += (c.w / M.W) * p;
+    const links = M.cond[c.sym] || {};
+    for (const [j, d] of Object.entries(links)) {
+      const wj = M.bySym[j]?.w || 0;
+      condAdj += (wj / M.W) * p * d;
+    }
+  }
+  return { naive, condAdj, total: naive + condAdj };
+}
+
+/* Linearised cascade — induced P(j) given user's beliefs about everyone else.
+   induced_j = belief_j + Σ_{a≠j} (belief_a - base_a) × cond[a][j]. */
+function inducedProb(sym, beliefs) {
+  const M = window.PMI_MODEL;
+  const base = M.bySym[sym].yes;
+  let bump = 0;
+  for (const [a, links] of Object.entries(M.cond)) {
+    if (a === sym) continue;
+    const d = links[sym];
+    if (d === undefined) continue;
+    bump += d * ((beliefs[a] ?? M.bySym[a].yes) - M.bySym[a].yes);
+  }
+  return Math.max(0, Math.min(1, (beliefs[sym] ?? base) + bump));
+}
+
+// ============================================================
+// PMI Simulator
+// ============================================================
+function TabSimulator() {
+  const M = window.PMI_MODEL;
+  const base = sMemo(() => Object.fromEntries(M.contracts.map(c => [c.sym, c.yes])), []);
+  const [beliefs, setBeliefs] = sState(base);
+  const [activePreset, setActivePreset] = sState('reset');
+
+  const eff = sMemo(effectiveWeights, []);
+  const basePMI = sMemo(() => pmiFromBeliefs(base), [base]);
+  const scenPMI = sMemo(() => pmiFromBeliefs(beliefs), [beliefs]);
+  const deltaPMI = scenPMI.total - basePMI.total;
+
+  // Sort contracts by absolute deviation for the diff chart
+  const sortedDiff = M.contracts
+    .map(c => {
+      const p = beliefs[c.sym];
+      const dp = p - c.yes;
+      return { sym: c.sym, q: c.q, w: c.w, base: c.yes, p, dp, contrib: dp * eff[c.sym] };
+    })
+    .sort((a, b) => Math.abs(b.contrib) - Math.abs(a.contrib));
+
+  function setOne(sym, val) {
+    setBeliefs({ ...beliefs, [sym]: val });
+    setActivePreset('custom');
+  }
+  function applyPreset(name) {
+    setActivePreset(name);
+    const next = { ...base };
+    if (name === 'reset') {
+      // no change
+    } else if (name === 'gop-sweep') {
+      next['TX-GOV-26']  = 0.95;
+      next['FL-GOV-26']  = 0.95;
+      next['GOP-HOUSE']  = 0.93;
+      next['MAGA-EO']    = 0.88;
+      next['MI-GOV-26']  = 0.20;
+    } else if (name === 'recession') {
+      next['REC-Q4-26']  = 0.85;
+      next['FED-50-OCT'] = 0.78;
+      next['BTC-100K']   = 0.35;
+      next['WTI-90']     = 0.18;
+      next['GOP-HOUSE']  = 0.42;
+    } else if (name === 'dem-comeback') {
+      next['TX-GOV-26']  = 0.55;
+      next['FL-GOV-26']  = 0.50;
+      next['MI-GOV-26']  = 0.82;
+      next['GOP-HOUSE']  = 0.28;
+      next['GA-3P-26']   = 0.40;
+    }
+    setBeliefs(next);
+  }
+
+  const dirty = JSON.stringify(beliefs) !== JSON.stringify(base);
+  const presets = [
+    { id: 'reset',        label: 'Status quo' },
+    { id: 'gop-sweep',    label: 'GOP sweep' },
+    { id: 'recession',    label: 'Recession arrives' },
+    { id: 'dem-comeback', label: 'Democratic comeback' },
+  ];
+
+  return (
+    <div className="rd2-pane">
+      {/* ===== PMI summary band ===== */}
+      <div className="sim-summary">
+        <div className="sim-summary__cell">
+          <div className="t-label">Base PMI</div>
+          <div className="sim-summary__v">{(basePMI.total * 100).toFixed(2)}</div>
+          <div className="t-label" style={{color:'var(--ink-3)'}}>
+            naive {(basePMI.naive * 100).toFixed(2)} · cond {basePMI.condAdj >= 0 ? '+' : ''}{(basePMI.condAdj * 100).toFixed(2)}
+          </div>
+        </div>
+        <div className="sim-summary__cell sim-summary__cell--scen">
+          <div className="t-label">Scenario PMI</div>
+          <div className="sim-summary__v">{(scenPMI.total * 100).toFixed(2)}</div>
+          <div className="t-label" style={{color:'var(--ink-3)'}}>
+            naive {(scenPMI.naive * 100).toFixed(2)} · cond {scenPMI.condAdj >= 0 ? '+' : ''}{(scenPMI.condAdj * 100).toFixed(2)}
+          </div>
+        </div>
+        <div className={`sim-summary__cell sim-summary__cell--delta sim-summary__cell--${deltaPMI >= 0 ? 'pos' : 'neg'}`}>
+          <div className="t-label">Δ PMI</div>
+          <div className="sim-summary__v">
+            {deltaPMI >= 0 ? '+' : ''}{(deltaPMI * 100).toFixed(2)}<span style={{fontSize:14, fontWeight:500, marginLeft:4}}>pp</span>
+          </div>
+          <div className="t-label" style={{color:'var(--ink-3)'}}>vs base · {dirty ? 'scenario active' : 'no change'}</div>
+        </div>
+        <div className="sim-summary__cell">
+          <div className="t-label">Scenario</div>
+          <div className="sim-summary__v sim-summary__v--small">
+            {presets.find(p => p.id === activePreset)?.label || 'Custom'}
+          </div>
+          <div className="t-label" style={{color:'var(--ink-3)'}}>
+            {sortedDiff.filter(d => Math.abs(d.dp) > 0.001).length} contracts shifted
+          </div>
+        </div>
+      </div>
+
+      {/* ===== Presets row ===== */}
+      <div className="sim-presets">
+        <span className="t-label" style={{color:'var(--ink-3)'}}>PRESETS</span>
+        {presets.map(p => (
+          <button key={p.id}
+            className={`sim-preset ${activePreset === p.id ? 'is-active' : ''}`}
+            onClick={() => applyPreset(p.id)}>
+            {p.label}
+          </button>
+        ))}
+        <button className="sim-preset sim-preset--ghost" onClick={() => { setBeliefs(base); setActivePreset('reset'); }}>
+          ↺ Reset
+        </button>
+      </div>
+
+      {/* ===== Body: sliders + cascade ===== */}
+      <div className="sim-body">
+        {/* ===== Sliders ===== */}
+        <div className="sim-sliders">
+          <div className="sim-sliders__head">
+            <span></span>
+            <span className="t-label">SCENARIO P(Yes)</span>
+            <span className="t-label" style={{textAlign:'right'}}>ε</span>
+            <span className="t-label" style={{textAlign:'right'}}>Δ to PMI</span>
+          </div>
+          {M.contracts.map(c => {
+            const p = beliefs[c.sym];
+            const induced = inducedProb(c.sym, beliefs);
+            const dp = p - c.yes;
+            const contribOwn = dp * eff[c.sym];
+            const cascadeIn = induced - p;  // shift coming FROM other components
+            const links = M.cond[c.sym] || {};
+            const linkSyms = Object.keys(links);
+
+            return (
+              <div key={c.sym} className={`sim-row ${Math.abs(dp) > 0.001 ? 'is-dirty' : ''}`}>
+                <div className="sim-row__head">
+                  <div className="sim-row__sym">
+                    <span style={{fontWeight:700}}>{c.sym}</span>
+                    <span style={{color:'var(--ink-3)', marginLeft:8}}>w {c.w}%</span>
+                  </div>
+                  <div className="sim-row__q">{c.q}</div>
+                </div>
+
+                <div className="sim-row__slider">
+                  <span className="sim-row__yesno-l">No</span>
+                  <span className="sim-row__track">
+                    {/* Base marker */}
+                    <span className="sim-row__base" style={{left: (c.yes * 100) + '%'}} title={`base ${(c.yes * 100).toFixed(0)}%`} />
+                    {/* Induced marker (shows where cascade pushed it) */}
+                    {Math.abs(cascadeIn) > 0.005 && (
+                      <span className="sim-row__induced" style={{left: (induced * 100) + '%'}}
+                            title={`cascade-induced ${(induced * 100).toFixed(1)}%`} />
+                    )}
+                    <input type="range" min={0} max={1} step={0.005}
+                           value={p}
+                           onChange={e => setOne(c.sym, parseFloat(e.target.value))} />
+                    <span className="sim-row__fill" style={{width: (p * 100) + '%'}} />
+                  </span>
+                  <span className="sim-row__yesno-r">Yes</span>
+                </div>
+
+                <div className="sim-row__readout">
+                  <span className="sim-row__p">
+                    <strong>{(p * 100).toFixed(0)}%</strong>
+                    <span style={{color:'var(--ink-3)', fontSize:11, marginLeft:6}}>
+                      vs base {(c.yes * 100).toFixed(0)}%
+                      {Math.abs(dp) > 0.001 && (
+                        <span className={dp > 0 ? 'rd-num--pos' : 'rd-num--neg'} style={{marginLeft:4, fontWeight:600}}>
+                          {dp > 0 ? '+' : ''}{(dp * 100).toFixed(0)}pp
+                        </span>
+                      )}
+                    </span>
+                  </span>
+                </div>
+
+                <div className="sim-row__eps">{(eff[c.sym] * 100).toFixed(1)}%</div>
+
+                <div className={`sim-row__contrib ${contribOwn >= 0 ? 'rd-num--pos' : 'rd-num--neg'}`}>
+                  {Math.abs(contribOwn) < 0.0001 ? '—' :
+                    (contribOwn >= 0 ? '+' : '') + (contribOwn * 100).toFixed(2) + 'pp'}
+                </div>
+
+                {/* Cascade reveal — only show when this contract is moved OR when others are pushing it */}
+                {(Math.abs(dp) > 0.001 || Math.abs(cascadeIn) > 0.005) && linkSyms.length > 0 && (
+                  <div className="sim-row__cascade">
+                    <span className="t-label" style={{color:'var(--ink-3)'}}>CASCADE FROM {c.sym} →</span>
+                    {linkSyms.map(j => {
+                      const delta = links[j];
+                      const induceJ = delta * dp;
+                      return (
+                        <span key={j} className="sim-cascade-pill">
+                          {j}
+                          <span className={induceJ >= 0 ? 'rd-num--pos' : 'rd-num--neg'} style={{marginLeft:6, fontWeight:600}}>
+                            {induceJ >= 0 ? '+' : ''}{(induceJ * 100).toFixed(1)}pp
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {Math.abs(cascadeIn) > 0.005 && (
+                  <div className="sim-row__cascade sim-row__cascade--in">
+                    <span className="t-label" style={{color:'var(--ink-3)'}}>INDUCED ON {c.sym} BY OTHERS</span>
+                    <span className={`sim-cascade-induced ${cascadeIn >= 0 ? 'rd-num--pos' : 'rd-num--neg'}`}>
+                      {cascadeIn >= 0 ? '+' : ''}{(cascadeIn * 100).toFixed(1)}pp → induced {(induced * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ===== Waterfall of contributions to ΔPMI ===== */}
+        <div className="sim-waterfall">
+          <div className="t-label" style={{marginBottom:12}}>WATERFALL · ΔPMI BY CONTRACT</div>
+          <p className="t-body-sm" style={{color:'var(--ink-3)', marginTop:0, marginBottom:'var(--s-4)'}}>
+            Each bar = Δp(yes) × effective weight ε. Bars sum to total ΔPMI.
+            ε already absorbs the conditional propagation, so moving one slider gives you the full cascade-aware impact.
+          </p>
+          {sortedDiff.map(d => {
+            const maxAbs = Math.max(0.001, ...sortedDiff.map(x => Math.abs(x.contrib)));
+            const pct = Math.abs(d.contrib) / maxAbs * 50;
+            const pos = d.contrib >= 0;
+            return (
+              <div key={d.sym} className="sim-wf__row">
+                <span className="sim-wf__sym">{d.sym}</span>
+                <span className="sim-wf__bar">
+                  <span className="sim-wf__mid" />
+                  {Math.abs(d.contrib) > 0.0001 && (
+                    <span className={`sim-wf__fill ${pos ? 'sim-wf__fill--pos' : 'sim-wf__fill--neg'}`}
+                          style={{width: pct + '%', [pos ? 'left' : 'right']: '50%'}} />
+                  )}
+                </span>
+                <span className={`sim-wf__v ${pos ? 'rd-num--pos' : 'rd-num--neg'}`}>
+                  {Math.abs(d.contrib) < 0.00005 ? '—' :
+                    (pos ? '+' : '') + (d.contrib * 100).toFixed(2)}
+                </span>
+              </div>
+            );
+          })}
+          <div className="sim-wf__total">
+            <span>TOTAL Δ PMI</span>
+            <span className={`sim-wf__v ${deltaPMI >= 0 ? 'rd-num--pos' : 'rd-num--neg'}`}>
+              {deltaPMI >= 0 ? '+' : ''}{(deltaPMI * 100).toFixed(2)}pp
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// ProViewMicro — same shell, with TabSimulator wired in
+// ============================================================
+function ProViewMicro({ brand }) {
+  const [sym, setSym]   = React.useState('TX-GOV-26');
+  const [tab, setTab]   = React.useState('sim');
+  const [range, setRange] = React.useState('30D');
+  const c = window.PMI_MODEL.bySym[sym];
+
+  const microTabs = [
+    { id: 'price',     label: 'Yes/No history',  hint: '60-day Yes/No probability with Micah Fair' },
+    { id: 'sim',       label: 'PMI Simulator',   hint: 'Drag P(Yes) — watch PMI recompute with conditional cascade' },
+    { id: 'analogues', label: 'Analogues',       hint: 'Prior cycles where this Yes/No question resolved' },
+    { id: 'cond',      label: 'Conditional impact', hint: 'How this contract shifts other PMI components' },
+    { id: 'venues',    label: 'Venue decomp',    hint: 'Where the Yes-price comes from' },
+    { id: 'notes',     label: 'Notes',           hint: 'Hypothesis log for this contract' },
+  ];
+
+  return (
+    <div className="rd2-view">
+      <CropFrame>
+        <div className="rd2-topbar">
+          <span className="t-eyebrow">RESEARCH DESK · {c.cat.toUpperCase()} · + PMI SIMULATOR · {window.PMI_MODEL.pmiName.toUpperCase()}</span>
+          <div className="rd2-topbar__right">
+            <div className="rd-range">
+              {['7D','30D','90D','1Y','ALL'].map(r => (
+                <button key={r} className={`rd-range__btn ${r === range ? 'is-active' : ''}`} onClick={() => setRange(r)}>{r}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="rd2-header">
+          <div className="rd2-header__title">
+            <h1 className={brand === 'caps' ? 't-display-caps' : 't-display'} style={{fontSize:'clamp(28px, 3vw, 44px)'}}>{c.q}</h1>
+            <p className="t-body" style={{marginTop:'var(--s-2)', fontSize:14, color:'var(--ink-3)', letterSpacing:'.04em'}}>
+              {c.sym} · WEIGHT {c.w}% IN {window.PMI_MODEL.pmiName.toUpperCase()} · COMPOSITE SCORE {window.PMI_MODEL.pmiScore.toFixed(1)}
+            </p>
+          </div>
+          <ContractPickerPMI value={sym} onChange={setSym} />
+        </div>
+
+        <HeroPMI sym={sym} density="editorial" />
+
+        <div className="rd2-dim">
+          <div className="rd2-tabs" role="tablist">
+            {microTabs.map(t => (
+              <button key={t.id} role="tab" aria-selected={t.id === tab}
+                className={`rd2-tab ${t.id === tab ? 'is-active' : ''}`}
+                onClick={() => setTab(t.id)}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <span className="t-label rd2-dim__hint">{microTabs.find(t => t.id === tab).hint}</span>
+        </div>
+
+        <div className="rd2-content">
+          {tab === 'price'     && <div className="rd2-pane"><PriceDense sym={sym} density="editorial" /></div>}
+          {tab === 'sim'       && <TabSimulator />}
+          {tab === 'analogues' && <AnaloguesDense sym={sym} density="editorial" />}
+          {tab === 'cond'      && <CondImpactPane sym={sym} density="editorial" />}
+          {tab === 'venues'    && <VenuesDense sym={sym} density="editorial" />}
+          {tab === 'notes'     && <TabNotes sym={sym} />}
+        </div>
+      </CropFrame>
+    </div>
+  );
+}
+
+Object.assign(window, { ProViewMicro, TabSimulator, effectiveWeights, pmiFromBeliefs, inducedProb });
+
+</script>
+  <script type="text/babel">
+/* views-senate.jsx — SenateView (2026 US Senate Index) */
+
+const { useState: sState } = React;
+
+// ---------- Seat balance bar (the spine of the page) ----------
+// Renders 7 stacked segments across 100% width, with a dashed "51" needle.
+function SeatBalanceBar({ counts, holdover, dSecured, rSecured, tossups }) {
+  // band order, left → right: D-safest first, R-safest last
+  const order = [
+    { key: 'safe-d',   label: 'Safe Dem',    color: window.heatColor(8),   fg: '#FBFAF6' },
+    { key: 'likely-d', label: 'Likely Dem',  color: window.heatColor(22),  fg: '#FBFAF6' },
+    { key: 'lean-d',   label: 'Lean Dem',    color: window.heatColor(36),  fg: '#11192C' },
+    { key: 'tossup',   label: 'Toss-up',     color: window.heatColor(50),  fg: '#11192C' },
+    { key: 'lean-r',   label: 'Lean GOP',    color: window.heatColor(64),  fg: '#11192C' },
+    { key: 'likely-r', label: 'Likely GOP',  color: window.heatColor(78),  fg: '#FBFAF6' },
+    { key: 'safe-r',   label: 'Safe GOP',    color: window.heatColor(92),  fg: '#FBFAF6' },
+  ];
+
+  // The two 51-thresholds. From the left (D needs 51), 51% mark is at position 51/100.
+  // From the right (R needs 51), 51% mark is at position 49/100 (i.e., 100-51).
+  // Each party "owns" the side they're growing from.
+  const dThreshold = 51; // pixels position as % from left
+  const rThreshold = 49;
+
+  return (
+    <div className="seat-bar">
+      <div className="seat-bar__head">
+        <div className="seat-bar__title">Projected Senate composition · 119th Congress</div>
+        <div className="seat-bar__sub">100 seats · 51 to control · {tossups} toss-up{tossups === 1 ? '' : 's'}</div>
+      </div>
+
+      <div className="seat-bar__chart">
+        <div className="seat-bar__row">
+          {order.map(o => {
+            const n = counts[o.key];
+            if (n === 0) return null;
+            return (
+              <div key={o.key}
+                className="seat-bar__seg"
+                style={{ flexBasis: `${n}%`, background: o.color, color: o.fg }}
+                title={`${o.label}: ${n}`}>
+                <span className="seat-bar__seg-num">{n}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* D threshold (51 from the left, marker on the right side of the line) */}
+        <div className="seat-bar__threshold"
+             data-label="DEM 51"
+             style={{ left: `${dThreshold}%` }} />
+        {/* R threshold (51 from the right) */}
+        <div className="seat-bar__threshold seat-bar__threshold--right"
+             data-label="GOP 51"
+             style={{ left: `${rThreshold}%` }} />
+      </div>
+
+      <div className="seat-bar__scale">
+        {[0, 25, 50, 75, 100].map(t => (
+          <span key={t} className="seat-bar__tick" style={{ left: `${t}%` }}>{t}</span>
+        ))}
+      </div>
+
+      <div className="seat-bar__legend">
+        {order.map(o => (
+          <span key={o.key} className="seat-bar__legend-item">
+            <span className="seat-bar__swatch" style={{ background: o.color }} />
+            {o.label} · {counts[o.key]}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------- Tossup right-rail ----------
+function TossupRail({ races, onNavigate }) {
+  return (
+    <div className="tossup-rail">
+      <div className="tossup-rail__title">TOSS-UPS · {races.length}</div>
+      <div className="tossup-rail__list">
+        {races.map(r => {
+          const fill = window.heatColor(r.probR);
+          const dark = r.probR > 65 || r.probR < 35;
+          return (
+            <div key={r.state}
+                 className="tossup-rail__cell"
+                 onClick={() => onNavigate && onNavigate({ view: 'state', state: r.state })}
+                 role="button"
+                 tabIndex={0}>
+              <span className="tossup-rail__code"
+                    style={{ background: fill, color: dark ? '#FBFAF6' : '#11192C' }}>
+                {r.state}
+              </span>
+              <span className="tossup-rail__matchup">{r.matchup}</span>
+              <span className="tossup-rail__prob">{r.probR}<span style={{ fontSize: 10, color: 'var(--ink-3)' }}>R</span></span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ---------- Marquee race table ----------
+function SenateRaceTable({ races, onNavigate }) {
+  const bandLabel = {
+    'safe-d': 'Safe Dem', 'likely-d': 'Likely Dem', 'lean-d': 'Lean Dem',
+    'tossup': 'Toss-up',
+    'lean-r': 'Lean GOP', 'likely-r': 'Likely GOP', 'safe-r': 'Safe GOP',
+  };
+
+  return (
+    <div className="senate-table">
+      <div className="senate-table__head">
+        <span>State</span>
+        <span>Matchup</span>
+        <span>Rating</span>
+        <span style={{ textAlign: 'right' }}>P(GOP)</span>
+        <span style={{ textAlign: 'right' }}>14-day Δ</span>
+        <span>Exchanges</span>
+      </div>
+
+      {races.map(r => {
+        const swatch = window.heatColor(r.probR);
+        const deltaCls = r.d14 > 0.05 ? 'senate-table__delta--up'
+                      : r.d14 < -0.05 ? 'senate-table__delta--down'
+                                      : 'senate-table__delta--flat';
+        const deltaTxt = (r.d14 > 0 ? '+' : '') + r.d14.toFixed(1);
+        return (
+          <div key={r.state}
+               className="senate-table__row"
+               onClick={() => onNavigate && onNavigate({ view: 'state', state: r.state })}
+               role="button"
+               tabIndex={0}>
+            <span className="senate-table__state">
+              <span className="senate-table__state-swatch" style={{ background: swatch }} />
+              {r.state}
+            </span>
+
+            <span>
+              <div className="senate-table__matchup">{r.matchup}</div>
+              <div className="senate-table__tag-row">
+                <span className={`inc-badge inc-badge--${r.inc.toLowerCase()}`}>
+                  Inc · {r.inc}
+                </span>
+                {r.special && <Tag>Special</Tag>}
+              </div>
+            </span>
+
+            <span className="senate-table__band">{bandLabel[r.band]}</span>
+
+            <span className="senate-table__prob">{r.probR}<span style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 500 }}>%</span></span>
+
+            <span className={`senate-table__delta ${deltaCls}`}>
+              {r.d14 === 0 ? '—' : deltaTxt}
+            </span>
+
+            <span className="senate-table__excs">
+              <ExchangeStack ids={r.excs.slice(0, 4)} extras={Math.max(0, r.excs.length - 4)} size={22} />
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---------- The view itself ----------
+function SenateView({ onNavigate, brand }) {
+  const S = window.MICAH_SENATE;
+  const [mode, setMode] = sState('map'); // 'map' | 'chart'
+  const [tab, setTab] = sState('marquee'); // 'marquee' | 'all'
+
+  // Aggregate market signals — sum of contracts & volume across our race set
+  const totalContracts = S.races.reduce((a, r) => a + r.contracts, 0);
+  const totalVolumeM = (S.races.reduce((a, r) => a + r.volume, 0) / 1_000_000).toFixed(1);
+
+  return (
+    <div className="view">
+      <CropFrame>
+        <div className="breadcrumb">
+          <button className="breadcrumb__link" onClick={() => onNavigate({ view: 'world' })}>World</button>
+          <span className="breadcrumb__sep">›</span>
+          <span>2026 Senate</span>
+        </div>
+
+        <PageTitle
+          caps={brand === 'caps'}
+          title="2026 US Senate Index"
+          body="An aggregated, data-driven estimate of which party holds the US Senate after the 2026 midterm elections. The index composites probabilities from 34 individual race markets, applies seat-by-seat weighting against the 51-seat majority threshold, and surfaces the toss-ups that move the needle."
+        />
+
+        <div className="row-between" style={{ marginTop: 'var(--s-6)' }}>
+          <span className="t-eyebrow">LIVE · 34 SEATS IN PLAY · 51 TO CONTROL · UPDATED MAY 28</span>
+          <Segmented
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: 'map',   label: 'Map' },
+              { value: 'chart', label: '14-Day Graph' },
+            ]}
+          />
+        </div>
+
+        {/* Hero: paired probability tiles + stats column on left ----------------- */}
+        <div className="senate-hero">
+          <div className="senate-hero__stats">
+            <StatCard value={`$${totalVolumeM}M`} label="24h Volume" live />
+            <StatCard value={`${(totalContracts).toLocaleString()}`} label="Live Contracts" />
+            <StatCard value="11" label="Prediction Market Exchanges">
+              <ExchangeStack ids={['kalshi','polymarket','robinhood','coinbase']} extras={7} size={22} />
+            </StatCard>
+            <StatCard value="34" label="Race PMIs" info />
+          </div>
+
+          <div className="senate-hero__main">
+            {/* Two big paired probability tiles */}
+            <div className="senate-paired">
+              <ScoreTile
+                value={`${S.pmiGOPMajority}%`}
+                label="GOP Majority Probability"
+                tone="red"
+                size="lg"
+              />
+              <ScoreTile
+                value={`${S.pmiDemMajority}%`}
+                label="Dem Majority Probability"
+                tone="blue"
+                size="lg"
+              />
+            </div>
+
+            {/* Seat balance bar */}
+            <SeatBalanceBar
+              counts={S.counts}
+              holdover={S.holdover}
+              dSecured={S.dSecured}
+              rSecured={S.rSecured}
+              tossups={S.tossups}
+            />
+          </div>
+        </div>
+
+        {/* Map / Chart toggle area ------------------------------------------------ */}
+        <div className="senate-viz" style={{ marginTop: 'var(--s-10)' }}>
+          {mode === 'map' ? (
+            <>
+              <div className="senate-viz__map">
+                <UsaMap
+                  width={780}
+                  height={500}
+                  dataByCode={S.probByState}
+                  dimMissing
+                  tipFormatter={(p) => {
+                    const r = S.raceByState[p.code];
+                    if (!r) return 'Not on 2026 ballot';
+                    return `${r.matchup}  ·  P(R) ${r.probR}%`;
+                  }}
+                  onSelect={(code) => {
+                    if (S.raceByState[code]) onNavigate({ view: 'state', state: code });
+                  }}
+                />
+                <div style={{ marginTop: 'var(--s-5)' }}>
+                  <HeatScale />
+                </div>
+                <p className="t-label" style={{ marginTop: 'var(--s-3)' }}>
+                  Colored states have a Senate race on the 2026 ballot. Greyed states are not on the ballot this cycle.
+                </p>
+              </div>
+              <div className="senate-viz__rail">
+                <TossupRail races={S.tossupRail} onNavigate={onNavigate} />
+              </div>
+            </>
+          ) : (
+            <div className="senate-viz__map" style={{ width: '100%' }}>
+              <div style={{ marginBottom: 'var(--s-3)' }}>
+                <span className="t-label">P(GOP holds 51+) · trailing 14 days</span>
+              </div>
+              <TimeChart
+                data={S.series14}
+                width={960}
+                height={460}
+                color="#8B1E2D"
+                yLabel="P(GOP Majority) %"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Race table ------------------------------------------------------------- */}
+        <div className="section" style={{ marginTop: 'var(--s-12)' }}>
+          <h2 className={brand === 'caps' ? 't-display-caps' : 't-display'} style={{ fontSize: 36 }}>
+            Race PMIs
+          </h2>
+          <p className="t-body" style={{ marginTop: 'var(--s-2)', maxWidth: 820 }}>
+            Each race is a single-factor PMI. Probabilities are derived from active prediction-market contracts
+            on Kalshi, Polymarket, Metaculus, Robinhood and 7 other exchanges, weighted by volume and recency.
+          </p>
+
+          <div style={{ marginTop: 'var(--s-5)' }}>
+            <Segmented
+              value={tab}
+              onChange={setTab}
+              options={[
+                { value: 'marquee', label: `Marquee · ${S.marquee.length}` },
+                { value: 'all',     label: `All Races · ${S.races.length}` },
+              ]}
+            />
+          </div>
+
+          <SenateRaceTable
+            races={tab === 'marquee'
+              ? S.marquee
+              : S.races.slice().sort((a, b) => Math.abs(a.probR - 50) - Math.abs(b.probR - 50))}
+            onNavigate={onNavigate}
+          />
+        </div>
+      </CropFrame>
+    </div>
+  );
+}
+
+Object.assign(window, { SenateView, SeatBalanceBar, TossupRail, SenateRaceTable });
+
+</script>
+  <script type="text/babel">
+/* App router — switches between views */
+
+const { useState: aState } = React;
+
+function App() {
+  const [route, setRoute] = aState({ view: 'world' });
+
+  // Top-level navigation chrome (so user can jump views)
+  const screens = [
+    { view: 'ask',                  label: '✦ Ask Micah (AI-native)', accent: 'ai' },
+    { view: 'pro',                  label: '◰ Research Desk',         accent: 'pro' },
+    { view: 'pro-analyst',          label: 'A · Analyst density',     accent: 'pro2' },
+    { view: 'pro-micro',            label: 'B · PMI Simulator',       accent: 'pro2' },
+    { view: 'world',                label: 'World · MAGA' },
+    { view: 'world-caps',           label: 'World · serif caps' },
+    { view: 'world-chart',          label: 'World · 14-Day' },
+    { view: 'senate',               label: '2026 Senate', accent: 'pro3' },
+    { view: 'state', state: 'MD',   label: 'State · MD' },
+    { view: 'state', state: 'TX',   label: 'State · TX Gov' },
+    { view: 'question', id: 'mi-question', label: 'Question · MI' },
+    { view: 'question-empty', id: 'mi-question', label: 'Question · No Data' },
+    { view: 'war',                  label: 'War Index' },
+  ];
+
+  const v = route.view;
+  const brand = v.endsWith('caps') ? 'caps' : 'normal';
+
+  return (
+    <div className="app">
+      <Header
+        title={v === 'war' ? 'The War Index' : 'MAGA Index'}
+        onNavigate={setRoute}
+      />
+
+      {/* In-prototype screen switcher (above the content) */}
+      <nav className="screen-nav">
+        <div className="screen-nav__inner">
+          <span className="t-label">VIEW:</span>
+          {screens.map(s => {
+            const key = s.view + (s.state || '') + (s.id || '');
+            const active = key === (route.view + (route.state || '') + (route.id || ''));
+            return (
+              <button
+                key={key}
+                className={`screen-nav__btn ${active ? 'is-active' : ''} ${s.accent === 'ai' ? 'screen-nav__btn--ai' : ''} ${s.accent === 'pro' ? 'screen-nav__btn--pro' : ''} ${s.accent === 'pro2' ? 'screen-nav__btn--pro2' : ''} ${s.accent === 'pro3' ? 'screen-nav__btn--pro3' : ''}`}
+                onClick={() => setRoute({ view: s.view, state: s.state, id: s.id })}
+              >
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <main className="app__main">
+        {v === 'ask' &&
+          <AskView onNavigate={setRoute} />}
+        {v === 'pro' &&
+          <ProView />}
+        {v === 'pro-analyst' &&
+          <ProViewAnalyst brand={brand} />}
+        {v === 'pro-micro' &&
+          <ProViewMicro brand={brand} />}
+        {(v === 'world' || v === 'world-caps') &&
+          <WorldView brand={brand} onNavigate={setRoute} />}
+        {v === 'world-chart' &&
+          <WorldView brand={brand} onNavigate={setRoute} _forceChart />}
+        {v === 'state' &&
+          <StateView stateCode={route.state || 'MD'} brand={brand} onNavigate={setRoute} showTooltips={false} />}
+        {v === 'question' &&
+          <QuestionView id={route.id} brand={brand} onNavigate={setRoute} />}
+        {v === 'question-empty' &&
+          <QuestionView id={route.id} brand={brand} onNavigate={setRoute} noData />}
+        {v === 'war' &&
+          <WarIndexView onNavigate={setRoute} />}
+        {v === 'senate' &&
+          <SenateView onNavigate={setRoute} brand={brand} />}
+      </main>
+
+      <Footer title={v === 'war' ? 'The War Index' : 'MAGA Index'} />
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+
+</script>
 </body>
 </html>

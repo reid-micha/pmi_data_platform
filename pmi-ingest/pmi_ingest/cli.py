@@ -11,13 +11,17 @@ import structlog
 
 from pmi_core.config import settings
 from pmi_ingest.config import ingest_settings
+from pmi_ingest.pollers.forecastex_rest import ForecastExRestPoller
+from pmi_ingest.pollers.gemini_rest import GeminiRestPoller
 from pmi_ingest.pollers.kalshi_clob import KalshiClobPoller
 from pmi_ingest.pollers.kalshi_rest import KalshiRestPoller
+from pmi_ingest.pollers.manifold_rest import ManifoldRestPoller
 from pmi_ingest.pollers.metaculus_rest import MetaculusRestPoller
 from pmi_ingest.pollers.mock_polymarket import MockPolymarketPoller
 from pmi_ingest.pollers.polymarket_clob import PolymarketClobPoller
 from pmi_ingest.pollers.polymarket_history import PolymarketHistoryPoller
 from pmi_ingest.pollers.polymarket_rest import PolymarketRestPoller
+from pmi_ingest.pollers.predictit_rest import PredictItRestPoller
 
 
 def _setup_logging() -> None:
@@ -51,6 +55,10 @@ PollerImpl = (
     | PolymarketClobPoller
     | KalshiClobPoller
     | MetaculusRestPoller
+    | ForecastExRestPoller
+    | GeminiRestPoller
+    | ManifoldRestPoller
+    | PredictItRestPoller
 )
 
 
@@ -72,6 +80,14 @@ def _build_poller(source: str) -> PollerImpl:
         return KalshiClobPoller()
     if source == "metaculus-rest":
         return MetaculusRestPoller()
+    if source == "forecastex-rest":
+        return ForecastExRestPoller()
+    if source == "gemini-rest":
+        return GeminiRestPoller()
+    if source == "manifold-rest":
+        return ManifoldRestPoller()
+    if source == "predictit-rest":
+        return PredictItRestPoller()
     raise click.UsageError(f"Unknown source: {source}")
 
 
@@ -97,6 +113,10 @@ def _interval_for(source: str) -> int:
             "polymarket-clob",
             "kalshi-clob",
             "metaculus-rest",
+            "forecastex-rest",
+            "gemini-rest",
+            "manifold-rest",
+            "predictit-rest",
         ]
     ),
     help="Source to poll.",
@@ -241,6 +261,21 @@ def crypto_scrape_cmd() -> None:
     from pmi_ingest.scrapers.crypto.job import CryptoScrapeJob
 
     job = CryptoScrapeJob()
+    total = job.run_once()
+    click.echo(f"[{job.name}] {total} contracts persisted")
+
+
+@cli.command(name="coinbase-scrape")
+def coinbase_scrape_cmd() -> None:
+    """Coinbase prediction-markets scraper (legacy Micah port).
+
+    Requires `COINBASE_ENABLED=true` + Playwright Chromium in the image.
+    Two-phase (GraphQL-intercept discovery → per-event-page extraction);
+    one-shot — schedule via cron.
+    """
+    from pmi_ingest.scrapers.coinbase.job import CoinbaseScrapeJob
+
+    job = CoinbaseScrapeJob()
     total = job.run_once()
     click.echo(f"[{job.name}] {total} contracts persisted")
 

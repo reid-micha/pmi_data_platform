@@ -190,6 +190,45 @@ services:
     profiles: ["ingest"]
     command: ["kalshi-clob"]
 
+  # ── Cross-venue REST sources ported from legacy Micah (2026-06-09) ──────────
+  # Each runs `run --source X` as its own internal poll loop (interval from
+  # config; default 300s). All in the `ingest` profile — brought up in prod,
+  # off for the light laptop `pmi` e2e.
+  pmi-ingest-forecastex:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-forecastex
+    profiles: ["ingest"]
+    command: ["run", "--source", "forecastex-rest"]
+
+  pmi-ingest-gemini:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-gemini
+    profiles: ["ingest"]
+    command: ["run", "--source", "gemini-rest"]
+
+  pmi-ingest-manifold:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-manifold
+    profiles: ["ingest"]
+    command: ["run", "--source", "manifold-rest"]
+
+  pmi-ingest-predictit:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-predictit
+    profiles: ["ingest"]
+    command: ["run", "--source", "predictit-rest"]
+
+  # Coinbase Playwright scraper (legacy Micah port). One-shot CLI wrapped in a
+  # daily loop, same shape as pmi-ingest-history. Needs COINBASE_ENABLED=true
+  # + Playwright Chromium (already in the pmi-ingest image).
+  pmi-ingest-coinbase:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-coinbase
+    profiles: ["ingest"]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "while true; do python -m pmi_ingest.cli coinbase-scrape || true; sleep 86400; done"
+
   # Read-only FastAPI gateway over pmi-core. Long-running.
   pmi-api:
     build:

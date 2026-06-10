@@ -1,586 +1,650 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<title>PMI Platform — Current Architecture (2026-05-29)</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMI Platform — 現況架構 / Current Architecture</title>
 <style>
-  :root {
-    --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --dim: #484f58; --muted: #8b949e;
-    --green: #3fb950; --green-bg: #0d1f0d; --green-border: #238636;
-    --blue: #58a6ff; --blue-bg: #0d1926; --blue-border: #1f6feb;
-    --purple: #a78bfa; --purple-bg: #1a0d26; --purple-border: #8b5cf6;
-    --orange: #e3b341; --orange-bg: #261a0d; --orange-border: #d29922;
-    --cyan: #39d2c0; --cyan-bg: #0d2626; --cyan-border: #1a8a7e;
-    --red: #f85149; --red-bg: #260d0d; --red-border: #da3633;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 28px 32px; }
-
-  .header { text-align: center; margin-bottom: 28px; }
-  .header h1 { font-size: 20px; font-weight: 600; color: #f0f6fc; }
-  .header p { font-size: 12px; color: var(--muted); margin-top: 4px; }
-
-  .card { border-radius: 8px; padding: 12px 16px; border: 1px solid; font-size: 12px; line-height: 1.55; }
-  .card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-  .card .sub { font-size: 11px; color: var(--muted); line-height: 1.65; }
-  .badge { font-size: 9px; font-weight: 600; padding: 1px 7px; border-radius: 8px; margin-left: auto; flex-shrink: 0; }
-
-  .c-green  { background: var(--green-bg); border-color: var(--green-border); }
-  .c-green h3 { color: var(--green); }
-  .c-green .badge { background: var(--green-border); color: #fff; }
-
-  .c-blue   { background: var(--blue-bg); border-color: var(--blue-border); }
-  .c-blue h3 { color: var(--blue); }
-  .c-blue .badge { background: var(--blue-border); color: #fff; }
-
-  .c-purple { background: var(--purple-bg); border-color: var(--purple-border); }
-  .c-purple h3 { color: var(--purple); }
-
-  .c-orange { background: var(--orange-bg); border-color: var(--orange-border); }
-  .c-orange h3 { color: var(--orange); }
-  .c-orange .badge { background: var(--orange-border); color: #000; }
-
-  .c-cyan { background: var(--cyan-bg); border-color: var(--cyan-border); }
-  .c-cyan h3 { color: var(--cyan); }
-  .c-cyan .badge { background: var(--cyan-border); color: #fff; }
-
-  .c-gray   { background: var(--card); border-color: var(--border); border-style: dashed; opacity: 0.55; }
-  .c-gray h3 { color: var(--muted); }
-
-  .arrow { display: flex; justify-content: center; align-items: center; padding: 4px 0; }
-  .arrow span { color: var(--dim); font-size: 10px; }
-  .arrow::before { content: ''; display: block; width: 0; height: 0;
-    border-left: 5px solid transparent; border-right: 5px solid transparent;
-    border-top: 6px solid var(--green); margin-right: 8px; }
-
-  .arrow-bi { display: flex; justify-content: center; align-items: center; padding: 4px 0; }
-  .arrow-bi span { color: var(--dim); font-size: 10px; margin: 0 6px; }
-  .arrow-bi::before { content: '\2191'; font-size: 12px; color: var(--cyan); }
-  .arrow-bi::after  { content: '\2193'; font-size: 12px; color: var(--cyan); }
-
-  .main-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    max-width: 1120px;
-    margin: 0 auto;
-    gap: 0;
-  }
-
-  .docker-boundary {
-    border: 1px dashed #21262d;
-    border-radius: 12px;
-    padding: 16px;
-    position: relative;
-  }
-  .docker-boundary::before {
-    content: 'DOCKER COMPOSE (profile: pmi + mlflow) — 6 services, e2e verified 2026-05-28';
-    position: absolute; top: -9px; left: 20px;
-    background: var(--bg); padding: 0 8px;
-    font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #21262d;
-  }
-
-  .engine-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 16px; margin-top: 6px; }
-  .engine-grid > div b { color: var(--blue); }
-
-  .db-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 2px 12px; margin-top: 4px; }
-  .db-grid b { color: var(--green); }
-
-  .placeholder-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-
-  .flow-summary {
-    max-width: 1120px; margin: 16px auto 0;
-    padding: 14px 18px; background: var(--card);
-    border: 1px solid var(--border); border-radius: 8px;
-    font-size: 12px; line-height: 1.8;
-  }
-
-  .legend {
-    display: flex; gap: 18px; margin: 16px auto 0;
-    justify-content: center; max-width: 1120px; flex-wrap: wrap;
-  }
-  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
-  .legend-dot { width: 10px; height: 10px; border-radius: 2px; border: 1.5px solid; }
-
-  .row-3col { display: grid; grid-template-columns: 1fr 260px; gap: 16px; align-items: start; }
-  .side-stack { display: flex; flex-direction: column; gap: 10px; }
-
-  .bottom-2col { display: grid; grid-template-columns: 1fr 320px; gap: 12px; align-items: start; }
-  .storage-row { display: grid; grid-template-columns: 1fr 1fr 320px; gap: 12px; align-items: start; }
-  .surface-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
-
-  code { font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 10px; color: var(--muted); }
-
-  .stub-tag { color: var(--orange); font-weight: 600; }
-  .real-tag { color: var(--green); font-weight: 600; }
-  .partial-tag { color: var(--orange); font-weight: 600; }
-
-  .section-label {
-    text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
-    color: #21262d; padding: 10px 0 4px; text-transform: uppercase;
-  }
-
-  .gap-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
-  .gap-item { font-size: 10px; padding: 6px 10px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 6px; color: var(--muted); }
-  .gap-item b { color: var(--orange); font-weight: 600; }
-  .gap-item.crit { background: var(--red-bg); border-color: var(--red-border); color: var(--text); }
-  .gap-item.crit b { color: var(--red); }
+:root{
+  --bg:#0d1117; --card:#161b22; --card2:#1c2230; --border:#2d333b; --muted:#8b949e; --fg:#e6edf3; --dim:#6e7681; --accent:#58a6ff;
+  --green-bg:#12351f; --green-border:#2ea043; --green-fg:#56d364;
+  --blue-bg:#0d2c4d; --blue-border:#1f6feb; --blue-fg:#79c0ff;
+  --cyan-bg:#0c2f33; --cyan-border:#1f9aa8; --cyan-fg:#56d4dd;
+  --orange-bg:#3a2a10; --orange-border:#bb8009; --orange-fg:#e3b341;
+  --purple-bg:#2a2151; --purple-border:#8957e5; --purple-fg:#bc8cff;
+  --red-bg:#3a1418; --red-border:#da3633; --red-fg:#ff7b72;
+  --gray-bg:#21262d; --gray-border:#444c56; --gray-fg:#8b949e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6;padding:0 0 80px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+header.page{background:linear-gradient(135deg,#11203a 0%,#161b22 60%);border-bottom:1px solid var(--border);padding:34px 0 26px}
+header.page h1{font-size:25px;color:#f0f6fc;margin-bottom:8px}
+header.page .sub{font-size:13.5px;color:var(--muted);max-width:820px}
+header.page .en{color:var(--dim)}
+.meta{font-size:12px;color:var(--dim);margin-top:12px}
+.nav-back{display:inline-block;font-size:12px;color:var(--accent);text-decoration:none;margin:18px 0 0}
+.nav-back:hover{text-decoration:underline}
+h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:38px 0 14px;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:6px}
+h2 .en{text-transform:none;letter-spacing:0;color:var(--dim)}
+h3{font-size:16px;color:#f0f6fc;margin:22px 0 8px}
+h3 .en{font-size:12.5px;color:var(--muted);font-weight:400}
+p{margin:8px 0;font-size:14px;color:var(--fg)}
+.en,.en-block{color:var(--muted)}
+.en-block{font-size:12.5px;display:block;margin-top:2px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin:12px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid,.grid3{grid-template-columns:1fr}}
+.badge{display:inline-block;font-size:11px;padding:1px 8px;border-radius:20px;border:1px solid;vertical-align:middle}
+.b-green{background:var(--green-bg);border-color:var(--green-border);color:var(--green-fg)}
+.b-orange{background:var(--orange-bg);border-color:var(--orange-border);color:var(--orange-fg)}
+.b-blue{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue-fg)}
+.b-gray{background:var(--gray-bg);border-color:var(--gray-border);color:var(--gray-fg)}
+.b-purple{background:var(--purple-bg);border-color:var(--purple-border);color:var(--purple-fg)}
+.b-cyan{background:var(--cyan-bg);border-color:var(--cyan-border);color:var(--cyan-fg)}
+.b-red{background:var(--red-bg);border-color:var(--red-border);color:var(--red-fg)}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+th{color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+code{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px;background:#0b0f14;border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--cyan-fg)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0;font-size:12px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.dot{width:11px;height:11px;border-radius:3px;border:1px solid;display:inline-block}
+ul{margin:8px 0 8px 20px}
+li{font-size:13.5px;margin:4px 0}
+.flow{background:#0b0f14;border:1px solid var(--border);border-radius:10px;padding:16px;margin:14px 0;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:12px;color:var(--muted);white-space:pre;overflow-x:auto;line-height:1.5}
+footer{color:var(--dim);font-size:11.5px;margin-top:48px;border-top:1px solid var(--border);padding-top:16px}
+footer a{color:var(--accent);text-decoration:none}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>PMI Platform &mdash; Current Implementation Architecture</h1>
-  <p>Snapshot 2026-05-29 &middot; Alembic head: 0003 &middot; 13 tables &middot; 7 packages (6 runnable + pmi-mcp stub) &middot; Tier-1 real LLM live &middot; MLflow mirror live</p>
-  <p style="font-size:11px; color:var(--green); margin-top:6px;">P0 e2e <strong>verified</strong> 2026-05-28 &mdash; <code>docker compose --profile pmi</code>: migrate &rarr; seed (13 markets + 5 index defs) &rarr; <code>run-job score-all</code> (5/5 success, 96 evals w/ mlflow_run_id) &rarr; <code>pmi-api /score</code> 200 &rarr; <code>pmi-web</code> SSR. Cloud deploy = same images + same env, new host.</p>
-  <p style="font-size:11px; color:var(--orange); margin-top:4px;">Status maps to <code>TODO-跑出來.md</code> (ship / deploy / DX = SHIP-*) + <code>TODO-跑得對.md</code> (correctness / LLM / schema / audit = CORR-*). <strong style="color:var(--red);">R5</strong> (cloud platform decision) blocks all SHIP-1.x.</p>
-</div>
-
-<div class="main-grid">
-  <div class="docker-boundary">
-
-    <!-- ========== EXTERNAL ========== -->
-    <div class="section-label">&#9312; Upstream Data Sources</div>
-
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; max-width:760px; margin:0 auto;">
-      <div class="card c-orange">
-        <h3>Polymarket Gamma REST <span class="badge">partial</span></h3>
-        <div class="sub">
-          GET /markets &middot; keyset paging <span style="color:var(--orange);">(offset cap fix &#10003; CORR-3.8; keyset &#10007; CORR-3.9)</span><br>
-          <span class="real-tag">Connected</span> &mdash; title, category, <code>lastTradePrice</code>, <code>volumeNum</code>, tags, dates<br>
-          <span style="color:var(--orange);">&#9888; reid laptop: HiNet DNS hijacks gamma-api &rarr; mock mode</span>
-        </div>
-      </div>
-      <div class="card c-gray" style="opacity:0.7;">
-        <h3>Deep signals — not connected</h3>
-        <div class="sub">
-          WebSocket trades <code>CORR-4.1</code> &middot; CLOB orderbook <code>CORR-4.3</code><br>
-          Polygon RPC (cohort / UMA) <code>CORR-4.2/4.4</code><br>
-          Subgraph backfill <code>SHIP-4.5 / CORR-8.3</code>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrow"><span>httpx async &middot; 5-min poll loop &middot; max_pages=1000 safety valve (SHIP-4.4)</span></div>
-
-    <!-- ========== INGEST ========== -->
-    <div class="section-label">&#9313; Ingest Layer</div>
-
-    <div style="max-width: 720px; margin: 0 auto;">
-      <div class="card c-green">
-        <h3>pmi-ingest <span class="badge">P0 running</span></h3>
-        <div class="sub">
-          <strong>polymarket_rest.py</strong> (asyncio + httpx + tenacity) &middot; <strong>mock_polymarket.py</strong> <span class="real-tag">SHIP-0.5</span> &mdash; <code>POLYMARKET_USE_MOCK=true</code> reads fixtures, keeps source name <code>polymarket-rest</code> so observability shape is identical<br>
-          &rarr; <code>_upsert_market</code> <span class="real-tag">atomic ON CONFLICT &#10003; CORR-3.1</span> &middot; APPEND <code>ts_price_snapshots</code> (last / volume)<br>
-          &rarr; <code>record_poll</code> &rarr; UPSERT <code>audit_source_health</code> <span style="color:var(--orange);">(p95 latency &amp; expected_records still heuristic — CORR-6.3/6.4)</span><br>
-          CLI: <code>pmi-ingest run [--once]</code> &middot; Docker long-lived daemon
-        </div>
-      </div>
-    </div>
-
-    <div class="arrow"><span>SQLAlchemy async + asyncpg</span></div>
-
-    <!-- ========== STORAGE (center of data flow) ========== -->
-    <div class="section-label">&#9314; Storage Layer (single Postgres)</div>
-
-    <div class="storage-row">
-      <div class="card c-green">
-        <h3>PostgreSQL 16 + pgvector <span class="badge">running :5432</span></h3>
-        <div class="sub">
-          <b style="color:var(--green);">core_*</b> markets, index_defs (SCD2 + yaml_sha256), prompts (sha256, append), api_keys, factor_models<br>
-          <span style="color:var(--orange);">&#9888; no <code>condition_id</code> (CORR-1.3) &middot; no <code>owner_id/tenant_id</code> (CORR-2.2)</span><br>
-          <b style="color:var(--green);">ts_*</b> price_snapshots, index_scores (component_audit_ids[]) <span style="color:var(--orange);">(no hypertable — CORR-4.5; no unique cstr — CORR-2.5)</span><br>
-          <span style="color:var(--dim);"><code>ts_trades</code> / <code>ts_orderbook_depth</code> not present (CORR-2.4)</span><br>
-          <b style="color:var(--green);">audit_*</b> evaluations (APPEND-ONLY), pipeline_runs, source_poll_log, source_health <span style="color:var(--orange);">(DB-level REVOKE not enforced — CORR-6.2)</span><br>
-          <b style="color:var(--green);">vec_*</b> market_embeddings <span style="color:var(--orange);">(schema only, never written — CORR-3.6)</span><br>
-          <span style="color:var(--dim);">13 tables &middot; Alembic head: 0003 &middot; pgvector/pgvector:pg16</span>
-        </div>
-      </div>
-      <div class="card c-cyan">
-        <h3>MLflow Server <span class="badge">running :5500</span></h3>
-        <div class="sub">
-          <span class="real-tag">Implemented</span> &mdash; graceful degradation<br>
-          Prompt Registry mirror &middot; Experiments<br>
-          Parent/child runs (cost + tokens metrics)<br>
-          Model Registry (factor_models)<br>
-          Backend: postgresql (mlflow DB)<br>
-          <span style="color:var(--dim);">Postgres is truth; pipeline never blocks if down</span>
-        </div>
-      </div>
-      <div class="card c-gray">
-        <h3>Not present</h3>
-        <div class="sub">
-          Redis (cache / Arq queue) <code>CORR-4.6</code><br>
-          Cloudflare R2 / S3 (blob) <code>SHIP-1.4</code><br>
-          TimescaleDB hypertable <code>CORR-4.5</code>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrow-bi"><span>read (compute) + write (scores / audit) &middot; async</span></div>
-
-    <!-- ========== WORKERS + CORE ENGINE ========== -->
-    <div class="section-label">&#9315; Compute — Workers + Core Engine</div>
-
-    <div class="row-3col">
-      <div class="card c-blue">
-        <h3>pmi-core <span style="font-weight:400; color:var(--muted); font-size:11px;">(shared library + CLI + engine)</span> <span class="badge">P0 implemented</span></h3>
-        <div class="engine-grid sub">
-          <div>
-            <b>DSL / IR</b><br>
-            YAML &rarr; Pydantic <code>IndexDef</code><br>
-            5 index defs registered<br>
-            <span style="color:var(--orange);">formula = string label only;<br>only weighted_average runs (CORR-1.1/1.2)</span>
-          </div>
-          <div>
-            <b>Selector</b><br>
-            ILIKE title + category eq<br>
-            <span style="color:var(--dim);">semantic: ignored (CORR-3.6)</span><br>
-            <span style="color:var(--orange);">limit 500 hardcoded (CORR-2.6)</span>
-          </div>
-          <div>
-            <b>Factor Resolver</b><br>
-            DB lookup <code>CoreFactorModel</code><br>
-            (active + production) &rarr; use<br>
-            fallback &rarr; YAML + stub model
-          </div>
-          <div>
-            <b>Factor Evaluator</b> <span class="real-tag" style="font-size:9px;">SHIP-0.6</span><br>
-            <code>stub-*</code> &rarr; SHA256 hash score<br>
-            <code>gpt-*</code> &rarr; <span class="real-tag">real OpenAI (Tier 1)</span><br>
-            retry &#10003; cost &#10003; fallback-to-stub &#10003;<br>
-            <span style="color:var(--orange);">Tier 0/2/3 &#10007; (CORR-5.x)</span>
-          </div>
-          <div>
-            <b>Aggregator</b><br>
-            relevancy &times; direction &times; price<br>
-            &rarr; 0..100 score<br>
-            <span style="color:var(--orange);">collapse = naive 3-token (CORR-1.4)</span><br>
-            <span style="color:var(--orange);">liquidity weight never read (CORR-3.4)</span>
-          </div>
-          <div>
-            <b>Pipeline / dry-run</b><br>
-            ensure_def (SCD2) &rarr; ensure_prompt<br>
-            &rarr; select &rarr; resolve &rarr; eval &rarr; agg<br>
-            &rarr; write score + audit + MLflow<br>
-            <code>dry_run.py</code> <span class="real-tag">0-DB SHIP-3.1</span>
-          </div>
-        </div>
-        <div style="margin-top:8px; border-top:1px solid #1f6feb33; padding-top:6px;">
-          <div style="font-size:11px; color:var(--blue);">
-            <b>CLI</b>: migrate &middot; seed &middot; score &middot; score-all &middot; history &middot; list-defs &middot; <span class="real-tag">dry-run</span> &middot; <span class="real-tag">schema dump</span> &middot; mlflow-init &middot; prompts list &middot; models list/register/promote
-          </div>
-        </div>
-      </div>
-      <div class="side-stack">
-        <div class="card c-green">
-          <h3>pmi-workers <span class="badge">P0 running</span></h3>
-          <div class="sub">
-            <strong>supercronic</strong> + <code>run-job</code> runner<br>
-            crontab: <code>hourly</code> / <code>daily</code><br>
-            jobs: score / score-all<br>
-            <span style="color:var(--orange);">Arq+Redis &#10007; CORR-4.6 &middot; Temporal &#10007; CORR-8.1</span>
-          </div>
-        </div>
-        <div class="card c-purple">
-          <h3>Index &amp; Prompt Config</h3>
-          <div class="sub">
-            <strong>5 index defs</strong>: war-index v1 (7+1 factor) + senate/house 2026 &times;{seats, share}<br>
-            7 prompt <code>.md</code> (SHA256 &rarr; core_prompts + MLflow)<br>
-            fixtures: 13 synthetic markets
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="arrow"><span>reads ts_index_scores + audit_* (read-only)</span></div>
-
-    <!-- ========== API + SURFACE ========== -->
-    <div class="section-label">&#9316; Serving — API &amp; User-facing Surface</div>
-
-    <div class="surface-row">
-      <div class="card c-green">
-        <h3>pmi-api (FastAPI) <span class="badge">running :8001</span></h3>
-        <div class="sub">
-          GET /health &middot; /sources/health<br>
-          GET /indexes &middot; /indexes/{id}<br>
-          GET /indexes/{id}/score &middot; /score/history<br>
-          GET /indexes/{id}/explain <span style="color:var(--red);">&#128027; relevancy/direction/last_price = 0 (CORR-3.3)</span><br>
-          <span style="color:var(--orange);">Read-only &middot; auth written but 0 routes wired (CORR-0.6/0.7/0.8)</span><br>
-          <span style="color:var(--dim);">GraphQL &amp; WebSocket not present</span>
-        </div>
-      </div>
-      <div class="card c-green">
-        <h3>pmi-web (Next.js 15) <span class="badge">P0 running :3030</span></h3>
-        <div class="sub">
-          SSR landing (5 index cards) &middot; <code>/indexes/[id]</code> dashboard (score + history chart + def metadata)<br>
-          <span style="color:var(--orange);">/groups/[slug] &#10007; SHIP-2.1 &middot; explain breakdown &#10007; SHIP-2.2 &middot; error boundary &#10007; SHIP-2.4</span><br>
-          <span style="color:var(--dim);">SSR fetches pmi-api over docker network</span>
-        </div>
-      </div>
-    </div>
-
-    <div style="height: 12px;"></div>
-
-    <!-- ========== MCP STUB ========== -->
-    <div class="section-label">Planned Surface (stub only)</div>
-
-    <div style="max-width: 720px; margin: 0 auto;">
-      <div class="card c-gray">
-        <h3>pmi-mcp <span class="badge">README only</span></h3>
-        <div class="sub">
-          MCP server &mdash; Tier A/B/C tools (P3). <strong>SHIP-2.3</strong>: first Tier-A reads (<code>list_indexes / get_index / get_score / get_history / get_group</code>) &mdash; the "AI native" demo lever.
-        </div>
-      </div>
-    </div>
-
-  </div><!-- docker-boundary -->
-
-  <div style="height: 14px;"></div>
-
-  <!-- ========== INFRA NOT PRESENT ========== -->
-  <div class="card c-gray" style="opacity:0.45;">
-    <h3>Infrastructure not yet present</h3>
-    <div class="sub" style="display:flex; gap:16px; flex-wrap:wrap;">
-      <span>Redis (cache / Arq queue)</span>
-      <span>Cloudflare R2 (blob)</span>
-      <span>OTel / Grafana (observability)</span>
-      <span>Sentry (errors)</span>
-      <span>Temporal (durable workflow)</span>
-      <span>TimescaleDB (hypertable)</span>
-      <span>Cloud deploy (Render / Fly.io — R5)</span>
-      <span>CI/CD (GitHub Actions — SHIP-1.3)</span>
-    </div>
+<header class="page">
+  <div class="wrap">
+    <h1>PMI Platform — 現況架構 <span class="en" style="font-size:18px;font-weight:400">/ Current Architecture</span></h1>
+    <p class="sub">
+      五層 data-flow：實際 code 跑成什麼樣，每個節點標 ✅/🟡/❌ 並對位 SHIP-*/CORR- ID。
+      <span class="en">Five-layer data flow — what the code actually runs today; each node marked and mapped to SHIP-/CORR- IDs.</span>
+    </p>
+    <p class="meta">Snapshot 2026-06-07 · Alembic head 0007 · 16 tables · 對照 against actual code</p>
   </div>
-</div>
+</header>
 
-<!-- Legend -->
-<div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:var(--green-bg); border-color:var(--green-border);"></div>Running (P0)</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--blue-bg); border-color:var(--blue-border);"></div>Implemented (library)</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--cyan-bg); border-color:var(--cyan-border);"></div>MLflow (mirror layer)</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--orange-bg); border-color:var(--orange-border);"></div>Partial / external</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--purple-bg); border-color:var(--purple-border);"></div>Config / data</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--card); border-color:var(--border); border-style:dashed;"></div>Stub / not present</div>
-</div>
+<div class="wrap">
+  <a class="nav-back" href="index.html">← 回文件入口 / Back to index</a>
 
-<!-- Data flow -->
-<div class="flow-summary">
-  <strong style="color:#f0f6fc;">End-to-End Data Flow (working today)</strong>
-  <div style="color:var(--muted); margin-top:6px;">
-    <span style="color:var(--orange);">Polymarket Gamma REST</span> <span style="color:var(--dim);">(or mock fixtures)</span>
-    <span style="color:var(--dim);"> &#10132; </span>
-    <span style="color:var(--green);">pmi-ingest</span> (poll 5min)
-    <span style="color:var(--dim);"> &#10132; </span>
-    <span style="color:var(--green);">PostgreSQL</span> (core_markets + ts_price_snapshots + audit_source_*)
-    <span style="color:var(--dim);"> &#10132; </span>
-    <span style="color:var(--green);">pmi-workers</span> (supercronic <code>run-job</code>)
-    <span style="color:var(--dim);"> &#10132; </span>
-    <span style="color:var(--blue);">pmi-core pipeline</span> (select &rarr; resolve &rarr; <span style="color:var(--orange);">stub / real-LLM eval</span> &rarr; aggregate)
-    <span style="color:var(--dim);"> &#10132; </span>
-    <span style="color:var(--green);">PostgreSQL</span> (audit_evaluations + ts_index_scores + audit_pipeline_runs)
-    <span style="color:var(--dim);"> &#10132; </span>
-    <span style="color:var(--cyan);">MLflow</span> (mirror runs + prompts + cost)
-    <span style="color:var(--dim);"> &#10132; </span>
-    <span style="color:var(--green);">pmi-api</span> (:8001) <span style="color:var(--dim);"> &#10132; </span> <span style="color:var(--green);">pmi-web</span> (:3030 SSR)
+  <!-- Legend -->
+  <div class="legend" style="margin-top:20px">
+    <span><span class="dot" style="background:var(--green-bg);border-color:var(--green-border)"></span> ✅ Running 跑著的</span>
+    <span><span class="dot" style="background:var(--orange-bg);border-color:var(--orange-border)"></span> 🟡 Partial/scaffold 半成品</span>
+    <span><span class="dot" style="background:var(--gray-bg);border-color:var(--gray-border)"></span> ❌ Not present 還沒有</span>
+    <span><span class="dot" style="background:var(--blue-bg);border-color:var(--blue-border)"></span> 🔵 Config-ready 設定好待執行</span>
+    <span><span class="dot" style="background:var(--cyan-bg);border-color:var(--cyan-border)"></span> ◇ MLflow mirror 鏡像</span>
   </div>
 
-  <div style="margin-top:8px; padding-top:8px; border-top:1px solid #21262d;">
-    <strong style="color:#f0f6fc;">Score Lineage Chain</strong>
-    <div style="color:var(--dim); font-size:11px; margin-top:2px;">
-      <code>ts_index_scores.component_audit_ids[]</code>
-      &rarr; <code>audit_evaluations</code> (market_id + index_def_id + prompt_sha256 + model_id + cost_usd + model_source)
-      &rarr; <code>core_prompts</code> (template + sha256)
-      &rarr; <code>core_index_definitions</code> (SCD2 version + yaml_sha256)
+  <!-- Design pillars / 設計原則 -->
+  <div class="card" style="margin-top:18px">
+    <p style="margin:0 0 10px;font-size:13px"><strong>平台目標：因應不同市場策略，快速迭代出各種 PMI。</strong> <span class="en">Goal: rapidly iterate many PMIs per market strategy.</span> 下列四項是硬需求，每項都對得上下方節點的機制。</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+      <div style="background:#0b0f14;border:1px solid var(--cyan-border);border-radius:8px;padding:9px 11px">
+        <div style="font-size:12.5px;font-weight:700;color:var(--cyan-fg)">🎛️ 高可控 <span style="color:var(--muted);font-weight:400;font-size:11px">High control</span></div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:3px">YAML DSL · prompt-as-code (sha256) · 人寫 keyword · factor model registry</div>
+      </div>
+      <div style="background:#0b0f14;border:1px solid var(--blue-border);border-radius:8px;padding:9px 11px">
+        <div style="font-size:12.5px;font-weight:700;color:var(--blue-fg)">🧩 高彈性 <span style="color:var(--muted);font-weight:400;font-size:11px">High flexibility</span></div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:3px">新增第 N 個不改前 N–1 · 一源一檔 poller · 一 index 一 YAML · formula registry</div>
+      </div>
+      <div style="background:#0b0f14;border:1px solid var(--green-border);border-radius:8px;padding:9px 11px">
+        <div style="font-size:12.5px;font-weight:700;color:var(--green-fg)">🎯 準確 + 確定性 <span style="color:var(--muted);font-weight:400;font-size:11px">Reproducible</span></div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:3px">sha256 lineage · append-only audit · cache reuse · byte-identical 回歸 · 每 score 可追源</div>
+      </div>
+      <div style="background:#0b0f14;border:1px solid var(--purple-border);border-radius:8px;padding:9px 11px">
+        <div style="font-size:12.5px;font-weight:700;color:var(--purple-fg)">🗂️ 多版本共存 <span style="color:var(--muted);font-weight:400;font-size:11px">Multi-version</span></div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:3px">SCD2 version + effective_from/to · prompt -vN · 舊版續算 · backtest · diff</div>
+      </div>
     </div>
   </div>
 
-  <div style="margin-top:8px; padding-top:8px; border-top:1px solid #21262d;">
-    <strong style="color:#f0f6fc;">Factor Model Resolution &amp; LLM Dispatch</strong>
-    <div style="color:var(--dim); font-size:11px; margin-top:2px;">
-      <code>core_factor_models</code> (factor + stage=production + is_active) &rarr; <span style="color:var(--green);">HIT</span>: registered (prompt, llm_model_id, temperature) / <span style="color:var(--orange);">MISS</span>: YAML prompt_ref + stub model.
-      Then evaluator dispatch: <code>stub-*</code> &rarr; hash score &middot; <code>gpt-*</code> &rarr; <span style="color:var(--green);">real OpenAI</span> (tenacity 3x, cost tracked, <span style="color:var(--orange);">fallback-to-stub on error</span>).
+  <!-- ① 資料來源 -->
+  <h2>① 資料來源 <span class="en">/ Upstream Sources</span></h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>來源 / Source</th>
+        <th>狀態 / Status</th>
+        <th>說明 / Notes</th>
+        <th>CORR/SHIP</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Polymarket Gamma REST</strong><span class="en-block">keyset pagination</span></td>
+        <td><span class="badge b-green">✅ live</span></td>
+        <td>42,016 markets via <code>/markets/keyset?after_cursor=</code>。寫入 <code>core_markets</code> + <code>ts_price_snapshots</code>。Mock mode <code>POLYMARKET_USE_MOCK=true</code> 讀 pmi-demo fixtures。<span class="en-block">Writes core_markets + ts_price_snapshots. Mock mode reads pmi-demo fixtures.</span></td>
+        <td><code>SHIP-0.5</code> <code>CORR-3.9</code></td>
+      </tr>
+      <tr>
+        <td><strong>Polymarket CLOB <code>/book</code></strong><span class="en-block">orderbook depth</span></td>
+        <td><span class="badge b-green">✅ live</span></td>
+        <td>mid/spread/depth_1pct/5pct + top-25 raw levels → <code>ts_orderbook_snapshots</code>。16-way 並發，60s cadence。<span class="en-block">16-way concurrency, 60s cadence.</span></td>
+        <td><code>CORR-4.3</code></td>
+      </tr>
+      <tr>
+        <td><strong>Polymarket <code>/prices-history</code></strong><span class="en-block">backfill, interval=max</span></td>
+        <td><span class="badge b-green">✅ live</span></td>
+        <td>8-way 並發，idempotent 回填 30 天每 10 分鐘價格。<span class="en-block">8-way concurrency, idempotent backfill.</span></td>
+        <td><code>SHIP-4.5</code> <code>CORR-3.10</code></td>
+      </tr>
+      <tr>
+        <td><strong>Polymarket CLOB WS trades</strong><span class="en-block">streaming</span></td>
+        <td><span class="badge b-orange">🟡 scaffold</span></td>
+        <td>Auto-reconnect 已寫，尚未對完整 universe smoke test。<span class="en-block">Auto-reconnect present; not smoked on full universe.</span></td>
+        <td><code>CORR-4.1</code></td>
+      </tr>
+      <tr>
+        <td><strong>Polygon chain indexer</strong><span class="en-block">on-chain events</span></td>
+        <td><span class="badge b-orange">🟡 scaffold</span></td>
+        <td>CTF Exchange + ConditionalTokens + UMA OO V2 events。需付費 RPC URL。<span class="en-block">Needs paid RPC URL to run against mainnet.</span></td>
+        <td><code>CORR-4.2</code></td>
+      </tr>
+      <tr>
+        <td><strong>UMA dispute resolver</strong></td>
+        <td><span class="badge b-orange">🟡 scaffold</span></td>
+        <td>Gamma-only 路徑已通；chain path 待 RPC。<span class="en-block">Gamma-only path live; chain path awaits paid RPC.</span></td>
+        <td><code>CORR-4.4</code></td>
+      </tr>
+      <tr>
+        <td><strong>Kalshi REST + CLOB orderbook</strong></td>
+        <td><span class="badge b-green">✅ live</span></td>
+        <td>REST + orderbook depth 已通。<span class="en-block">REST and orderbook depth operational.</span></td>
+        <td><code>CORR-4.7</code></td>
+      </tr>
+      <tr>
+        <td><strong>Kalshi WS</strong></td>
+        <td><span class="badge b-orange">🟡 scaffold</span></td>
+        <td>401 — streaming scope not enabled on Kalshi side。<span class="en-block">Returns 401; Kalshi streaming scope not enabled.</span></td>
+        <td><code>CORR-4.7</code></td>
+      </tr>
+      <tr>
+        <td><strong>Metaculus REST</strong></td>
+        <td><span class="badge b-green">✅ exploratory</span></td>
+        <td>探索性接入。<span class="en-block">Exploratory integration.</span></td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="card" style="border-color:var(--orange-border);background:var(--orange-bg)">
+    <span class="badge b-orange">Note</span>
+    <span style="font-size:13px;margin-left:8px;color:var(--orange-fg)">Deep Polymarket signals (trade flow / trader cohort / conditional tree) — scaffold 於 2026-06-01 落地，待 mainnet RPC smoke test。</span>
+    <span class="en-block" style="padding-left:70px">Deep Polymarket signals (trade flow / trader cohort / conditional tree) — scaffold landed 2026-06-01, awaiting mainnet RPC smoke.</span>
+  </div>
+
+  <!-- ② Ingest layer -->
+  <h2>② Ingest 層 <span class="en">/ Ingest Layer — pmi-ingest (asyncio)</span></h2>
+
+  <div class="grid">
+    <div class="card">
+      <h3>模組結構 <span class="en">Module layout</span></h3>
+      <ul>
+        <li><code>pollers/</code> — polymarket_rest, polymarket_clob, polymarket_history, kalshi_rest, kalshi_clob, metaculus_rest, mock_polymarket</li>
+        <li><code>streams/</code> — polymarket_ws, kalshi_ws</li>
+        <li><code>chain/</code> — polygon_indexer, uma_resolver, cohort, abis</li>
+      </ul>
+      <span class="en-block">All pollers share the same health-tracking contract.</span>
+    </div>
+    <div class="card">
+      <h3>Health tracking <span class="en">每次 poll 都寫</span></h3>
+      <ul>
+        <li>INSERT <code>audit_source_poll_log</code> (immutable, per poll)</li>
+        <li>UPSERT <code>audit_source_health</code> (current state, per source)</li>
+        <li>原子 <code>_upsert_market</code> — INSERT…ON CONFLICT <code>(CORR-3.1)</code></li>
+      </ul>
+      <span class="en-block">Atomic upsert prevents duplicate market rows on re-poll.</span>
     </div>
   </div>
-</div>
 
-<!-- ===== Data-flow detail diagrams (frontend fetch + index computation) ===== -->
-<div class="flow-summary" style="margin-top:12px; border-color:var(--blue-border);">
-  <strong style="color:#f0f6fc;">&#9337; Frontend Data Fetch &mdash; <span style="font-weight:400; color:var(--muted);">前端資料怎麼拿</span></strong>
-  <div style="color:var(--muted); margin:4px 0 6px; font-size:11px;">Dual base: SSR talks to pmi-api over the docker network with a server-only <code>X-API-Key</code>; the browser path uses <code>localhost</code> with no key. All reads are read-only. <span style="color:var(--dim);">雙 base，全部 read-only。</span></div>
-  <svg viewBox="0 0 1040 320" width="100%" role="img" aria-label="Frontend data fetch flow" style="display:block; margin:6px auto 0; max-width:100%">
-    <defs><marker id="adf" markerWidth="11" markerHeight="11" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3fb950"/></marker></defs>
-    <rect x="16" y="46" width="150" height="80" rx="10" fill="#161b22" stroke="#30363d"/>
-    <text x="91" y="78" text-anchor="middle" font-size="24">&#128104;&#8205;&#128187;</text>
-    <text x="91" y="104" text-anchor="middle" fill="#c9d1d9" font-size="12.5" font-weight="700">Browser</text>
-    <text x="91" y="120" text-anchor="middle" fill="#8b949e" font-size="10.5">使用者瀏覽器</text>
-    <line x1="168" y1="86" x2="192" y2="86" stroke="#3fb950" stroke-width="2.5" marker-end="url(#adf)"/>
-    <rect x="194" y="36" width="172" height="100" rx="10" fill="#0d1f0d" stroke="#238636"/>
-    <text x="280" y="60" text-anchor="middle" fill="#c9d1d9" font-size="12.5" font-weight="700">pmi-web · Next.js 15</text>
-    <text x="280" y="80" text-anchor="middle" fill="#8b949e" font-size="10.5">Server Components (SSR/RSC)</text>
-    <text x="280" y="96" text-anchor="middle" fill="#8b949e" font-size="10.5">+ Client (useEffect)</text>
-    <text x="280" y="118" text-anchor="middle" fill="#3fb950" font-size="10.5">:3030</text>
-    <line x1="368" y1="86" x2="392" y2="86" stroke="#3fb950" stroke-width="2.5" marker-end="url(#adf)"/>
-    <rect x="394" y="26" width="232" height="120" rx="10" fill="#161b22" stroke="#30363d"/>
-    <text x="510" y="50" text-anchor="middle" fill="#c9d1d9" font-size="12.5" font-weight="700">lib/api-client.ts · get()</text>
-    <text x="510" y="69" text-anchor="middle" fill="#8b949e" font-size="10.5">base = isServer() ? internal : browser</text>
-    <text x="510" y="85" text-anchor="middle" fill="#8b949e" font-size="10.5">cache: no-store · typed envelope</text>
-    <text x="510" y="107" text-anchor="middle" fill="#58a6ff" font-size="10">&#128274; SSR: PMI_API_URL + X-API-Key</text>
-    <text x="510" y="123" text-anchor="middle" fill="#58a6ff" font-size="10">&#127760; Browser: NEXT_PUBLIC_PMI_API_URL</text>
-    <text x="510" y="139" text-anchor="middle" fill="#8b949e" font-size="9.5">(service key server-only · never in client bundle)</text>
-    <line x1="626" y1="62" x2="694" y2="62" stroke="#3fb950" stroke-width="2" marker-end="url(#adf)"/>
-    <line x1="626" y1="110" x2="694" y2="110" stroke="#3fb950" stroke-width="2" marker-end="url(#adf)"/>
-    <rect x="696" y="36" width="150" height="100" rx="10" fill="#0d1f0d" stroke="#238636"/>
-    <text x="771" y="58" text-anchor="middle" fill="#c9d1d9" font-size="12" font-weight="700">pmi-api · FastAPI</text>
-    <text x="771" y="75" text-anchor="middle" fill="#8b949e" font-size="10">:8001 · auth dep</text>
-    <text x="771" y="93" text-anchor="middle" fill="#8b949e" font-size="9.5">/indexes /score</text>
-    <text x="771" y="107" text-anchor="middle" fill="#8b949e" font-size="9.5">/history /explain</text>
-    <text x="771" y="121" text-anchor="middle" fill="#8b949e" font-size="9.5">/senate-board</text>
-    <line x1="848" y1="86" x2="872" y2="86" stroke="#3fb950" stroke-width="2.5" marker-end="url(#adf)"/>
-    <rect x="874" y="36" width="150" height="100" rx="10" fill="#0d1926" stroke="#1f6feb"/>
-    <text x="949" y="60" text-anchor="middle" fill="#58a6ff" font-size="12" font-weight="700">PostgreSQL</text>
-    <text x="949" y="77" text-anchor="middle" fill="#8b949e" font-size="10">read-only</text>
-    <text x="949" y="95" text-anchor="middle" fill="#8b949e" font-size="9.5">ts_index_scores</text>
-    <text x="949" y="109" text-anchor="middle" fill="#8b949e" font-size="9.5">core_index_definitions</text>
-    <text x="949" y="123" text-anchor="middle" fill="#8b949e" font-size="9.5">audit_*</text>
-    <polyline points="949,136 949,272 91,272 91,128" fill="none" stroke="#3fb950" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#adf)"/>
-    <text x="520" y="266" text-anchor="middle" fill="#3fb950" font-size="11">return JSON envelope { summary, data } &#8594; SSR HTML + recharts history chart &#183; 回傳 envelope 組頁面</text>
-  </svg>
-</div>
-
-<div class="flow-summary" style="margin-top:12px; border-color:var(--purple-border);">
-  <strong style="color:#f0f6fc;">&#9338; Index Computation &mdash; <span style="font-weight:400; color:var(--muted);">index 怎麼計算</span></strong>
-  <div style="color:var(--muted); margin:4px 0 6px; font-size:11px;">One pipeline tick: YAML &rarr; select markets &rarr; per-factor LLM eval (append-only + cache) &rarr; aggregate to 0&ndash;100. The formula box is the exact <code>aggregate()</code> math. <span style="color:var(--dim);">公式即實際算式。</span></div>
-  <svg viewBox="0 0 1040 624" width="100%" role="img" aria-label="Index computation pipeline" style="display:block; margin:6px auto 0; max-width:100%">
-    <defs><marker id="adc" markerWidth="11" markerHeight="11" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3fb950"/></marker>
-      <marker id="adp" markerWidth="11" markerHeight="11" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#a78bfa"/></marker></defs>
-    <rect x="30" y="18" width="540" height="52" rx="9" fill="#161b22" stroke="#30363d"/>
-    <text x="46" y="40" fill="#c9d1d9" font-size="12" font-weight="700">1 · load</text>
-    <text x="46" y="58" fill="#8b949e" font-size="11">index_defs/&lt;id&gt;.yaml &#8594; load_index_def &#8594; IR (Pydantic IndexDef) + sha256</text>
-    <line x1="300" y1="70" x2="300" y2="88" stroke="#3fb950" stroke-width="2.5" marker-end="url(#adc)"/>
-    <rect x="30" y="90" width="540" height="74" rx="9" fill="#161b22" stroke="#30363d"/>
-    <text x="46" y="112" fill="#c9d1d9" font-size="12" font-weight="700">2 · idempotent setup (SCD2 / append-only)</text>
-    <text x="46" y="131" fill="#8b949e" font-size="10.5">_ensure_index_definition &#8594; core_index_definitions (retire prev current)</text>
-    <text x="46" y="147" fill="#8b949e" font-size="10.5">_ensure_prompt &#8594; core_prompts (sha256 + MLflow) · resolve_factor_model (DB active+prod | YAML+stub)</text>
-    <line x1="300" y1="164" x2="300" y2="182" stroke="#3fb950" stroke-width="2.5" marker-end="url(#adc)"/>
-    <rect x="30" y="184" width="540" height="52" rx="9" fill="#161b22" stroke="#30363d"/>
-    <text x="46" y="206" fill="#c9d1d9" font-size="12" font-weight="700">3 · select_markets</text>
-    <text x="46" y="224" fill="#8b949e" font-size="11">keyword ILIKE word-boundary OR category eq · limit 500 &#8594; N markets + latest price/depth</text>
-    <line x1="300" y1="236" x2="300" y2="254" stroke="#3fb950" stroke-width="2.5" marker-end="url(#adc)"/>
-    <rect x="30" y="256" width="540" height="150" rx="9" fill="#161b22" stroke="#8b5cf6" stroke-dasharray="7 4"/>
-    <text x="46" y="278" fill="#a78bfa" font-size="12" font-weight="700">4 · for each  market &#215; factor  &#8594;  evaluate_factor</text>
-    <rect x="44" y="288" width="512" height="30" rx="7" fill="#0d1117" stroke="#30363d"/><text x="56" y="307" fill="#8b949e" font-size="10.5">cache_key (market, index_def, factor, prompt_sha256, model_id) hit? &#8594; reuse (no re-spend)</text>
-    <rect x="44" y="322" width="512" height="30" rx="7" fill="#1a0d26" stroke="#8b5cf6"/><text x="56" y="341" fill="#c9d1d9" font-size="10.5">stub-* &#8594; SHA256 deterministic  |  gpt-* &#8594; real LLM: get_provider + render_prompt &#8594; value / label / conf / cost</text>
-    <rect x="44" y="356" width="512" height="30" rx="7" fill="#0d1f0d" stroke="#238636"/><text x="56" y="375" fill="#8b949e" font-size="10.5">INSERT ON CONFLICT DO NOTHING &#8594; audit_evaluations (append-only) + MLflow child run</text>
-    <text x="300" y="400" text-anchor="middle" fill="#8b949e" font-size="9.5">on failure &#8594; fallback stub (stub=True, cost=0)</text>
-    <line x1="300" y1="406" x2="300" y2="424" stroke="#3fb950" stroke-width="2.5" marker-end="url(#adc)"/>
-    <rect x="30" y="426" width="540" height="70" rx="9" fill="#261a0d" stroke="#d29922"/>
-    <text x="46" y="448" fill="#c9d1d9" font-size="12" font-weight="700">5 · aggregate()</text>
-    <text x="46" y="467" fill="#8b949e" font-size="10.5">collapse mutually-exclusive buckets (date-aware noisy-OR, CORR-1.4 naive)</text>
-    <text x="46" y="483" fill="#8b949e" font-size="10.5">liquidity weight = quantile 0.90 / 1.00 / 1.20 / 1.50 on depth (vol fallback)</text>
-    <line x1="300" y1="496" x2="300" y2="532" stroke="#3fb950" stroke-width="2.5" marker-end="url(#adc)"/>
-    <rect x="30" y="534" width="540" height="70" rx="9" fill="#0d1f0d" stroke="#238636"/>
-    <text x="46" y="556" fill="#c9d1d9" font-size="12" font-weight="700">6 · write</text>
-    <text x="46" y="575" fill="#8b949e" font-size="10.5">ts_index_scores (score · component_count · component_evaluation_ids[] · breakdown)</text>
-    <text x="46" y="591" fill="#8b949e" font-size="10.5">+ MLflow tick metrics + audit_pipeline_runs roll-up (cost_usd, llm_calls)</text>
-    <line x1="570" y1="461" x2="604" y2="430" stroke="#a78bfa" stroke-width="2.5" marker-end="url(#adp)"/>
-    <rect x="606" y="300" width="414" height="210" rx="11" fill="#1a0d26" stroke="#8b5cf6"/>
-    <text x="813" y="326" text-anchor="middle" fill="#a78bfa" font-size="13" font-weight="700">Index formula · 指數計算公式</text>
-    <text x="626" y="356" fill="#c9d1d9" font-size="12.5">relevancy  r&#7522; = &#931;&#11388;(v&#11388; &#183; w&#11388;) / &#931;&#11388; w&#11388;</text>
-    <text x="626" y="384" fill="#c9d1d9" font-size="12.5">raw = &#931;&#7522; (r&#7522; &#183; dir&#7522; &#183; price&#7522; &#183; liq&#7522;) / &#931;&#7522; (r&#7522; &#183; liq&#7522;)</text>
-    <text x="640" y="402" fill="#8b949e" font-size="10.5">raw &#8712; [&#8722;1, +1]</text>
-    <text x="626" y="430" fill="#3fb950" font-size="13.5" font-weight="700">score = clamp( 50 + 50 &#183; raw , 0 &#8230; 100 )</text>
-    <text x="640" y="448" fill="#8b949e" font-size="10.5">50 = neutral</text>
-    <text x="626" y="472" fill="#8b949e" font-size="10.5">dir &#8712; {&#8722;1, 0, +1}  ·  price = last_price or 0.5</text>
-    <text x="626" y="492" fill="#e3b341" font-size="10.5">below min_components or &#931;rel = 0 &#8594; score = NULL (not 0)</text>
-  </svg>
-  <div style="color:var(--dim); font-size:10.5px; margin-top:6px;">source: <code>pmi-core/engine/{pipeline,aggregator,factor_evaluator,selector}.py</code> · <code>pmi-web/lib/api-client.ts</code>. P0 formula = <code>weighted_average_x_100</code>; NEXT-3.x swaps in a formula registry.</div>
-</div>
-
-<!-- ===== Tier 0 embedding gate (proposed) ===== -->
-<div class="flow-summary" style="margin-top:12px; border-color:var(--purple-border);">
-  <strong style="color:#f0f6fc;">&#9339; Tier 0 Embedding Gate <span style="color:var(--purple);">(proposed)</span> &mdash; <span style="font-weight:400; color:var(--muted);">語意選股 + 成本守門 · CORR-5.1 / CORR-3.6 / CORR-2.3</span></strong>
-  <div style="color:var(--muted); margin:4px 0 10px; font-size:11px;">在 <code>select_markets</code> 與 factor loop 之間插一個 Tier 0 gate：先用 embedding 把不相關的 candidate 砍掉，<strong style="color:var(--green);">只對活下來的 market 燒 LLM</strong>。<span style="color:var(--dim);">Insert an embedding pre-filter between selection and the LLM loop so cost is spent only on survivors.</span></div>
-
-  <div style="font-size:11px; color:var(--orange); font-weight:600; margin:4px 0;">現在 · current <code>run_pipeline</code></div>
-  <pre style="background:#0d1117; border:1px solid var(--border); border-radius:8px; padding:12px 14px; font-family:'SF Mono',Monaco,Consolas,monospace; font-size:11.5px; line-height:1.7; color:var(--text); overflow-x:auto; margin:0 0 12px;">load IR
-  &#8594; select_markets(keyword/category)        <span style="color:var(--dim);">[pipeline.py:234]</span>
-  &#8594; 對「每個」market &#215; 每個 factor
-       跑 evaluate_factor (LLM)              <span style="color:var(--dim);">[pipeline.py:287]</span>  <span style="color:var(--orange);">&#8592; 燒錢在這</span>
-  &#8594; aggregate &#8594; 寫 TsIndexScore</pre>
-
-  <div style="font-size:11px; color:var(--green); font-weight:600; margin:4px 0;">加 Tier 0 之後 · with embedding gate</div>
-  <pre style="background:#0d1117; border:1px solid var(--green-border); border-radius:8px; padding:12px 14px; font-family:'SF Mono',Monaco,Consolas,monospace; font-size:11.5px; line-height:1.7; color:var(--text); overflow-x:auto; margin:0;">load IR
-  &#9474;
-  &#9500;&#9472; select_markets()                <span style="color:var(--muted);">&#8592; keyword/category 命中 (可能含髒詞)</span>
-  &#9474;     + (新) SemanticSelector       <span style="color:var(--blue);">&#8592; VectorStore.search(anchor, min_similarity 0.78)</span>
-  &#9474;                                     <span style="color:var(--dim);">語意「發現」相關 market</span>
-  &#9474;
-  &#9500;&#9472;【新 Tier 0 gate】               <span style="color:var(--purple);">&#8592; 成本守門</span>
-  &#9474;     embed anchor once ("search_query: "+anchor)
-  &#9474;     for m in candidates:
-  &#9474;         cos = 取 m 的 stored vec 算 cosine
-  &#9474;         if cos &lt; 0.5:  drop          <span style="color:var(--muted);">(不進 LLM loop)</span>
-  &#9474;
-  &#9500;&#9472; for m in survivors:
-  &#9474;     for factor: evaluate_factor()   <span style="color:var(--green);">&#8592; 只對活下來的燒 LLM</span>
-  &#9474;
-  &#9492;&#9472; aggregate &#8594; TsIndexScore</pre>
-
-  <div style="color:var(--dim); font-size:10.5px; margin-top:8px;">prereqs: <code>CORR-3.6</code> 寫入 <code>vec_market_embeddings</code> + 語意 selector · <code>CORR-2.3</code> embedding dim 動態化 · 對應 AI Tier ladder 的 <strong>Tier 0</strong>（目前 schema only）。</div>
-</div>
-
-<!-- Critical path / next moves -->
-<div class="flow-summary" style="margin-top:12px; border-color:var(--red-border);">
-  <strong style="color:#f0f6fc;">Critical Path &mdash; unblocks everything</strong>
-  <div class="gap-row">
-    <div class="gap-item crit"><b>R5</b> Cloud platform decision (Render / Fly.io / Modal / DIY) &mdash; blocks all SHIP-1.x</div>
-    <div class="gap-item crit"><b>R1</b> Polymarket ToS — commercial redistribution allowed? Must resolve before public demo</div>
-    <div class="gap-item"><b>SHIP-2.3</b> pmi-mcp Tier-A reads — the "AI native" demo surface</div>
+  <div class="card">
+    <h3>CLI 入口 <span class="en">CLI entrypoints</span></h3>
+    <p style="font-size:13px">
+      <code>pmi-ingest run --source &lt;name&gt;</code> &nbsp;·&nbsp;
+      <code>pmi-ingest clob</code> (orderbook) &nbsp;·&nbsp;
+      <code>pmi-ingest ws</code> (trade stream) &nbsp;·&nbsp;
+      <code>pmi-ingest chain</code> (polygon/UMA)
+    </p>
+    <span class="en-block">All commands run inside Docker via docker compose --profile pmi (per §0 rule 4 of CLAUDE.md).</span>
   </div>
-</div>
 
-<!-- Ship-it gaps -->
-<div class="flow-summary" style="margin-top:12px;">
-  <strong style="color:#f0f6fc;">跑出來 (Ship-it) &mdash; <span style="font-weight:400; color:var(--muted);">TODO-跑出來.md</span></strong>
-  <div class="gap-row">
-    <div class="gap-item"><b>SHIP-1.1&ndash;1.7</b> render.yaml / GHCR images / pgvector ext / secrets / DNS+TLS <span style="color:var(--red);">(blocked on R5)</span></div>
-    <div class="gap-item"><b>SHIP-2.1/2.2/2.4</b> web group view / explain breakdown / error boundary</div>
-    <div class="gap-item"><b>SHIP-3.2</b> <code>diff</code> CLI (v1 vs v2 per-market)</div>
-    <div class="gap-item"><b>SHIP-3.4</b> backtest CLI (replay 90d &rarr; CSV)</div>
-    <div class="gap-item"><b>SHIP-3.5</b> 2&ndash;3 more baseline indexes (fed-rate / crypto)</div>
-    <div class="gap-item"><b>SHIP-4.5</b> historical price backfill (backtest prereq)</div>
-    <div class="gap-item"><b>SHIP-5.1/5.2</b> log drain (Logflare) + Sentry SDK</div>
-  </div>
-</div>
+  <!-- ③ Storage -->
+  <h2>③ 儲存層 <span class="en">/ Storage Layer — PostgreSQL 16 + pgvector</span></h2>
 
-<!-- Correctness gaps -->
-<div class="flow-summary" style="margin-top:12px; border-color:var(--orange-border);">
-  <strong style="color:#f0f6fc;">跑得對 (Correctness) &mdash; <span style="font-weight:400; color:var(--muted);">TODO-跑得對.md</span></strong>
-  <div class="gap-row">
-    <div class="gap-item crit"><b>CORR-0.6/0.7/0.8</b> API auth wired + key CLI + fix deps.py double-commit bug</div>
-    <div class="gap-item"><b>CORR-0.1/0.4/0.5</b> Anthropic provider + structured output + cost roll-up + circuit breaker</div>
-    <div class="gap-item crit"><b>CORR-3.3</b> /explain endpoint — relevancy/direction/last_price always 0</div>
-    <div class="gap-item"><b>CORR-1.1/1.2</b> formula expression evaluator + baseline/total_seats (Senate 67 fixed seats)</div>
-    <div class="gap-item"><b>CORR-1.3/1.4</b> condition_id column + Micah bucket-collapse algorithm</div>
-    <div class="gap-item"><b>CORR-2.2/2.5/2.6</b> multi-tenant cols + snapshot unique cstr + selector cursor</div>
-    <div class="gap-item"><b>CORR-3.4/3.6</b> liquidity weighting + embedding write &amp; semantic selector</div>
-    <div class="gap-item"><b>CORR-7.1</b> engine unit tests (currently 0 on selector/aggregator/evaluator)</div>
-    <div class="gap-item"><b>CORR-7.2&ndash;7.5</b> OTel &rarr; Grafana + 3 dashboards + Slack alerts</div>
-  </div>
-</div>
+  <p style="font-size:13px;margin-bottom:8px">
+    單一 PostgreSQL 16 + pgvector。<strong>16 張 table，tier 前綴，Alembic HEAD 0007（7 次 migration）</strong>。向量目前用 pgvector，<strong>之後 embeddings / 語意搜尋會搬到 Milvus</strong>（專用向量庫，P2+）。
+    <span class="en-block">Single PostgreSQL 16 + pgvector. 16 tables, tier-prefixed, Alembic HEAD 0007 (7 migrations). Vectors run on pgvector today; embeddings / semantic search will move to a dedicated <strong>Milvus</strong> vector DB (P2+).</span>
+  </p>
 
-<!-- AI tier ladder -->
-<div class="flow-summary" style="margin-top:12px; border-color:var(--cyan-border);">
-  <strong style="color:#f0f6fc;">AI Algorithm Ladder (CLAUDE.md §6) &mdash; <span style="font-weight:400; color:var(--muted);">CORR-5.x</span></strong>
-  <div class="gap-row">
-    <div class="gap-item"><b>Tier 0</b> Embedding pre-filter &mdash; schema only, never written (CORR-5.1)</div>
-    <div class="gap-item" style="background:var(--green-bg); border-color:var(--green-border); color:var(--text);"><b>Tier 1</b> Cheap factor eval &mdash; <span style="color:var(--green);">real OpenAI live</span> (gpt-4o-mini, SHIP-0.6)</div>
-    <div class="gap-item"><b>Tier 2</b> Deep agentic eval &mdash; no orchestrator (CORR-5.6/5.7)</div>
-    <div class="gap-item"><b>Tier 3</b> Periodic re-eval trigger (price drift) — absent (CORR-5.2)</div>
-    <div class="gap-item"><b>CORR-5.3</b> Batch API nightly recompute (Micah has portable code)</div>
-    <div class="gap-item"><b>CORR-5.5/5.8/5.9</b> A/B shadow mode &middot; disagreement detection &middot; multi-model ensemble</div>
+  <table>
+    <thead>
+      <tr><th>前綴 / Prefix</th><th>Table</th><th>說明 / Description</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td rowspan="6"><strong>core_</strong><span class="en-block">(6 tables)</span></td>
+        <td><code>core_markets</code></td>
+        <td>市場主表，唯一鍵 external_id<span class="en-block">Primary market table, keyed by external_id</span></td>
+      </tr>
+      <tr>
+        <td><code>core_index_definitions</code></td>
+        <td>SCD Type 2 版本控管，含 version + yaml_sha256<span class="en-block">SCD2 versioning + yaml_sha256 lineage</span></td>
+      </tr>
+      <tr>
+        <td><code>core_prompts</code></td>
+        <td>Append-only，含 mlflow_prompt_uri 鏡像欄<span class="en-block">Append-only; mlflow_prompt_uri mirror col</span></td>
+      </tr>
+      <tr>
+        <td><code>core_factor_models</code></td>
+        <td>Registry，stage/is_active 驅動 evaluator<span class="en-block">Registry; stage/is_active drives factor_resolver</span></td>
+      </tr>
+      <tr>
+        <td><code>core_api_keys</code></td>
+        <td>API key 驗證<span class="en-block">API key authentication</span></td>
+      </tr>
+      <tr>
+        <td><code>core_traders</code></td>
+        <td>Trader cohort（預留）<span class="en-block">Trader cohort table (reserved for chain indexer)</span></td>
+      </tr>
+
+      <tr>
+        <td rowspan="4"><strong>ts_</strong><span class="en-block">(4 tables)</span></td>
+        <td><code>ts_price_snapshots</code></td>
+        <td>unique (market_id, snapshot_at) <code>CORR-2.5</code><span class="en-block">Deduped by unique constraint on market+time</span></td>
+      </tr>
+      <tr>
+        <td><code>ts_orderbook_snapshots</code></td>
+        <td>mid/spread/depth levels per market<span class="en-block">CLOB book snapshots per 60s cadence</span></td>
+      </tr>
+      <tr>
+        <td><code>ts_trades</code></td>
+        <td>WS trade feed（scaffold）<span class="en-block">WS trade feed rows (scaffold, CORR-4.1)</span></td>
+      </tr>
+      <tr>
+        <td><code>ts_index_scores</code></td>
+        <td>nullable score，<code>component_audit_ids[]</code> lineage<span class="en-block">Nullable score; array col links to audit_evaluations</span></td>
+      </tr>
+
+      <tr>
+        <td rowspan="5"><strong>audit_</strong><span class="en-block">(5 tables)</span></td>
+        <td><code>audit_evaluations</code></td>
+        <td>Immutable，cost_usd，model_response JSONB，ON CONFLICT race-fix <code>CORR-3.11</code><span class="en-block">Immutable eval rows; race condition fixed</span></td>
+      </tr>
+      <tr>
+        <td><code>audit_pipeline_runs</code></td>
+        <td>每次 pipeline tick 的 parent run<span class="en-block">Parent run per pipeline tick; mlflow_run_id col</span></td>
+      </tr>
+      <tr>
+        <td><code>audit_chain_events</code></td>
+        <td>Polygon/UMA on-chain events<span class="en-block">On-chain events from polygon_indexer / UMA</span></td>
+      </tr>
+      <tr>
+        <td><code>audit_source_health</code></td>
+        <td>Current state per source (UPSERT每次 poll)<span class="en-block">Current health state, one row per source</span></td>
+      </tr>
+      <tr>
+        <td><code>audit_source_poll_log</code></td>
+        <td>Immutable，每次 poll 一筆<span class="en-block">Immutable log, one row per poll attempt</span></td>
+      </tr>
+
+      <tr>
+        <td><strong>vec_</strong><span class="en-block">(1 table)</span></td>
+        <td><code>vec_market_embeddings</code></td>
+        <td>unsized pgvector，Alembic 0007，Ollama nomic 預設；<strong>之後搬 Milvus</strong>（向量庫，P2+）<span class="en-block">Unsized vector col (alembic 0007); default Ollama nomic. Moves to <strong>Milvus</strong> (vector DB, P2+).</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="card">
+    <h3>Migration 歷程 <span class="en">Migration history — 7 versions</span></h3>
+    <table style="margin:6px 0">
+      <thead><tr><th>版本</th><th>名稱</th></tr></thead>
+      <tbody>
+        <tr><td><code>0001</code></td><td>initial — core / ts / audit schema</td></tr>
+        <tr><td><code>0002</code></td><td>mlflow_links — prompt URI + run_id cols</td></tr>
+        <tr><td><code>0003</code></td><td>core_factor_models</td></tr>
+        <tr><td><code>0004</code></td><td>polymarket_deep_signals — orderbook / trades / chain_events + condition_id / clob tokens / chain_resolution cols</td></tr>
+        <tr><td><code>0005</code></td><td>ts_price_snapshots_unique — unique (market_id, snapshot_at)</td></tr>
+        <tr><td><code>0006</code></td><td>ts_index_scores nullable score</td></tr>
+        <tr><td><code>0007</code></td><td>vec_market_embeddings unsized pgvector</td></tr>
+      </tbody>
+    </table>
   </div>
+
+  <div class="card" style="border-color:var(--gray-border)">
+    <h3 style="color:var(--gray-fg)">❌ 尚未引入 <span class="en">Not present yet</span></h3>
+    <ul>
+      <li><span class="badge b-gray">❌</span> Timescale hypertables <code>CORR-4.5</code></li>
+      <li><span class="badge b-gray">❌</span> Redis / Arq queue <code>CORR-4.6</code></li>
+      <li><span class="badge b-gray">❌</span> Cloudflare R2 / S3 runtime blobs（MLflow artifacts S3 僅 cloud config）</li>
+    </ul>
+  </div>
+
+  <!-- ④ Compute -->
+  <h2>④ 計算層 <span class="en">/ Compute — Workers + Core Engine</span></h2>
+
+  <div class="card">
+    <h3>pmi-core engine 模組（11 個）<span class="en">11 engine modules</span></h3>
+    <table style="margin:6px 0">
+      <thead><tr><th>模組</th><th>狀態</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>selector</code></td>
+          <td><span class="badge b-green">✅</span> <span class="badge b-orange">🟡 semantic</span></td>
+          <td>keyword <code>\m...\M</code> word-boundary + category → ✅；SemanticSelector pgvector cosine 已落地 <code>CORR-3.6</code> 但 dormant（現役 5 個 index def 均未宣告 <code>type: semantic</code> anchor）<span class="en-block">Keyword/category live; SemanticSelector landed but dormant — no current index declares a semantic anchor.</span></td>
+        </tr>
+        <tr>
+          <td><code>factor_evaluator</code></td>
+          <td><span class="badge b-green">✅</span></td>
+          <td>LLM 呼叫；cost_usd tracking；fallback-to-stub<span class="en-block">LLM call with cost tracking and stub fallback.</span></td>
+        </tr>
+        <tr>
+          <td><code>factor_resolver</code></td>
+          <td><span class="badge b-green">✅</span></td>
+          <td><code>CoreFactorModel</code> registry lookup → promoted bundle；無 row → YAML + stub fallback<span class="en-block">Registry lookup first; YAML+stub fallback when no promoted row.</span></td>
+        </tr>
+        <tr>
+          <td><code>aggregator</code></td>
+          <td><span class="badge b-green">✅</span></td>
+          <td>formula dispatch: <code>weighted_average_x_100</code> / <code>seat_projection_sum</code> <code>CORR-1.8</code> 2026-06-07<span class="en-block">Dispatches formula by index def; seat_projection_sum landed 2026-06-07.</span></td>
+        </tr>
+        <tr>
+          <td><code>bucket_collapser</code></td>
+          <td><span class="badge b-green">✅</span></td>
+          <td>noisy-OR calendar + mean multi-year，port from Micah <code>CORR-1.4</code><span class="en-block">Ported from Micah; noisy-OR (calendar) + mean (multi-year).</span></td>
+        </tr>
+        <tr>
+          <td><code>seat_distribution</code></td>
+          <td><span class="badge b-green">✅</span></td>
+          <td>Exact Poisson-binomial via <code>np.convolve</code> <code>CORR-1.6</code><span class="en-block">Exact distribution, not Monte Carlo.</span></td>
+        </tr>
+        <tr>
+          <td><code>seat_mapping</code></td>
+          <td><span class="badge b-green">✅</span></td>
+          <td>Per-state race title parser <code>CORR-1.3</code><span class="en-block">Parses Polymarket race titles to state/seat keys.</span></td>
+        </tr>
+        <tr>
+          <td><code>state_lean</code> / <code>state_detail</code></td>
+          <td><span class="badge b-green">✅</span></td>
+          <td>MAGA-by-state lean + detail data<span class="en-block">State-level MAGA index data layer.</span></td>
+        </tr>
+        <tr>
+          <td><code>pipeline</code></td>
+          <td><span class="badge b-green">✅</span></td>
+          <td>Tier 0 prefilter → select → evaluate → aggregate → write<span class="en-block">Full pipeline orchestration.</span></td>
+        </tr>
+        <tr>
+          <td><code>dry_run</code></td>
+          <td><span class="badge b-green">✅</span></td>
+          <td>host in-process，不碰 DB / LLM<span class="en-block">Runs on host, no DB/LLM calls.</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>LLM 層 <span class="en">LLM layer — pmi_core/llm</span></h3>
+    <table style="margin:6px 0">
+      <thead><tr><th>Provider</th><th>狀態</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>OpenAIProvider</td>
+          <td><span class="badge b-green">✅ Tier 1 real</span></td>
+          <td>前綴 <code>gpt-*</code> / <code>openai/*</code> / <code>local/*</code> / <code>self-hosted/*</code>；全域 <code>PMI_LLM_BASE_URL</code>。Model: <strong>gpt-4o-mini-2024-07-18</strong>，tenacity retry ×3，cost_usd tracking，fallback-to-stub<span class="en-block">Prefix routing; tenacity ×3 retry; cost_usd per eval.</span></td>
+        </tr>
+        <tr>
+          <td>OllamaProvider</td>
+          <td><span class="badge b-green">✅ embeddings</span></td>
+          <td>前綴 <code>ollama/*</code>；<code>PMI_OLLAMA_BASE_URL</code>。Embeddings default: <strong>nomic</strong>（本地免費）<span class="en-block">Local embeddings, free; prefix ollama/*.</span></td>
+        </tr>
+        <tr>
+          <td>stub-*</td>
+          <td><span class="badge b-blue">🔵 deterministic</span></td>
+          <td>CI / dry-run 用；不呼叫外部 API<span class="en-block">Deterministic stub for CI and dry-run.</span></td>
+        </tr>
+        <tr>
+          <td>Tier 0 prefilter</td>
+          <td><span class="badge b-orange">🟡 dormant</span></td>
+          <td>cosine floor cull before factor LLM；dormant（無 semantic anchor index）<span class="en-block">Present in pipeline; dormant until an index declares semantic anchor.</span></td>
+        </tr>
+        <tr>
+          <td>Tier 2/3</td>
+          <td><span class="badge b-gray">❌</span></td>
+          <td>Agentic deep eval / periodic re-eval 尚未實作 <code>CORR-5.6</code> / <code>CORR-5.2</code><span class="en-block">Agentic and periodic tiers not started.</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Index defs + Prompts <span class="en">5 YAML index defs · 10 factor prompt markdown</span></h3>
+    <div class="grid">
+      <div>
+        <p style="font-size:13px;margin-bottom:6px"><strong>5 個 index def（YAML）</strong></p>
+        <ul>
+          <li><code>polymarket-war-index</code> v1 — 7 factors</li>
+          <li><code>us-senate-2026-republican-seats</code> v2</li>
+          <li><code>us-senate-2026-republican-share</code> v1</li>
+          <li><code>us-house-2026-republican-seats</code> v2</li>
+          <li><code>us-house-2026-republican-share</code> v1</li>
+        </ul>
+      </div>
+      <div>
+        <p style="font-size:13px;margin-bottom:6px"><strong>10 個 factor prompt（markdown）</strong></p>
+        <ul>
+          <li>7 war factors + 3 election factors</li>
+          <li>sha256-locked，append-only <code>core_prompts</code></li>
+          <li>◇ MLflow Prompt Registry 鏡像<span class="en-block">Mirror to MLflow Prompt Registry on write.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>pmi-workers <span class="en">Cron jobs (supercronic)</span></h3>
+    <table style="margin:6px 0">
+      <thead><tr><th>Job</th><th>排程</th><th>狀態</th></tr></thead>
+      <tbody>
+        <tr><td><code>score-all</code></td><td>hourly</td><td><span class="badge b-green">✅</span></td></tr>
+        <tr><td><code>daily</code></td><td>daily</td><td><span class="badge b-green">✅</span></td></tr>
+        <tr><td><code>embed_markets</code></td><td>daily</td><td><span class="badge b-green">✅</span></td></tr>
+        <tr><td><code>score</code> (single)</td><td>on-demand</td><td><span class="badge b-green">✅</span></td></tr>
+        <tr><td>Arq queue workers</td><td>—</td><td><span class="badge b-gray">❌ CORR-4.6</span></td></tr>
+        <tr><td>Temporal workflows</td><td>—</td><td><span class="badge b-gray">❌ CORR-8.1</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="border-color:var(--cyan-border)">
+    <h3 style="color:var(--cyan-fg)">◇ MLflow mirror <span class="en">Graceful degradation</span></h3>
+    <ul>
+      <li>Prompt Registry + Tracking（parent run per pipeline tick，child run per factor eval）</li>
+      <li>MLflow 掛了 → <code>mlflow_*</code> 欄位留 NULL，eval 照跑不阻斷<span class="en-block">If MLflow is down, mlflow_* cols stay NULL; pipeline never blocks.</span></li>
+      <li>事後可用 <code>pmi-core mlflow-init</code> 補拉<span class="en-block">Backfill later with pmi-core mlflow-init.</span></li>
+    </ul>
+  </div>
+
+  <!-- ⑤ Serving -->
+  <h2>⑤ 服務層 <span class="en">/ Serving — API + Frontend Surfaces</span></h2>
+
+  <div class="grid">
+    <div class="card">
+      <h3>pmi-api <span class="en">FastAPI :8001 (read-only)</span></h3>
+      <table style="margin:6px 0;font-size:12px">
+        <thead><tr><th>路由</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET /health</code></td><td>public</td></tr>
+          <tr><td><code>GET /sources/health</code></td><td>auth required</td></tr>
+          <tr><td><code>GET /indexes</code></td><td>list all defs</td></tr>
+          <tr><td><code>GET /indexes/{id}</code></td><td>single def</td></tr>
+          <tr><td><code>GET /indexes/{id}/score</code></td><td>latest score</td></tr>
+          <tr><td><code>GET /indexes/{id}/score/history</code></td><td>14d history</td></tr>
+          <tr><td><code>GET /indexes/{id}/explain</code></td><td>CORR-3.3 fixed</td></tr>
+          <tr><td><code>GET /indexes/{id}/senate-board</code></td><td>CORR-1.6</td></tr>
+          <tr><td><code>GET /maga/by-state</code></td><td>all states</td></tr>
+          <tr><td><code>GET /maga/by-state/{state}</code></td><td>state detail</td></tr>
+          <tr><td><code>GET /maga/groups</code></td><td>group data</td></tr>
+          <tr><td><code>GET /maga/by-state/{state}/trends</code></td><td>trend series</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;margin-top:6px">Auth: <code>require_api_key</code> validates <code>X-API-Key</code> vs <code>core_api_keys</code>，env-gated <code>PMI_API_REQUIRE_AUTH</code> <code>CORR-0.6</code></p>
+      <p style="font-size:12px;margin-top:4px">Key CLI: <code>pmi-core keys create/list/revoke/rotate</code> <code>CORR-0.7</code></p>
+    </div>
+
+    <div>
+      <div class="card">
+        <h3>pmi-web <span class="en">Next.js 15 App Router SSR :3030</span></h3>
+        <ul style="font-size:12.5px">
+          <li><code>/</code> — landing</li>
+          <li><code>/pmi_dashboard</code> — index cards + score</li>
+          <li><code>/pmi_dashboard/health</code> — source health</li>
+          <li><code>/indexes/[id]</code> — score + 14d history chart (recharts)</li>
+          <li><code>/micah</code> — war index</li>
+          <li><code>/micah/senate</code> — senate board</li>
+          <li><code>/micah/state/[code]</code> — state detail</li>
+          <li><code>/micah/q/[id]</code> — market detail</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>pmi-maga-web <span class="en">Vite SPA</span></h3>
+        <p style="font-size:13px">National MAGA Index choropleth + state detail。Ported from legacy micah maga-index。<span class="en-block">Choropleth + state detail, ported from legacy.</span></p>
+      </div>
+      <div class="card" style="border-color:var(--gray-border)">
+        <h3 style="color:var(--gray-fg)">pmi-mcp <span class="en">❌ stub (P3)</span></h3>
+        <p style="font-size:13px;color:var(--gray-fg)">Tier A/B/C tools planned，0 lines of implementation。SHIP-2.3。<span class="en-block">Zero lines of implementation; planned for P3.</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑥ Data-flow diagrams -->
+  <h2>⑥ 資料流圖 <span class="en">/ Data-Flow Diagrams</span></h2>
+
+  <h3 style="margin-top:22px">(a) 前端取資料 <span class="en">Frontend fetch path</span></h3>
+  <div class="flow">
+Browser (user)
+    │
+    ▼
+pmi-web (Next.js 15 App Router SSR / RSC)
+    │  api-client.ts
+    ▼
+pmi-api (FastAPI :8001)
+    │  ① check Redis cache (key: index_def_id + minute-bucket)
+    │      HIT  ──► return JSON  (P50 &lt; 20ms)           [❌ Redis not yet — planned §3.2]
+    │      MISS ↓
+    │  ② query ts_index_scores — latest row for index_def_id
+    │      HIT  ──► return + backfill Redis
+    │      MISS ↓
+    │  ③ Arq enqueue score job → 202 + job_id            [❌ Arq not yet — CORR-4.6]
+    │      (current fallback: supercronic cron score-all)
+    ▼
+PostgreSQL 16
+    ├─ ts_index_scores   (latest score + component_audit_ids[])
+    └─ ts_price_snapshots (history for chart — 14d)
+  </div>
+
+  <h3 style="margin-top:22px">(b) Index 計算 pipeline <span class="en">Index computation pipeline</span></h3>
+  <div class="flow">
+pmi-workers run-job score-all
+    │
+    ▼
+① load active IR
+    core_index_definitions (SCD2, effective_to IS NULL)
+    → dsl/ir.py: (IR, raw_yaml, sha256)
+    │
+    ▼
+② idempotent run setup
+    INSERT audit_pipeline_runs  ──► ◇ MLflow parent run
+    │
+    ▼
+③ selector
+    KeywordSelector   ── \m...\M word-boundary Postgres regex
+    CategorySelector  ── polymarket_tag match
+    SemanticSelector  ── pgvector cosine vs anchor (之後 → Milvus)  [🟡 dormant: no index has anchor yet]
+    │
+    ▼  [Tier 0 prefilter — dormant]
+    cosine &lt; threshold → skip contract (saves LLM cost)
+    │
+    ▼
+④ factor_resolver  (per contract, per factor)
+    ┌──► CoreFactorModel(factor_id, stage='production', is_active=True)?
+    │      YES: use promoted (prompt, llm_model_id, temperature, tools)  model_source='registry'
+    │      NO : use YAML factor.prompt_ref + stub/DEFAULT_LLM_MODEL      model_source='yaml'
+    │
+    ▼
+⑤ factor_evaluator
+    gpt-4o-mini-2024-07-18  (real)            cost_usd tracked
+    tenacity retry ×3
+    fallback-to-stub on persistent error
+    ──► ◇ MLflow child run (factor_model_id tag, model_source tag)
+    │
+    ▼
+⑥ bucket_collapser
+    noisy-OR (calendar overlapping ranges)
+    mean     (multi-year ranges)
+    │
+    ▼
+⑦ aggregator  (formula dispatch)
+    weighted_average_x_100   → war index / share indexes
+    seat_projection_sum      → senate/house seats  [CORR-1.8, 2026-06-07]
+    │
+    ▼
+⑧ write results  (immutable / append-only)
+    audit_evaluations   cache key = (contract_id, index_definition_id, prompt_id, model_id)
+                        ON CONFLICT → reuse (def/prompt/model unchanged = no LLM cost)
+    ts_index_scores     component_audit_ids[] → full lineage
+    audit_pipeline_runs → update status, cost_usd, duration_ms
+  </div>
+
+  <!-- ⑦ Not present yet -->
+  <h2>⑦ 尚未接上 <span class="en">/ Not Present Yet</span></h2>
+
+  <div class="card" style="border-color:var(--gray-border)">
+    <ul>
+      <li><span class="badge b-gray">❌</span> <strong>Redis + Arq</strong> — on-demand score enqueue，WS-triggered re-eval <code>CORR-4.6</code></li>
+      <li><span class="badge b-gray">❌</span> <strong>Timescale hypertables</strong> — ts_ tables 尚為普通 Postgres table <code>CORR-4.5</code></li>
+      <li><span class="badge b-gray">❌</span> <strong>Milvus</strong> — 專用向量庫，之後接手 embeddings / 語意搜尋（現用 pgvector）<code>P2+</code></li>
+      <li><span class="badge b-gray">❌</span> <strong>R2 / S3 runtime blobs</strong> — LLM batch payloads, backtest snapshots, CSV/Parquet export（MLflow artifacts S3 僅 cloud config）</li>
+      <li><span class="badge b-gray">❌</span> <strong>OTel / Grafana / Sentry firing</strong> — Sentry SDK wired but env-gated, effectively no-op; no OTel collector running</li>
+      <li><span class="badge b-gray">❌</span> <strong>Tier 2 / Tier 3 LLM</strong> — agentic deep eval + periodic re-eval <code>CORR-5.6</code> / <code>CORR-5.2</code></li>
+      <li><span class="badge b-gray">❌</span> <strong>pmi-mcp server</strong> — Tier A/B/C tools 全待 <code>SHIP-2.3</code></li>
+      <li><span class="badge b-gray">❌</span> <strong>Index builder + Chat UI</strong> — pmi-web 目前無 builder / chat routes</li>
+    </ul>
+  </div>
+
+  <!-- ⑧ Proven e2e -->
+  <h2>⑧ E2E 驗證 <span class="en">/ Proven End-to-End Run</span></h2>
+
+  <div class="card" style="border-color:var(--green-border);background:var(--green-bg)">
+    <span class="badge b-green">✅ E2E confirmed 2026-05-30</span>
+    <p style="font-size:13.5px;margin-top:10px;color:var(--green-fg)">
+      <strong>18,682 real Polymarket markets</strong> ingested → war selector matched <strong>449 contracts</strong> → 7 factors × real <strong>gpt-4o-mini</strong> → <strong>3,143 evaluations</strong>（all <code>stub=false</code>）→ cost <strong>$0.2915</strong> → committed score <strong>47.1078 / 181 components</strong> → <code>GET /indexes/polymarket-war-index/score</code> 200 OK → pmi-web SSR renders 5 index cards + dashboard.
+    </p>
+    <span class="en-block" style="margin-top:6px;padding-left:0">Full real-data run: 18,682 markets → 449 selected → 3,143 real LLM evals at $0.2915 → score committed → API 200 → SSR renders.</span>
+  </div>
+
+  <div class="card" style="border-color:var(--orange-border)">
+    <span class="badge b-orange">Known env issue</span>
+    <p style="font-size:13px;margin-top:8px">Reid 本機 HiNet ISP DNS 劫持 <code>gamma-api.polymarket.com</code> → 攔截頁。<strong>本機開發</strong>用 <code>POLYMARKET_USE_MOCK=true</code> mock mode 解；如需真資料用 <code>1.1.1.1</code> DNS monkeypatch（見 <code>../micah/server/scripts/polymarket_local.py</code>）。<strong>Cloud 部署不受影響</strong>。</p>
+    <span class="en-block">HiNet ISP hijacks gamma-api.polymarket.com on Reid's local machine. Use mock mode or 1.1.1.1 DNS locally. Not a cloud issue.</span>
+  </div>
+
+  <footer>
+    <a href="index.html">← 文件入口 / Back to index</a>
+    &nbsp;·&nbsp;
+    設計權威 design authority: <strong>CLAUDE.md §15.10</strong>
+    &nbsp;·&nbsp;
+    實作細節 implementation details: <strong>TODO-跑出來.md</strong> / <strong>TODO-跑得對.md</strong>
+    &nbsp;·&nbsp;
+    Snapshot 2026-06-07
+  </footer>
 </div>
 
 </body>

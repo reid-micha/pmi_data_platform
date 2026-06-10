@@ -54,7 +54,13 @@
       "Bash(awk '/^METACULUS_|^ROBINHOOD_|^CRYPTO_/{split\\($0, a, \"=\"\\); print a[1]\"=\"\\(length\\(a[2]\\)>0 ? \"\\(set, \"length\\(a[2]\\)\" chars\\)\" : \"\\(empty\\)\"\\)}' /Users/reid/micah/pmi_data_platform/.env)",
       "Bash(python3 -m py_compile pmi-ingest/pmi_ingest/scrapers/persistence.py)",
       "Bash(grep -n \"§3\\\\|§4\\\\|§5\\\\|§6\\\\|§7\\\\|§8\\\\|§10\" /Users/reid/micah/CLAUDE.md | grep \"對位\\\\|落地\\\\|目前\\\\|目標\\\\|✅\\\\|🟡\\\\|❌\" | head -30)",
-      "Bash(grep -n \"15.10\\\\|對位表\\\\|架構層面的已落地\\\\|設計目標 | 落地狀態\" /Users/reid/micah/CLAUDE.md)"
+      "Bash(grep -n \"15.10\\\\|對位表\\\\|架構層面的已落地\\\\|設計目標 | 落地狀態\" /Users/reid/micah/CLAUDE.md)",
+      "Bash(find /Users/reid/micah/micah-frontend/packages -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) ! -path \"*/node_modules/*\" | wc -l)",
+      "Bash(find /Users/reid/micah/micah-frontend/apps/maga-index/src -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) | wc -l)",
+      "Read(//Users/reid/micah/micah-frontend/packages/shared/src/**)",
+      "Read(//Users/reid/micah/micah-frontend/packages/types/src/**)",
+      "Read(//Users/reid/micah/micah-frontend/packages/ui/src/**)",
+      "Bash(grep -r \"midterm_election_tags\\\\|contracts\\\\|hourly_contract_prices\" /Users/reid/micah/micah-db/micah_db/models --include=\"*.py\" | grep \"class\\\\|__tablename__\" | head -20)"
     ]
   }
 }
