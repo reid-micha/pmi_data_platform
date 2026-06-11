@@ -4,7 +4,8 @@
 > **不負責**：把東西 ship 起來看得到、cloud deploy、DX 工具 — 那些去 [`TODO-跑出來.md`](TODO-跑出來.md)。
 >
 > **整合來源**：r3 `TODO.md`（已刪）+ `TODO-combined-seat-prediction.md`（已刪）+ 2026-05-27 chat 對話拆出的 B1-B10。
-> **最後更新**：2026-05-28（v2）— CORR-0.1 / 0.2 / 0.3 / 0.4 / 0.5 ship-batch 拿走 80%，剩細項；見 [`TODO-跑出來.md`](TODO-跑出來.md) SHIP-0.6。
+> **最後更新**：2026-06-11 — **active 清單已整併到 [`TODO.md`](TODO.md)（主入口，先看那裡）**；本檔保留為細節 + 歷史紀錄。
+> 同日 reid 決策拿掉：**CORR-7.2~7.5**（觀測整套）與 **CORR-0.1 的 Anthropic provider 子項**——理由見 `TODO.md` 拿掉表。
 
 ---
 
@@ -14,7 +15,7 @@
 
 | # | Todo | 估算 | 源 |
 |---|---|---|---|
-| 🟡 **CORR-0.1** | **真 LLM 落地** — ✅ **基本接通**（[`pmi_core/llm/openai_client.py`](pmi-core/pmi_core/llm/openai_client.py) + `factor_evaluator` model_id dispatch + binary/ternary/score JSON parsing + fallback-to-stub on error，見 SHIP-0.6）。**剩**：Anthropic provider、structured output (`response_format=json_schema`)、self-consistency / retry-on-low-confidence。 | ~3 天剩 | M1 / P0-1 / §1.1 第一條 |
+| 🟡 **CORR-0.1** | **真 LLM 落地** — ✅ **基本接通**（[`pmi_core/llm/openai_client.py`](pmi-core/pmi_core/llm/openai_client.py) + `factor_evaluator` model_id dispatch + binary/ternary/score JSON parsing + fallback-to-stub on error，見 SHIP-0.6）。**剩**：structured output (`response_format=json_schema`)、self-consistency / retry-on-low-confidence。~~Anthropic provider~~ **拿掉（2026-06-11）**——provider 抽象已支援任何 OpenAI-compatible endpoint（`PMI_LLM_BASE_URL` / `ollama/*` / `local/*`），夠用。 | ~2 天剩 | M1 / P0-1 / §1.1 第一條 |
 | ✅ **CORR-0.2** | **Prompt template rendering** — done in SHIP-0.6 `pmi_core.llm.render_prompt()`；regex-based 留 `{value}` 等 prompt body 自帶 placeholder 不替換。 | — | §1.1 / §5.5 C1 |
 | ✅ **CORR-0.3** | **LLM provider abstraction layer** — done in SHIP-0.6 `pmi_core/llm/{base.py,openai_client.py}`；`get_provider()` 走 prefix dispatch（`gpt-*` / `openai/*`），加 Anthropic 只要 drop file。 | — | §1.7 S10 / §5.5 C2 |
 | 🟡 **CORR-0.4** | **Cost tracking** — ✅ `audit_evaluations.cost_usd` 每次 LLM 評估都寫真值（SHIP-0.6 用 `_PRICE_PER_M_TOKENS` table）。**剩**：roll up 到 `audit_pipeline_runs.cost_usd / llm_calls`（目前 pipeline-level 還沒 SUM 子 row）。 | 半天剩 | §1.1 / §5.5 C4 一部分 |
@@ -70,6 +71,7 @@
 | ✅ ~~**CORR-3.8**~~ | ~~Polymarket Gamma API offset hard cap ~10,000 → 422~~ **完成 2026-05-28**（路徑 a）：`_fetch_page` 在 `raise_for_status()` 之前先檢查 `resp.status_code==422`，若是則丟自訂 `_OffsetCapReached`（不繼承 `httpx.HTTPError`，retry predicate 不會抓它），poll loop 在外層 `try/except _OffsetCapReached` 把它當「end of dataset」正常 break，cycle 仍標 `success=true`、records=已寫筆數。**驗證**：實際跑到 offset=10100 → 收到 422 → log `polymarket.offset_cap_reached`（INFO，不是 ERROR）→ `audit_source_health.status='healthy'`、`records_24h=10100`。⚠️ 還有後續：要徹底窮舉 > 10k 的市場，需走 keyset pagination（API 回 422 body 直接提示 `/markets/keyset`）— 開 **CORR-3.9** 追蹤。 | 1-2 小時 | 2026-05-28 subagent report → 已修 |
 | ✅ ~~**CORR-3.9**~~ | ~~實作 Polymarket `/markets/keyset` cursor pagination 取齊 > 10k markets~~ **完成 2026-05-30**：整個 poller 從 `/markets?offset=` 改成 `/markets/keyset?after_cursor=`。發現過程：probe 5 個候選 cursor param 都被 server 忽略（連 garbage cursor 都回 page 1）→ 從 `/openapi.json` 的 sibling `/spotlights/keyset` 文件找到正確 param 名 `after_cursor`（`/markets/keyset` 本身未文件化但同 convention）。Verify: 一次 cycle 撈到 **42,016 markets**（vs 舊 10,100）、其中 **26,460 markets** 位於先前兩個方向 offset 都搆不到的 id 中段（2,032,547 ~ 2,375,198）；audit `status=healthy` / 0 skip / 0 retry。Side effect：`_OffsetCapReached` 整段刪掉（CORR-3.8 變成 dead code，因為 offset endpoint 已經不在 hot path）；poll loop 改 cursor-driven + fixpoint guard (`next_cursor==cursor` 早抓 stuck loop)。位置：[`pmi-ingest/pmi_ingest/pollers/polymarket_rest.py`](pmi-ingest/pmi_ingest/pollers/polymarket_rest.py) 整支 module docstring + `_fetch_keyset_page` + `PolymarketRestPoller.run_once`。 | 1 天 | 2026-05-30 已修 |
 | ✅ ~~**CORR-3.11**~~ | ~~`audit_evaluations` write path 缺 ON CONFLICT 保護~~（背景：`evaluate_factor()` 走 SELECT → INSERT 兩步，supercronic hourly tick × 手動 `score` 撞同一 cache key → 第二個 INSERT IntegrityError → 整 tick rollback。2026-06-02 reproduce 過）。**完成 2026-06-04**：採推薦的 (a) atomic 路徑 — [`factor_evaluator.py`](pmi-core/pmi_core/engine/factor_evaluator.py) 改用 `pg_insert(...).on_conflict_do_nothing(constraint="uq_audit_evaluations__cache_key").returning(id)`；`returning` 為 None（即衝突）時 re-read 既有 row 當 cache hit 回傳。idempotent，兩容器並行也不爆。驗：對 Postgres dialect compile 出預期的 `INSERT ... ON CONFLICT ON CONSTRAINT ... DO NOTHING RETURNING` SQL。否決 (b) advisory lock（太重）/ (c) Arq dedupe（屬 CORR-4.6）。 | 半天 | 2026-06-02 對話 — CORR-3.4 smoke 發現 |
+| **CORR-3.12** | **cross-venue 進 pipeline**：[`embed_markets.py`](pmi-workers/pmi_workers/jobs/embed_markets.py) 與 [`engine/selector.py`](pmi-core/pmi_core/engine/selector.py) 都硬篩 `venue == 'polymarket'`——已 ingest 的 kalshi（8 萬）/ manifold（18 萬）/ forecastex / predictit / gemini market **全部進不了 embedding / LLM pipeline**。改成 per-index 可宣告 venues（IR 加欄位，預設 `[polymarket]` 保持向後相容）+ embed job 吃 config venue 清單。**動 scoring 語意**——要配 golden regression（既有 5 index 分數 byte-identical）。§11 MVP 多源 parity 的必經之路 | 2-3 天 | 2026-06-10 EC2 session 發現（多源 ingest 上線後暴出） |
 
 ---
 
@@ -191,10 +193,10 @@
 | # | Todo | 估算 | 源 |
 |---|---|---|---|
 | 🟡 **CORR-7.1** | **Engine 層 unit tests** — ✅ **partial**：(1) 2026-05-30 加 33 個 test 蓋掉 aggregator collapse path（[`tests/test_bucket_collapser.py`](pmi-core/tests/test_bucket_collapser.py) + [`tests/test_date_analyzer.py`](pmi-core/tests/test_date_analyzer.py))。(2) 2026-05-31 加 18 個 **pmi-api route tests**（[`pmi-api/tests/`](pmi-api/tests/)）蓋住 `/health`、`/sources/health`、`/indexes`、`/indexes/{id}`、`/indexes/{id}/score`、`/score/history`、`/explain`、`require_api_key`。**剩 0 test**：[`engine/selector.py`](pmi-core/pmi_core/engine/selector.py)（keyword / category match）、[`engine/factor_evaluator.py`](pmi-core/pmi_core/engine/factor_evaluator.py)（stub vs real LLM dispatch、JSON parsing、cost tracking、fallback-to-stub）、[`engine/factor_resolver.py`](pmi-core/pmi_core/engine/factor_resolver.py)（CoreFactorModel registry hit vs YAML fallback）、[`engine/pipeline.py`](pmi-core/pmi_core/engine/pipeline.py)（SCD2 ensure_index_definition、prompt sha256 mismatch error path）、[`dsl/ir.py`](pmi-core/pmi_core/dsl/ir.py)（IndexDef validator：總權重 > 0、所有 selector 類型、extra fields rejected）、aggregator 的 `_relevancy` / `_direction_value` / `aggregate()` 邊界（zero relevancy / below min_components）。 | 半週剩 | §5.5 E5 |
-| **CORR-7.2** | OTel SDK → Grafana Cloud free tier：poll rate / latency / queue depth / LLM cost metrics | 3 天 | CLAUDE.md §3.4 |
-| **CORR-7.3** | Ingest metrics（poll latency / records/min）→ Prometheus | 1 天 | §5.5 A7 |
-| **CORR-7.4** | Grafana 三個基礎 dashboard：Source Health / LLM Cost / PMI Freshness | 1 天 | CLAUDE.md §3.4 |
-| **CORR-7.5** | Slack / PagerDuty alert rule：`consecutive_failures > 3` / `records_24h < 0.5 × expected` / `latency_p95 > baseline × 3` | 1 天 | CLAUDE.md §3.3 |
+| ❌ ~~**CORR-7.2**~~ | ~~OTel SDK → Grafana Cloud free tier~~ **拿掉（2026-06-11 reid 決策）**：暫以 structured logs + `/sources/health` + MLflow 為觀測面 | — | CLAUDE.md §3.4 |
+| ❌ ~~**CORR-7.3**~~ | ~~Ingest metrics → Prometheus~~ **拿掉（2026-06-11，同上）** | — | §5.5 A7 |
+| ❌ ~~**CORR-7.4**~~ | ~~Grafana 三個基礎 dashboard~~ **拿掉（2026-06-11，同上）** | — | CLAUDE.md §3.4 |
+| ❌ ~~**CORR-7.5**~~ | ~~Slack / PagerDuty alert rule~~ **拿掉（2026-06-11，同上）** | — | CLAUDE.md §3.3 |
 
 ---
 
@@ -217,7 +219,7 @@
 | # | 問題 | 觸發點 | 源 |
 |---|---|---|---|
 | **R1** | Polymarket ToS 是否允許商業重新分發資料？ | 在 SHIP cloud deploy 對外開放前必解 | r3 §6 R1 |
-| **R2** | LLM 廠商選 OpenAI / Anthropic / both routing？ | CORR-0.1 開工前 | r3 §6 R2 |
+| ✅ **R2** | ~~LLM 廠商選 OpenAI / Anthropic / both routing？~~ **已決（2026-06-11）：OpenAI-compatible only**——`get_provider()` prefix 路由 + `PMI_LLM_BASE_URL` 已可接 OpenAI / Ollama / 任何 self-hosted OpenAI-compatible server；Anthropic provider 拿掉不做 | — | r3 §6 R2 |
 | **R3** | MLflow Model Registry artifact 要不要真的傳？ | CORR-0.1 完成後 | r3 §6 R3 |
 | **R4** | Self-host MLflow 還是上 Databricks-managed？ | 開始有 prod 流量時 | r3 §6 R4 |
 | **R5** | Cloud 平台 Render / Fly.io / Railway？ | SHIP-1.1 一起決定 | r3 §6 R5 |

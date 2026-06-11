@@ -3,7 +3,8 @@
 > **目標**：在 reid 筆電上，用 docker compose 跑一次**真資料進 → 全 factor 真 LLM → 算對 → 對外 serve**的完整鏈，
 > 取代現在的基線（mock ingest + 只有 1 個 factor 真 LLM + supercronic cron + 地端）。
 > **不負責**：cloud deploy、auth 嚴格化、election seats 算法 — 那些留在 [`TODO-跑出來.md`](TODO-跑出來.md) / [`TODO-跑得對.md`](TODO-跑得對.md)。
-> **最後更新**：2026-05-30。
+> **最後更新**：2026-06-11 — **active 清單已整併到 [`TODO.md`](TODO.md)（主入口，先看那裡）**；本檔保留為細節 + 歷史紀錄。
+> 主要目標（真資料 → 真 LLM → serve 的完整鏈）**已在 EC2 上達成**，含 T1 並發化；剩餘 T 項見 `TODO.md`。
 
 ---
 

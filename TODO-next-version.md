@@ -5,7 +5,7 @@
 >
 > **整合來源**：2026-05-31 chat 對話（contract 歸類 → graph 解法 → typed multigraph → formula registry → pipeline 對比）。
 > **架構對比圖**：[`docs/pipeline-comparison.html`](docs/pipeline-comparison.html)（瀏覽器開）— 左「現況單迴圈」vs 右「新雙迴圈」,顏色標出新增/改動/不變 + 三個量的位置。
-> **最後更新**：2026-05-31（v1,設計定稿,尚未動工）。
+> **最後更新**：2026-06-11 — **active 清單已整併到 [`TODO.md`](TODO.md)（主入口）**；本檔整本仍未動工,保留為設計定稿。Phase 0（Formula Registry,NEXT-3.x）無 edge 依賴,可最先動。
 
 ---
 

@@ -14,12 +14,14 @@
 > - **vector DB 啟動**：38.9k polymarket market 進 pgvector（GPU nomic）；`semantic-war-demo.yaml`（首個 `type: semantic` anchor index）讓 SemanticSelector + Tier 0 真的作用。
 > - **真實 scoring**：6 index 全 succeeded、hourly cron 續算、$0（GPU）。senate-seats 在真資料下從 null → 47.x（Class II 補齊）。
 > - **T1 factor eval 並發化 ✅ 已做+驗證（2026-06-11）**：pipeline 4 階段（批次 cache → `asyncio.gather` 並發 LLM → 序列寫入）+ ollama `OLLAMA_NUM_PARALLEL` + MLflow per-eval gate（`PMI_MLFLOW_FACTOR_CHILD_RUNS`）。單 T4 量到 ~2x（GPU compute-bound；network-bound 的 OpenAI 會接近 concurrency 倍數）。
-> - **仍未做**（別誤判為 done）：**cross-venue 進 pipeline**（`embed_markets.py` / `selector.py` 仍硬篩 `venue='polymarket'`，kalshi/manifold 等暫 dormant）；MCP server（SHIP-2.3 stub）；**production 雲端部署**（SHIP-1.8，本機 EC2 dev compose ≠ deploy/ 的 prod Caddy/GHCR/Secrets Manager stack）。
+> - **仍未做**（別誤判為 done）：**cross-venue 進 pipeline**（CORR-3.12——`embed_markets.py` / `selector.py` 仍硬篩 `venue='polymarket'`，kalshi/manifold 等暫 dormant）；MCP server（SHIP-2.3 stub）。完整 active 清單見 [`TODO.md`](TODO.md)。
+> - **拿掉（同日 reid 決策，不再是 TODO）**：~~SHIP-1.8~~ production infra apply（EC2 dev compose 即為部署形態，`deploy/` 物件保留備用）；~~CORR-7.2~7.5~~ OTel/Grafana/Slack 觀測整套（暫以 structured logs + `/sources/health` + MLflow 為觀測面）；~~Anthropic provider~~（provider 抽象已支援任何 OpenAI-compatible endpoint）。§3.3/§3.4 的設計章節保留，落地與否依此決策。
 >
 > **方向**：未來持續往本目錄（`pmi_data_platform/`，即本檔所在處）收斂。Micah 三 repo 是「為什麼這樣設計」的 reference，不是延伸基底。
 >
 > 本檔（§1–§14）保留為**設計權威**（為什麼這樣設計）；**實作狀態**看 §15.10 的 2026-06-07 snapshot
-> （§15.1–§15.9 是 Micah legacy 的 2026-05-29 snapshot）跟四本 TODO：
+> （§15.1–§15.9 是 Micah legacy 的 2026-05-29 snapshot）。**TODO 主入口 = [`TODO.md`](TODO.md)**
+> （2026-06-11 整併，active 清單都在那）；四本主題式 TODO 留作細節 + 歷史：
 > [`TODO-跑出來.md`](TODO-跑出來.md) / [`TODO-跑得對.md`](TODO-跑得對.md) /
 > [`TODO-真實e2e.md`](TODO-真實e2e.md) / [`TODO-next-version.md`](TODO-next-version.md)。
 > 雙語 HTML 文件入口在 [`docs/index.html`](docs/index.html)（snapshot 2026-06-07）。

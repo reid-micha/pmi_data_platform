@@ -4,7 +4,8 @@
 > **不負責**：分數正不正確、LLM 真不真、auth 嚴不嚴、long-term schema 對不對 — 那些去 [`TODO-跑得對.md`](TODO-跑得對.md)。
 >
 > **整合來源**：r3 `TODO.md`（已刪）+ `TODO-combined-seat-prediction.md`（已刪）+ 2026-05-27 chat 對話拆出的 A1-A4 / B1-B10。
-> **最後更新**：2026-05-28（整合版 v4 — 第三輪 ship batch：env 整合 + mock ingest + real LLM 接通；見附錄 B）。
+> **最後更新**：2026-06-11 — **active 清單已整併到 [`TODO.md`](TODO.md)（主入口，先看那裡）**；本檔保留為細節 + 歷史紀錄。
+> 同日 reid 決策拿掉：**SHIP-1.8**（真 AWS production infra apply）——現行 EC2 dev compose 即為部署形態，`deploy/` 物件保留備用。
 
 ---
 
@@ -36,7 +37,7 @@
 >
 > **R5 決策結論**：選 **單台 EC2 t3.large（2 vCPU / 8 GB）+ gp3 100 GB EBS + Elastic IP**，Postgres 跑 container（RDS 是未來遷移）、Caddy 在 host 自動 Let's Encrypt（取代 ALB+ACM）。理由：最省、最自由、與既有 docker-compose 拓樸 1:1、enterprise SLA/VPC 需求未到。Render / Fly.io / Modal 的比較留在附錄 D 當紀錄。
 >
-> **2026-06-11 EC2 對帳（重要釐清）**：平台目前**已實際跑在一台 AWS EC2（Tesla T4 GPU）**上——但走的是 **dev compose**（`docker-compose.yml` + `just up` + `--profile ingest` + GPU ollama），**不是** `deploy/docker-compose.prod.yml` 的 production stack。亦即 **SHIP-1.8 仍未做**：沒有 Caddy TLS / GHCR pinned image / Secrets Manager / systemd / CloudWatch；secrets 在本機 `.env`、服務由 `docker compose` 直接拉、無對外 domain。換句話說「上了 EC2」≠「production 部署完成」。要轉 prod 仍須照 [`deploy/README.md`](deploy/README.md) 跑 SHIP-1.8。此環境已驗證的新事實：真實 Polymarket API 在 EC2 可達、GPU ollama 可跑、6-venue ingest + vector + 真實 scoring 端到端通。
+> **2026-06-11 EC2 對帳（重要釐清）**：平台目前**已實際跑在一台 AWS EC2（Tesla T4 GPU）**上——但走的是 **dev compose**（`docker-compose.yml` + `just up` + `--profile ingest` + GPU ollama），**不是** `deploy/docker-compose.prod.yml` 的 production stack。亦即 **SHIP-1.8 仍未做**：沒有 Caddy TLS / GHCR pinned image / Secrets Manager / systemd / CloudWatch；secrets 在本機 `.env`、服務由 `docker compose` 直接拉、無對外 domain。換句話說「上了 EC2」≠「production stack」。此環境已驗證的新事實：真實 Polymarket API 在 EC2 可達、GPU ollama 可跑、6-venue ingest + vector + 真實 scoring 端到端通。**後記（同日稍晚）**：reid 決策 **SHIP-1.8 拿掉**——dev compose 即為部署形態，prod 化物件保留備用；故此差距不再是 TODO，只是事實陳述。
 
 | # | Todo | 估算 | 源 | 狀態 |
 |---|---|---|---|---|
@@ -48,7 +49,7 @@
 | ✅ **SHIP-1.5** | pgvector extension：prod 用 `pgvector/pgvector:pg16` image + [`deploy/db-init/00-extensions.sql`](deploy/db-init/00-extensions.sql)（`CREATE EXTENSION vector`）+ alembic 0001 已 `CREATE EXTENSION IF NOT EXISTS vector`（雙保險）；`01-mlflow-database.sql` 建 mlflow DB | 1 小時 | §4.3 | ✅ |
 | ✅ **SHIP-1.6** | Secrets：[`deploy/scripts/fetch-secrets.sh`](deploy/scripts/fetch-secrets.sh) 開機從 AWS Secrets Manager（`pmi/prod/secrets` JSON）render `deploy/.env` + `kalshi.key`，由 [`deploy/systemd/pmi-env-fetch.service`](deploy/systemd/pmi-env-fetch.service) 在 `pmi.service` 前跑；`.gitignore` 加 `deploy/.env` / `deploy/.env.base`。non-secret 留 `deploy/.env.base.example` | 1 小時 | §4.3 | ✅ |
 | ✅ **SHIP-1.7** | DNS + TLS：[`deploy/caddy/Caddyfile`](deploy/caddy/Caddyfile) 3 subdomain（`pmi.` → web、`api.pmi.` → api、`mlflow.pmi.` → mlflow + basic-auth）自動 Let's Encrypt；`.env.base` 對齊 `NEXT_PUBLIC_PMI_API_URL` / CORS。剩：Route 53 A record 指 Elastic IP（AWS apply） | 半天 | 2026-05-28 對話 | ✅ 配置好、DNS record 待設 |
-| 📋 **SHIP-1.8** | **AWS infra apply（唯一待人工執行）**：開 EC2 t3.large + gp3 + Elastic IP + SG(80/443, SSM only) + IAM role + S3 bucket + Route 53 + Secrets Manager + Budgets，跑 [`deploy/scripts/bootstrap.sh`](deploy/scripts/bootstrap.sh) + bring-up runbook。完整步驟見 [`deploy/README.md`](deploy/README.md) | 1.5 天 | 2026-06-04 plan | 📋 待 AWS 帳號 |
+| ❌ ~~**SHIP-1.8**~~ | ~~AWS infra apply（Caddy TLS / GHCR / Secrets Manager / systemd / CloudWatch）~~ **拿掉（2026-06-11 reid 決策）**：現行 EC2 dev compose（`just up` + `--profile ingest` + GPU ollama）即為部署形態。`deploy/` 全套物件 + [`deploy/README.md`](deploy/README.md) runbook 保留，未來要 prod 化再撿回 | — | 2026-06-04 plan | ❌ 拿掉 |
 
 ---
 
@@ -109,13 +110,13 @@
 ## 累積估算
 
 - 第 0 節（election demo）：半天 → **✅ 完成**（地端 docker 跑通）
-- 第 1 節（cloud deploy）：~4-5 天 → **R5 已決策（單台 EC2）；SHIP-1.0~1.7 全落地（code + deploy 物件 + 本機驗證）**，只剩 **SHIP-1.8（真 AWS infra apply，~1.5 天，待帳號）**
-- 第 2 節（demo surface）：~1 週 — **未動**
+- 第 1 節（cloud deploy）：~4-5 天 → **✅ 收線（2026-06-11）**：SHIP-1.0~1.7 全落地；~~SHIP-1.8~~ 拿掉（EC2 dev compose 即為部署形態）
+- 第 2 節（demo surface）：~1 週 — **未動**（SHIP-2.5 board 已部分落地）
 - 第 3 節（DX 工具）：~2 週（可分批）→ **剩 SHIP-3.2 / 3.4 / 3.5 ≈ 8 天**
-- 第 4 節（修壞掉的）：~1 天 → **剩 SHIP-4.5 ≈ 3 天**（backtest 前置）
-- 第 5 節（觀測）：1 天 — **未動**
+- 第 4 節（修壞掉的）：~1 天 → **✅ 全完成**（SHIP-4.5 已 2026-06-01 落地）
+- 第 5 節（觀測）：SHIP-5.1/5.2 配置好；CORR-7.2~7.5 拿掉（見 [`TODO.md`](TODO.md)）
 
-**剩餘合計：~3 週**，可以分 sprint。**最小 demo 路徑：R5 決策 → 第 1 節剩餘 → SHIP-2.3（MCP）= ~1.5 週**就能對外 demo「上雲 + Polymarket 進來 + 4 個 election index + AI agent 透過 MCP 拿分數」。
+**最小 demo 路徑剩 SHIP-2.3（MCP）**——平台已在 EC2 跑真資料 + 真 LLM，補上 MCP 即可對外 demo「AI agent 一句話拿任何 index 分數」。
 
 > **下一步明顯就是 R5**：先選 platform（Render / Fly.io / Modal / DIY），其他 cloud 任務全跟著走。
 
@@ -237,5 +238,5 @@
   - **Race-fix**（0d，CORR-3.11）：`factor_evaluator` 寫 `audit_evaluations` 改 `INSERT ... ON CONFLICT ON CONSTRAINT uq_audit_evaluations__cache_key DO NOTHING RETURNING`，衝突則 re-read 當 cache hit。驗：對 Postgres dialect compile 出預期 SQL。
 - ✅ **Phase 1 CI（SHIP-1.3）**：`.github/workflows/build-images.yml` matrix build+push 6 image 到 GHCR（tag = short SHA + latest），pmi-web bake `NEXT_PUBLIC_PMI_API_URL`。
 - ✅ **Phase 2-4 deploy 物件（SHIP-1.1/1.4/1.5/1.6/1.7/5.1/5.2）**：`deploy/` 下 `docker-compose.prod.yml`（GHCR image、11 service、awslogs、S3 MLflow artifact、EBS pgdata、Caddy；`docker compose config` 驗過）、`caddy/Caddyfile`（3 subdomain + auto-TLS）、`db-init/`、`.env.base.example`、`scripts/{fetch-secrets,bootstrap}.sh`、`systemd/{pmi-env-fetch,pmi}.service`、`README.md`（AWS console + bring-up + deploy/rollback runbook）。Sentry 走 `pmi_core/observability.py::init_sentry`。
-- 📋 **唯一待人工（SHIP-1.8）**：真 AWS infra apply（沒帳號無法在此執行）——照 [`deploy/README.md`](deploy/README.md) 跑。
+- ❌ ~~唯一待人工（SHIP-1.8）：真 AWS infra apply~~ **拿掉（2026-06-11）**——EC2 dev compose 即為部署形態；要 prod 化照 [`deploy/README.md`](deploy/README.md) 撿回。
 - ⚠️ **已知 tradeoff**：prod 仍 bind-mount `pmi_core`（沒 bake 進 image），所以 git checkout SHA 與 `IMAGE_TAG` 要一起動；未來硬化 = 把 `pmi_core` COPY 進各 image（build context 改 repo root）。
