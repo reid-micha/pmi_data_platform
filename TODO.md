@@ -1,14 +1,13 @@
-# TODO — 平台現役主清單（2026-06-11 整併）
+# TODO — 平台現役主清單（2026-06-11 整併；同日完成大批次後更新）
 
-> **這是唯一的 active TODO 入口**。2026-06-11 把四本主題式 TODO 裡**還開著的項目**整併到這裡，按優先序重排。
-> 其中三本（跑出來 / 跑得對 / 真實e2e）**已刪除**——每項的完整設計、實作計畫、驗收條件在 **git history**
-> （最後存在於 commit `aa45741`，`git show aa45741:TODO-跑得對.md` 可調閱）；
-> [`TODO-next-version.md`](TODO-next-version.md)（typed multigraph 設計稿，未動工）保留。
+> **這是唯一的 active TODO 入口**。2026-06-11 把四本主題式 TODO 裡還開著的項目整併到這裡；
+> 其中三本（跑出來 / 跑得對 / 真實e2e）**已刪除**——細節在 git history
+> （`git show aa45741:<檔名>` 調閱）；[`TODO-next-version.md`](TODO-next-version.md)（multigraph 設計稿）保留。
 > HTML 版見 [`docs/todo-bilingual.html`](docs/todo-bilingual.html)。新增/完成項目時：**改這裡 + 同步 HTML**。
 >
-> **前情**：平台已跑在單台 AWS EC2（Tesla T4）上——真實 6-venue ingest（~32 萬 market）、GPU 本地 LLM
-> （ollama llama3.2）、vector DB（pgvector + Tier 0 + SemanticSelector）、T1 並發 factor eval、
-> hourly 真實 scoring。e2e 鏈全通。本檔列的是**之後**的事。
+> **前情**：平台跑在單台 AWS EC2（Tesla T4）——真實 6-venue ingest（~32 萬 market）、GPU 本地 LLM、
+> vector DB（Tier 0 + SemanticSelector live）、T1 並發 factor eval、hourly + drift-triggered 真實 scoring。
+> 本檔列的是**之後**的事。
 
 ---
 
@@ -18,35 +17,44 @@
 |---|---|---|
 | ~~SHIP-1.8~~ | 真 AWS production infra apply（Caddy TLS / GHCR / Secrets Manager / systemd / CloudWatch） | 現行 EC2 dev compose 即為部署形態；`deploy/` 物件保留，未來要 prod 化再撿回 |
 | ~~CORR-7.2~~ ~~7.3~~ ~~7.4~~ ~~7.5~~ | OTel / Prometheus / Grafana dashboards / Slack alert 整套觀測 | 暫以 structured logs + `/sources/health` + MLflow 為觀測面；要上再撿回 |
-| ~~CORR-0.1 的 Anthropic provider 子項~~ | Anthropic LLM provider | 不需要——provider 抽象已支援 OpenAI-compatible endpoint（`PMI_LLM_BASE_URL` / `ollama/*` / `local/*`），夠用 |
+| ~~CORR-0.1 的 Anthropic provider 子項~~ | Anthropic LLM provider | provider 抽象已支援 OpenAI-compatible endpoint（`PMI_LLM_BASE_URL` / `ollama/*` / `local/*`），夠用 |
+
+## ✅ 已完成（2026-06-10 ~ 06-11 EC2 批次；驗證數字見 git log 與 HTML 版）
+
+- **基礎**：多源 ingest 上線（6 venue ~32 萬 market；kalshi 節流修復）· GPU ollama（auto-detect T4）·
+  vector DB 啟動（38.9k embeddings + semantic-war-demo）· **T1 並發 factor eval**（~2x on 單 T4）
+- **CORR-3.12** cross-venue：IR `venues:` + selector/embed 通用化（驗：war+kalshi 多選 67 個）
+- **CORR-2.6 / T4** selector cap 可覆寫 + 飽和告警（驗：house 原默默丟 527 個 → 1027 全選）
+- **CORR-0.4 / T2** cost roll-up（隨 T1 落地，已驗證）
+- **CORR-5.2** Tier 3 drift re-eval job + 15-min cron（首跑命中 17.5 點漂移）
+- **CORR-5.6** Tier 2 agentic 在 ollama 真跑驗證（tool 呼叫 + trace）
+- **CORR-5.7** 低信心升級 Tier 2（兩筆入 audit、tier2 聚合優先）
+- **CORR-5.8** factor disagreement → `breakdown.disagreement`（真資料標 5 個經典模式）
+- **CORR-5.9** `ensemble/<m1>+<m2>` 投票 provider（GPU 雙模型真跑）
+- **CORR-0.5 / 5.4** `_LLMGuard` budget cap + circuit breaker（行為測試通過）
+- **CORR-5.3** Batch API submit/poll jobs + `core_llm_batches`（submit 端真資料 dry-run 驗證；**poll/ingest 未 e2e**，列下方 §2）
 
 ---
 
-## 1. 🔴 高槓桿（下一步從這裡挑）
+# 🔵 尚未做（active）
 
-| # | 項目 | 為什麼 / 條件 | 細節 |
-|---|---|---|---|
-| **SHIP-2.3** | **pmi-mcp：Tier A read tools ×5**（`pmi.list_indexes / get_index / get_score / get_history / get_group`） | 「AI native」招牌；`pmi-mcp/` 仍 stub。外部 agent 一句話拿任何 index 分數 | 細節:git history（跑出來 §2）|
-| ✅ ~~**CORR-3.12**~~ | **cross-venue 進 pipeline** — **DONE 2026-06-11**：IR 加 `venues:`（預設 `[polymarket]` 向後相容）+ `max_markets:`；selector / embed job 改吃宣告值（embed 走 `PMI_EMBED_VENUES`）。驗證：war keywords 宣告 `[polymarket, kalshi]` 多選出 67 個 kalshi market；118 tests green；既有 index 行為不變 | 解鎖已 ingest 的 26 萬 cross-venue market | — |
-| ✅ ~~**CORR-2.6 / T4**~~ | **selector cap 可覆寫** — **DONE 2026-06-11**：`PMI_SELECTOR_MAX_MARKETS` 全域 + per-index `max_markets:`；飽和時 log `selector.limit_saturated`。驗證：house-share 原 500 飽和（默默丟 527 個）→ cap 1500 選滿 1027 | 不再 silently 漏資料 | — |
-| ✅ ~~**CORR-0.4 / T2**~~ | **cost roll-up** — **確認已 DONE**（T1 重構時落地）：`audit_pipeline_runs.llm_calls/cost_usd` 每 tick 寫真值（驗：t1-smoke run llm_calls=224；ollama cost=$0 正確） | — | — |
+## 1. 🔴 高槓桿
 
-## 2. 🟡 LLM 分層（§6 四層的後段；Tier 0/1 已落地）
+| # | 項目 | 為什麼 |
+|---|---|---|
+| **SHIP-2.3** | **pmi-mcp：Tier A read tools ×5**（`pmi.list_indexes / get_index / get_score / get_history / get_group`） | 「AI native」招牌；`pmi-mcp/` 仍 stub。外部 agent 一句話拿任何 index 分數。**唯一剩下的高槓桿項** |
+
+## 2. 🟡 LLM 分層尾巴
 
 | # | 項目 | 摘要 |
 |---|---|---|
-| ✅ ~~**CORR-5.3**~~ 🔥 | Batch API — **DONE 2026-06-11**：`llm-batch-submit`/`llm-batch-poll` jobs + `core_llm_batches` 表（alembic 0008）+ cron（02:00 submit、半小時 poll）。同 prompt/parse/cache-key 路徑、0.5× 計價。**驗證**：submit 端真資料 dry-run 產出 1806/3500/1000 條 JSONL；all-ollama 部署乾淨 no-op。**poll/ingest 端 code-complete、未 e2e**（需真 OPENAI_API_KEY + 一輪真 batch） |
-| ✅ ~~**CORR-5.6**~~ | Tier 2 agentic — **已存在 + 本輪在 ollama 真跑驗證**（2026-06-11）：`agentic/llama3.2` 真的呼叫 `recent_trades` tool → 推理 → verdict，trace + tier 標記入 extras。web search tool 仍待加（目前 tool = 本地深度訊號） |
-| ✅ ~~**CORR-5.2**~~ | Tier 3 — **DONE 2026-06-11**：`reeval-drifted` job（漂移 ≥ `PMI_DRIFT_THRESHOLD_PCT` 點 → 只重算受影響 index）+ cron 每 15 min。**真資料首跑即命中**：house-share 的 market 漂 17.5 點 → 單獨重算該 index |
-| ✅ ~~**CORR-5.7**~~ | 升級條件 — **DONE 2026-06-11**：`PMI_TIER2_MODEL_ID` + 信心 floor；低信心 Tier 1 → Tier 2 重評，**兩筆都入 audit**（tier2 聚合優先、loader 偏好 tier2 row）。真 LLM 驗證：llama conf=0.2 → qwen 升級 |
-| ✅ ~~**CORR-5.8**~~ | Disagreement — **DONE 2026-06-11**：高信心二元 factor 互斥偵測 → `breakdown.disagreement`。真資料驗證：war index 標出 5 個 market（正是 `armed_conflict=1`/`directly_about_war=0` 模式） |
-| ✅ ~~**CORR-5.9**~~ | Ensemble — **DONE 2026-06-11**：`ensemble/<m1>+<m2>` provider（binary 多數決/ternary 眾數/score 平均，agreement 折扣信心，全成員票入 extras）。GPU 真跑驗證：llama3.2+qwen2.5:0.5b 合議 conf=0.875 |
+| **CORR-5.3**（剩） | Batch API **poll/ingest 端 e2e 驗證** — code-complete，需真 `OPENAI_API_KEY` + gpt-* factor binding 跑一輪真 batch 回收 |
+| **CORR-5.6**（剩） | Tier 2 agentic 加 **web search tool**（目前 tool 只有本地深度訊號 `recent_trades`） |
 | **CORR-5.10** | Model promotion calibration / drift detection（換 LLM 後分數漂移是否在預期內） |
 | **CORR-5.11** | Prompt namespace 統一（`core_prompts` vs MLflow 命名） |
-| **CORR-0.1**（剩） | structured output（`response_format=json_schema`）+ self-consistency / retry-on-low-confidence（~~Anthropic provider~~ 已拿掉） |
-| ✅ ~~**CORR-0.5 / 5.4**~~ | Breaker + budget — **DONE 2026-06-11**：`_LLMGuard`（連續 N 失敗斷路、每 tick $X 上限，超過 → stub fallback + `breakdown.llm_guard`）。驗證：8 真失敗後斷路短路、$1.2≥$1 cap 後短路 |
+| **CORR-0.1**（剩） | structured output（`response_format=json_schema`，目前 json_object）+ self-consistency / retry-on-low-confidence |
 
-## 3. 🟡 Polymarket / Kalshi 深度訊號（§5；scaffold 多已落地，剩真實 smoke / 演算法）
+## 3. 🟡 深度訊號（scaffold 已落地，剩真實 smoke / 演算法）
 
 | # | 項目 | 摘要 |
 |---|---|---|
@@ -55,14 +63,14 @@
 | **CORR-4.4**（剩） | UMA dispute 全路徑驗證（Gamma-only 路徑已可用） |
 | **CORR-4.7**（剩） | Kalshi WS（待 Kalshi 開 streaming scope） |
 | **CORR-3.5** | `core_markets.volume_24h` 從 Gamma `volumeNum` 補寫 |
-| **CORR-8.7** | Cross-market arbitrage signal（互斥但 Σ≠1 → 信號劣化） |
+| **CORR-8.7** | Cross-market arbitrage signal（互斥但 Σ≠1 → 信號劣化；與 NEXT-2.4 coherence 相關） |
 
 ## 4. 🟡 Worker / Storage 演進
 
 | # | 項目 | 摘要 |
 |---|---|---|
 | **CORR-4.6** | Arq + Redis：cron → worker + on-demand score（WS 觸發 single-market re-eval） |
-| **CORR-6.5** | Score 寫入排程化（依賴 CORR-4.6） |
+| **CORR-6.5** | Score 寫入排程化（依賴 CORR-4.6；drift cron 已涵蓋部分場景） |
 | **CORR-4.5** | TimescaleDB hypertables（`ts_price_snapshots` / `ts_index_scores` / `audit_source_*`） |
 | **CORR-8.1** | Temporal（durable backtest / Tier 2 agentic；P2+） |
 | **CORR-8.2** | ClickHouse / Tinybird（等 Timescale 撐不住；P2+） |
@@ -72,17 +80,17 @@
 
 | # | 項目 | 摘要 |
 |---|---|---|
-| **CORR-1.1** | Aggregation formula expression evaluator（`expected_count = Σ P_i × outcome_i` 等） |
+| **CORR-1.1** | Aggregation formula expression evaluator（被 NEXT-3.x Formula Registry 取代亦可） |
 | **CORR-1.3**（剩） | senate board step-2：per-race `state`/`matchup`/`incumbent` 完整對應（`prob_by_state` 已有 16 州） |
 | **CORR-1.5** | election factor prompt v2（真 LLM 可用版 + few-shot；T9 同源） |
 | **CORR-2.1** | `WeightingSpec` IR 補 §4 欄位（`boost_threshold`、trader_cohort） |
 | **CORR-2.2** | Multi-tenant `owner_id`/`tenant_id` 預留 column（§9 invariant） |
 | **CORR-2.4** | `ts_trades` / `ts_orderbook_depth` schema 預留 |
 | **CORR-2.5** | `ts_price_snapshots` unique constraint（poller retry 防重） |
-| **CORR-3.2** | CLI 升 public import（`_ensure_index_definition` → public） |
+| **CORR-3.2** | CLI 升 public import（`_ensure_index_definition` → public；`llm_batch.py` 現在也 import 私名，順手一起） |
 | **CORR-3.7** | `audit_pipeline_runs.metadata_json` 沒人寫——刪 column 或真用 |
 | **T10** | 容器時鐘 skew（timestamp 偏移；資料正確但對不準） |
-| us-house-seats null | `us-house-2026-republican-seats` 真實資料下 collapse 後 0 component——查 seat_projection 幾何 |
+| house-seats null | `us-house-2026-republican-seats` 真實資料下 collapse 後 0 component——查 seat_projection 幾何 |
 
 ## 6. 🟡 Audit / Security（enterprise 底線）
 
@@ -100,9 +108,9 @@
 |---|---|---|
 | **SHIP-3.4** | Backtest CLI（一鍵 replay 90 天出 CSV）— 客戶 demo 必問 |
 | **SHIP-3.2** | `pmi-core diff <index_id> <v1> <v2>`（§4 diff view 承諾） |
-| **SHIP-3.5** | 更多 baseline index（fed-rate / crypto-cycle） |
+| **SHIP-3.5** | 更多 baseline index（fed-rate / crypto-cycle；cross-venue 已通，可直接做多 venue 版） |
 | **SHIP-2.1** | pmi-web `/groups/[slug]` 頁（Election 2026 suite 4 張卡） |
-| **SHIP-2.2** | explain breakdown 區塊（等 `/explain` 修好，CORR-3.3） |
+| **SHIP-2.2** | explain breakdown 區塊（`/explain` 已修好，接 UI；disagreement / llm_guard 也可一併呈現） |
 | **SHIP-2.4** | error boundary + Suspense streaming（api 掛了整頁 500） |
 | **SHIP-2.5(e)** | Senate board USA choropleth 前端（`prob_by_state` 後端已填） |
 | **T5** | 真實 conditional-impact 矩陣（PMI Simulator 依賴網路現在是空的） |
@@ -115,7 +123,7 @@
 
 設計定稿在 [`TODO-next-version.md`](TODO-next-version.md)：`core_market_edges` 邊儲存（NEXT-1.x）→
 圖建構 / collapse / coherence 投影（NEXT-2.x）→ **Formula Registry** 取代寫死 aggregator（NEXT-3.x，
-含 `-seats` 真吐席次的 NEXT-3.3/3.5）→ Edge-Proposer agent(NEXT-4.x)。Phase 0（Formula Registry）
+含 `-seats` 真吐席次的 NEXT-3.3/3.5）→ Edge-Proposer agent（NEXT-4.x）。Phase 0（Formula Registry）
 無 edge 依賴、最低風險，可先動。
 
 ## 9. 💼 商業 / 長期（P2+，記著別忘）

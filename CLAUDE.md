@@ -14,7 +14,8 @@
 > - **vector DB 啟動**：38.9k polymarket market 進 pgvector（GPU nomic）；`semantic-war-demo.yaml`（首個 `type: semantic` anchor index）讓 SemanticSelector + Tier 0 真的作用。
 > - **真實 scoring**：6 index 全 succeeded、hourly cron 續算、$0（GPU）。senate-seats 在真資料下從 null → 47.x（Class II 補齊）。
 > - **T1 factor eval 並發化 ✅ 已做+驗證（2026-06-11）**：pipeline 4 階段（批次 cache → `asyncio.gather` 並發 LLM → 序列寫入）+ ollama `OLLAMA_NUM_PARALLEL` + MLflow per-eval gate（`PMI_MLFLOW_FACTOR_CHILD_RUNS`）。單 T4 量到 ~2x（GPU compute-bound；network-bound 的 OpenAI 會接近 concurrency 倍數）。
-> - **仍未做**（別誤判為 done）：**cross-venue 進 pipeline**（CORR-3.12——`embed_markets.py` / `selector.py` 仍硬篩 `venue='polymarket'`，kalshi/manifold 等暫 dormant）；MCP server（SHIP-2.3 stub）。完整 active 清單見 [`TODO.md`](TODO.md)。
+> - **2026-06-11 稍晚批次再完成**：CORR-3.12 cross-venue（IR `venues:`，war+kalshi 驗證 +67）、CORR-2.6 selector cap（house 原默默丟 527）、Tier 2/3 + escalation + ensemble + budget/breaker + disagreement（全真資料/真 LLM 驗證）、Batch API（submit 端驗證；poll/ingest 未 e2e）。
+> - **仍未做**（別誤判為 done）：**MCP server（SHIP-2.3 stub）——唯一剩下的高槓桿項**。完整 active 清單見 [`TODO.md`](TODO.md)。
 > - **拿掉（同日 reid 決策，不再是 TODO）**：~~SHIP-1.8~~ production infra apply（EC2 dev compose 即為部署形態，`deploy/` 物件保留備用）；~~CORR-7.2~7.5~~ OTel/Grafana/Slack 觀測整套（暫以 structured logs + `/sources/health` + MLflow 為觀測面）；~~Anthropic provider~~（provider 抽象已支援任何 OpenAI-compatible endpoint）。§3.3/§3.4 的設計章節保留，落地與否依此決策。
 >
 > **方向**：未來持續往本目錄（`pmi_data_platform/`，即本檔所在處）收斂。Micah 三 repo 是「為什麼這樣設計」的 reference，不是延伸基底。
