@@ -11,6 +11,8 @@ from pmi_workers.jobs import (  # noqa: F401  registration side-effects
     daily,
     embed_markets,
     hourly,
+    llm_batch,
+    reeval_drifted,
     score,
     score_all,
 )

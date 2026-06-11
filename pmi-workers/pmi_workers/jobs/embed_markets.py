@@ -8,7 +8,8 @@ only that market.
 
 Flow
 ----
-1. Load candidate markets (polymarket, unresolved) — id + title + description.
+1. Load candidate markets (venues from PMI_EMBED_VENUES, default polymarket;
+   unresolved) — id + title + description.
 2. Compute canonical text + sha per market (shared helpers, so the sha matches
    whatever a future re-embed path would compute).
 3. Skip markets that already have a row for (active_model, sha).
@@ -50,7 +51,9 @@ async def _candidates(model: str) -> list[tuple[int, str]]:
         rows = (
             await session.execute(
                 select(CoreMarket.id, CoreMarket.title, CoreMarket.description).where(
-                    CoreMarket.venue == "polymarket",
+                    # CORR-3.12: venue scope is config (PMI_EMBED_VENUES,
+                    # default ["polymarket"]) instead of a hard filter.
+                    CoreMarket.venue.in_(settings.embed_venues),
                     CoreMarket.resolved_at.is_(None),
                 )
             )

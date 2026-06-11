@@ -273,6 +273,13 @@ def get_provider(model_id: str) -> LLMProvider:
     # CoreFactorModel row, with no new provider class.
     # `ollama/<model>` routes to a local Ollama worker (own endpoint, free,
     # coexists with OpenAI-direct) — see PMI_OLLAMA_BASE_URL in settings.
+    # `ensemble/<m1>+<m2>` (CORR-5.9) → multi-model voting; each member id is
+    # itself routed back through get_provider. Checked FIRST because member
+    # ids contain the other prefixes.
+    if model_id.startswith("ensemble/"):
+        from pmi_core.llm.ensemble_client import EnsembleProvider
+
+        return EnsembleProvider(model_id=model_id)
     # `agentic/<base_model>` (e.g. `agentic/gpt-4o`) → Tier 2 multi-step
     # tool-calling provider. Checked before the gpt-/openai- prefixes so the
     # base model name inside the id doesn't get routed to the single-shot

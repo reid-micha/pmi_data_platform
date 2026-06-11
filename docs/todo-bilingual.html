@@ -91,30 +91,30 @@ a{color:var(--accent)}
     <tr><td><span class="id id-red">SHIP-2.3</span></td>
       <td><strong>pmi-mcp：Tier A read tools ×5</strong>（list_indexes / get_index / get_score / get_history / get_group）<span class="en">MCP server Tier A read tools</span></td>
       <td>「AI native」招牌；<code>pmi-mcp/</code> 仍 stub。外部 agent 一句話拿任何 index 分數<span class="en">The "AI native" flagship — any external agent fetches any index score in one sentence</span></td></tr>
-    <tr><td><span class="id id-red">CORR-3.12</span></td>
-      <td><strong>cross-venue 進 pipeline</strong>：<code>embed_markets.py</code> + <code>selector.py</code> 拿掉 <code>venue='polymarket'</code> 硬篩，per-index 可宣告 venues<span class="en">Generalize the venue hard-filter</span></td>
-      <td>已 ingest 的 kalshi 8 萬 / manifold 18 萬 等全 dormant；MVP 多源 parity 必經之路。動 scoring 語意——配 golden regression<span class="en">260k+ ingested cross-venue markets are dormant; needs golden regression</span></td></tr>
-    <tr><td><span class="id id-red">CORR-2.6 / T4</span></td>
-      <td><strong>selector <code>.limit(500)</code> 可覆寫</strong><span class="en">Overridable selector cap</span></td>
-      <td>真實資料下多個 index 已撞 cap，正 silently 漏資料<span class="en">Several indexes hit the cap on real data — silently dropping markets</span></td></tr>
-    <tr><td><span class="id id-red">CORR-0.4 / T2</span></td>
-      <td><strong>cost roll-up 到 <code>audit_pipeline_runs</code></strong><span class="en">Pipeline-level cost roll-up</span></td>
-      <td>計費 / 成本可見性；半天<span class="en">Billing / cost visibility; half a day</span></td></tr>
+    <tr class="dropped"><td><span class="id id-green">✅ CORR-3.12</span></td>
+      <td><strong>cross-venue 進 pipeline</strong> — DONE 2026-06-11：IR <code>venues:</code> + <code>max_markets:</code>；selector/embed 吃宣告值<span class="en">Done: per-index venues; verified +67 kalshi markets on war keywords; 118 tests green</span></td>
+      <td>驗證：war keywords 宣告 kalshi 多選 67 個；既有 index 行為不變</td></tr>
+    <tr class="dropped"><td><span class="id id-green">✅ CORR-2.6 / T4</span></td>
+      <td><strong>selector cap 可覆寫</strong> — DONE 2026-06-11：全域 env + per-index <code>max_markets</code>，飽和告警<span class="en">Done: house was silently dropping 527 markets; cap 1500 → 1027 selected</span></td>
+      <td>驗證：house 原 500 飽和（丟 527）→ 1027 全選</td></tr>
+    <tr class="dropped"><td><span class="id id-green">✅ CORR-0.4 / T2</span></td>
+      <td><strong>cost roll-up</strong> — 確認已隨 T1 落地<span class="en">Confirmed done with T1 (llm_calls=224 verified; ollama cost correctly $0)</span></td>
+      <td>驗證：audit_pipeline_runs.llm_calls/cost_usd 寫真值</td></tr>
   </table>
 
-  <h2>2. 🟡 LLM 分層 <span class="en">LLM tiers (§6 — Tier 0/1 landed; the rest)</span></h2>
+  <h2>2. 🟢 LLM 分層 <span class="en">LLM tiers — bulk landed 2026-06-11 (Tier 0/1/2/3 + ensemble + guard)</span></h2>
   <table>
     <tr><th style="width:150px">#</th><th>項目 item</th></tr>
-    <tr><td><span class="id id-orange">CORR-5.3 🔥</span></td><td>Batch API integration（搬 Micah batch_evaluator）— nightly 半價 recompute<span class="en">Batch API for half-price nightly recompute</span></td></tr>
-    <tr><td><span class="id id-orange">CORR-5.6</span></td><td>Tier 2 agentic deep eval（web search / resolution criteria，reasoning trace 入 audit）<span class="en">Tier 2 agentic deep eval with audit trace</span></td></tr>
-    <tr><td><span class="id id-orange">CORR-5.2</span></td><td>Tier 3 週期 re-eval trigger（價格漂移 &gt; X%）<span class="en">Tier 3 periodic re-eval on price drift</span></td></tr>
-    <tr><td><span class="id id-orange">CORR-5.7</span></td><td>Tier 1 → 2 升級條件（信心低 / factor 矛盾 / 資料稀疏）<span class="en">Tier upgrade trigger logic</span></td></tr>
-    <tr><td><span class="id id-orange">CORR-5.8</span></td><td>Factor disagreement detection<span class="en">e.g. directly_about_war=1 but armed_conflict=0</span></td></tr>
-    <tr><td><span class="id id-orange">CORR-5.9</span></td><td>Multi-model voting / ensemble</td></tr>
+    <tr class="dropped"><td><span class="id id-green">✅ CORR-5.3</span></td><td>Batch API — submit/poll jobs + <code>core_llm_batches</code>（0008）+ cron。submit 端真資料 dry-run 驗證（1806/3500/1000 條 JSONL）；<strong>poll/ingest 未 e2e</strong>（需真 OpenAI key）<span class="en">Submit path verified via dry-run; poll/ingest code-complete, needs a real key</span></td></tr>
+    <tr class="dropped"><td><span class="id id-green">✅ CORR-5.6</span></td><td>Tier 2 agentic — ollama 真跑驗證：模型呼叫 recent_trades tool → 推理 → verdict + trace。web search tool 仍待加<span class="en">Verified live on ollama: tool call → reasoning → verdict with trace</span></td></tr>
+    <tr class="dropped"><td><span class="id id-green">✅ CORR-5.2</span></td><td>Tier 3 — <code>reeval-drifted</code> job + 15-min cron。真資料首跑命中：market 漂 17.5 點 → 單獨重算 house-share<span class="en">First real run caught a 17.5-point drift and re-scored just that index</span></td></tr>
+    <tr class="dropped"><td><span class="id id-green">✅ CORR-5.7</span></td><td>升級條件 — 低信心 Tier1 → Tier2 重評，兩筆都入 audit、tier2 聚合優先。真 LLM 驗證（llama conf 0.2 → qwen）<span class="en">Low-confidence escalation, both rows audited, tier2 preferred</span></td></tr>
+    <tr class="dropped"><td><span class="id id-green">✅ CORR-5.8</span></td><td>Disagreement — <code>breakdown.disagreement</code>；真資料標出 5 個 market（正是 armed_conflict=1 / directly_about_war=0）<span class="en">Live data flagged 5 markets with exactly the canonical pattern</span></td></tr>
+    <tr class="dropped"><td><span class="id id-green">✅ CORR-5.9</span></td><td>Ensemble — <code>ensemble/&lt;m1&gt;+&lt;m2&gt;</code> provider；GPU 真跑（llama3.2+qwen2.5:0.5b，合議 conf 0.875、全票入 extras）<span class="en">Real GPU two-model vote verified</span></td></tr>
     <tr><td><span class="id id-orange">CORR-5.10</span></td><td>Model promotion calibration / drift detection<span class="en">Is post-swap score drift within expectation?</span></td></tr>
     <tr><td><span class="id id-orange">CORR-5.11</span></td><td>Prompt namespace 統一（core_prompts vs MLflow）<span class="en">Unify prompt naming</span></td></tr>
     <tr><td><span class="id id-orange">CORR-0.1 剩</span></td><td>structured output（json_schema）+ self-consistency / retry-on-low-confidence（Anthropic 已拿掉）</td></tr>
-    <tr><td><span class="id id-orange">CORR-0.5 / 5.4</span></td><td>account-wide circuit breaker + cost budget enforcement（每 tick 預算 $X 超過停）<span class="en">Circuit breaker + per-tick budget cap</span></td></tr>
+    <tr class="dropped"><td><span class="id id-green">✅ CORR-0.5 / 5.4</span></td><td>Breaker + budget — <code>_LLMGuard</code>（連續失敗斷路、每 tick $ 上限 → stub fallback + breakdown 標記）；行為測試通過<span class="en">Verified: trips after 8 consecutive failures / at the $ cap, rest short-circuit</span></td></tr>
   </table>
 
   <h2>3. 🟡 深度訊號 <span class="en">Deep signals (§5 — scaffolds landed; real smoke / algorithms remain)</span></h2>

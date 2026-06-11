@@ -10,6 +10,7 @@ Sprint 1/2 deliverable. Writes one `ts_index_scores` row + N `audit_evaluations`
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import hashlib
 import time
 from datetime import UTC, datetime
@@ -301,22 +302,62 @@ async def _batch_load_evaluations(
     existing: dict[tuple[int, str], AuditEvaluation] = {}
     if not market_ids:
         return existing
+    # When Tier 2 escalation is configured, prefer an escalated row over the
+    # Tier 1 row for the same (market, factor) — query tier2 first so the
+    # second (tier1) pass only fills the gaps.
+    model_ids_by_pref: list[str | None] = []
+    if settings.tier2_model_id:
+        model_ids_by_pref.append(settings.tier2_model_id)
+    model_ids_by_pref.append(None)  # None → the factor's own resolved model
     for factor in ir.factors:
         resolved = resolved_models[factor.id]
-        rows = (
-            await session.execute(
-                select(AuditEvaluation).where(
-                    AuditEvaluation.index_definition_id == index_definition_id,
-                    AuditEvaluation.factor_id == factor.id,
-                    AuditEvaluation.prompt_sha256 == resolved.prompt.sha256,
-                    AuditEvaluation.model_id == resolved.llm_model_id,
-                    AuditEvaluation.market_id.in_(market_ids),
+        for pref_model in model_ids_by_pref:
+            model_id = pref_model or resolved.llm_model_id
+            rows = (
+                await session.execute(
+                    select(AuditEvaluation).where(
+                        AuditEvaluation.index_definition_id == index_definition_id,
+                        AuditEvaluation.factor_id == factor.id,
+                        AuditEvaluation.prompt_sha256 == resolved.prompt.sha256,
+                        AuditEvaluation.model_id == model_id,
+                        AuditEvaluation.market_id.in_(market_ids),
+                    )
                 )
-            )
-        ).scalars().all()
-        for row in rows:
-            existing[(row.market_id, factor.id)] = row
+            ).scalars().all()
+            for row in rows:
+                existing.setdefault((row.market_id, factor.id), row)
     return existing
+
+
+class _LLMGuard:
+    """Per-tick budget cap (CORR-5.4) + consecutive-failure circuit breaker
+    (CORR-0.5). Shared by all concurrent LLM calls of one tick; mutations are
+    safe because asyncio tasks interleave only at awaits. Approximate under
+    concurrency: calls already in flight when the guard trips still complete.
+    """
+
+    def __init__(self) -> None:
+        self.spent_usd = 0.0
+        self.consecutive_failures = 0
+        self.open_reason: str | None = None  # 'budget_exceeded' | 'circuit_open'
+
+    def check(self) -> str | None:
+        return self.open_reason
+
+    def record_success(self, cost_usd: float) -> None:
+        self.consecutive_failures = 0
+        self.spent_usd += cost_usd or 0.0
+        budget = settings.llm_budget_usd_per_tick
+        if budget > 0 and self.spent_usd >= budget and self.open_reason is None:
+            self.open_reason = "budget_exceeded"
+            log.warning("llm_guard.budget_exceeded", spent_usd=self.spent_usd, budget=budget)
+
+    def record_failure(self) -> None:
+        self.consecutive_failures += 1
+        limit = settings.llm_circuit_breaker_failures
+        if limit > 0 and self.consecutive_failures >= limit and self.open_reason is None:
+            self.open_reason = "circuit_open"
+            log.warning("llm_guard.circuit_open", consecutive_failures=self.consecutive_failures)
 
 
 async def _llm_under_sem(
@@ -324,21 +365,90 @@ async def _llm_under_sem(
     market,
     factor,
     resolved: ResolvedFactorModel,
+    guard: _LLMGuard,
 ) -> tuple[tuple[int, str], object | None, str | None, int]:
     """Stage 3 of T1: one concurrent LLM call. Pure async HTTP, no session.
 
     Returns `((market_id, factor_id), llm_response|None, error|None, latency_ms)`.
     Exceptions are captured (not raised) so one bad call can't sink the gather —
     the persist stage turns a captured error into a deterministic stub fallback.
+    Tier 1 → Tier 2 escalation (CORR-5.7): when configured and the Tier 1
+    response is under the confidence floor, the Tier 2 response is returned in
+    the response's `extras["escalation"]` for the persist stage to also write.
     """
     async with sem:
+        reason = guard.check()
+        if reason is not None:
+            return (market.id, factor.id), None, reason, 0
         t0 = time.perf_counter()
         try:
             resp = await run_factor_llm(market, factor, resolved)
-            return (market.id, factor.id), resp, None, int((time.perf_counter() - t0) * 1000)
         except Exception as exc:  # noqa: BLE001 - fallback-to-stub by design
+            guard.record_failure()
             err = f"{type(exc).__name__}: {exc}"
             return (market.id, factor.id), None, err, int((time.perf_counter() - t0) * 1000)
+        guard.record_success(resp.cost_usd or 0.0)
+
+        # CORR-5.7: low-confidence escalation to the Tier 2 model.
+        tier2 = settings.tier2_model_id
+        if (
+            tier2
+            and tier2 != resolved.llm_model_id
+            and resp.confidence is not None
+            and resp.confidence < settings.tier2_escalation_confidence
+        ):
+            try:
+                t2_resolved = dataclasses.replace(resolved, llm_model_id=tier2)
+                t2_resp = await run_factor_llm(market, factor, t2_resolved)
+                guard.record_success(t2_resp.cost_usd or 0.0)
+                resp.extras = dict(resp.extras or {})
+                resp.extras["escalation"] = {
+                    "tier2_model_id": tier2,
+                    "tier1_confidence": resp.confidence,
+                    "response": t2_resp,
+                }
+                log.info(
+                    "tier2.escalated",
+                    factor_id=factor.id,
+                    market_id=market.id,
+                    tier1_confidence=resp.confidence,
+                    tier2_model=tier2,
+                )
+            except Exception as exc:  # noqa: BLE001 - escalation is best-effort
+                guard.record_failure()
+                log.warning(
+                    "tier2.escalation_failed",
+                    factor_id=factor.id,
+                    market_id=market.id,
+                    error=str(exc)[:200],
+                )
+        return (market.id, factor.id), resp, None, int((time.perf_counter() - t0) * 1000)
+
+
+def _detect_disagreements(market_rows: list[MarketEvaluations], ir: IndexDef) -> dict:
+    """CORR-5.8: flag markets whose weighted binary factors confidently
+    disagree (some say 1, some say 0, both sides confidence ≥ 0.6) — e.g.
+    `directly_about_war=1` but `armed_conflict=0`. Pure post-hoc analysis;
+    feeds `ts_index_scores.breakdown.disagreement` + a log line.
+    """
+    weighted_binary = {f.id for f in ir.factors if f.weight is not None and f.type == "binary"}
+    flagged: list[dict] = []
+    for row in market_rows:
+        ones, zeros = [], []
+        for fid in weighted_binary:
+            ev = row.by_factor.get(fid)
+            if ev is None or ev.value_numeric is None:
+                continue
+            conf = float(ev.confidence) if ev.confidence is not None else 0.0
+            if conf < 0.6:
+                continue
+            (ones if float(ev.value_numeric) >= 0.5 else zeros).append(fid)
+        if ones and zeros:
+            flagged.append({"market_id": row.market.id, "ones": sorted(ones), "zeros": sorted(zeros)})
+    return {
+        "markets_flagged": len(flagged),
+        "examples": flagged[:5],
+    }
 
 
 async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
@@ -449,10 +559,14 @@ async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
                 # Stage 3 — concurrent LLM (the ONLY concurrent point). Pure
                 # HTTP under a semaphore; no session is touched here.
                 llm_results: dict[tuple[int, str], tuple[object | None, str | None, int]] = {}
+                guard = _LLMGuard()
                 if real_todo:
                     sem = asyncio.Semaphore(settings.llm_concurrency)
                     gathered = await asyncio.gather(
-                        *[_llm_under_sem(sem, m, f, resolved_models[f.id]) for (m, f) in real_todo]
+                        *[
+                            _llm_under_sem(sem, m, f, resolved_models[f.id], guard)
+                            for (m, f) in real_todo
+                        ]
                     )
                     for key, resp, err, lat in gathered:
                         llm_results[key] = (resp, err, lat)
@@ -461,6 +575,13 @@ async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
                 # is not concurrency-safe). Stubs and LLM-failures fall back here.
                 for (m, f) in todo:
                     resp, err, lat = llm_results.get((m.id, f.id), (None, None, 0))
+                    # CORR-5.7: a Tier 2 escalation rides along in extras. Strip
+                    # it from the Tier 1 payload (it holds a non-serializable
+                    # LLMResponse) and persist it as its OWN audit row under the
+                    # tier2 model's cache key — both rows are real audit facts.
+                    escalation = None
+                    if resp is not None and resp.extras and "escalation" in resp.extras:
+                        escalation = resp.extras.pop("escalation")
                     row, conflict_hit = await persist_evaluation(
                         session,
                         m,
@@ -487,6 +608,38 @@ async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
                             llm_calls += 1
                         if row.cost_usd is not None:
                             cost_usd_total += float(row.cost_usd)
+                    if escalation is not None:
+                        t2_resp = escalation["response"]
+                        t2_resp.extras = dict(t2_resp.extras or {})
+                        t2_resp.extras["escalated_from"] = {
+                            "model_id": resolved_models[f.id].llm_model_id,
+                            "tier1_confidence": escalation["tier1_confidence"],
+                        }
+                        t2_resolved = dataclasses.replace(
+                            resolved_models[f.id],
+                            llm_model_id=escalation["tier2_model_id"],
+                        )
+                        t2_row, t2_conflict = await persist_evaluation(
+                            session,
+                            m,
+                            f,
+                            index_def_row.id,
+                            t2_resolved,
+                            llm_response=t2_resp,
+                            llm_error=None,
+                            latency_ms=0,
+                            experiment_id=index_def_row.mlflow_experiment_id,
+                            parent_run_id=parent_run_id,
+                        )
+                        # Tier 2 row wins for aggregation this tick (and on
+                        # future ticks via the loader's tier2-first preference).
+                        evalmap[(m.id, f.id)] = t2_row
+                        if not t2_conflict:
+                            evaluations_written += 1
+                            if (t2_row.model_response or {}).get("stub") is False:
+                                llm_calls += 1
+                            if t2_row.cost_usd is not None:
+                                cost_usd_total += float(t2_row.cost_usd)
 
                 # Assemble per-market evaluation bundles for the aggregator.
                 for market in markets:
@@ -507,6 +660,23 @@ async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
                     )
 
                 result = aggregate(market_rows, ir)
+
+                # CORR-5.8: confident factor disagreement, recorded per tick.
+                disagreement = _detect_disagreements(market_rows, ir)
+                if isinstance(result.breakdown, dict):
+                    result.breakdown["disagreement"] = disagreement
+                    if guard.open_reason:
+                        result.breakdown["llm_guard"] = {
+                            "tripped": guard.open_reason,
+                            "spent_usd": guard.spent_usd,
+                            "consecutive_failures": guard.consecutive_failures,
+                        }
+                if disagreement["markets_flagged"]:
+                    log.info(
+                        "pipeline.disagreement",
+                        index_id=index_id,
+                        flagged=disagreement["markets_flagged"],
+                    )
 
                 score_row = TsIndexScore(
                     index_definition_id=index_def_row.id,

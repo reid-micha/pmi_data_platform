@@ -114,15 +114,29 @@ async def select_markets(session: AsyncSession, ir: IndexDef) -> list[CoreMarket
     if not where_clauses:
         return []
 
+    # CORR-3.12: venue scope comes from the IR (default ["polymarket"], so
+    # pre-existing indexes are unchanged). CORR-2.6: the cap is per-index
+    # (ir.max_markets) falling back to the configurable global default.
+    limit = ir.max_markets or settings.selector_max_markets
     stmt = (
         select(CoreMarket)
         .where(
-            CoreMarket.venue == "polymarket",
+            CoreMarket.venue.in_(ir.venues),
             CoreMarket.resolved_at.is_(None),
             or_(*where_clauses),
         )
         .order_by(CoreMarket.id.desc())
-        .limit(500)
+        .limit(limit)
     )
     result = await session.execute(stmt)
-    return list(result.scalars().all())
+    markets = list(result.scalars().all())
+    if len(markets) >= limit:
+        log.warning(
+            "selector.limit_saturated",
+            index_id=ir.id,
+            limit=limit,
+            venues=ir.venues,
+            hint="markets beyond the cap are silently dropped — raise "
+            "`max_markets` in the index YAML or PMI_SELECTOR_MAX_MARKETS",
+        )
+    return markets

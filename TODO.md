@@ -27,25 +27,24 @@
 | # | 項目 | 為什麼 / 條件 | 細節 |
 |---|---|---|---|
 | **SHIP-2.3** | **pmi-mcp：Tier A read tools ×5**（`pmi.list_indexes / get_index / get_score / get_history / get_group`） | 「AI native」招牌；`pmi-mcp/` 仍 stub。外部 agent 一句話拿任何 index 分數 | 細節:git history（跑出來 §2）|
-| **CORR-3.12** | **cross-venue 進 pipeline**：`embed_markets.py` + `engine/selector.py` 拿掉 `venue='polymarket'` 硬篩，改 per-index 可宣告 venues | 已 ingest 的 kalshi 8 萬 / manifold 18 萬 / forecastex 等全 dormant；§11 MVP 多源 parity 的必經之路。動 scoring 語意——要配 golden regression | 細節:git history（跑得對 §3,2026-06-11 新增）|
-| **CORR-2.6 / T4** | **selector `.limit(500)` 可覆寫**（config / per-index cap） | 真實資料下 war/house/senate/semantic 多個 index 已撞 cap，**正 silently 漏資料** | 細節:git history（跑得對 §2）|
-| **CORR-0.4 / T2** | **cost roll-up 到 `audit_pipeline_runs`**（目前 pipeline-level cost 靠 SUM 子 row） | 計費 / 成本可見性；半天 | 細節:git history（跑得對 §0）|
+| ✅ ~~**CORR-3.12**~~ | **cross-venue 進 pipeline** — **DONE 2026-06-11**：IR 加 `venues:`（預設 `[polymarket]` 向後相容）+ `max_markets:`；selector / embed job 改吃宣告值（embed 走 `PMI_EMBED_VENUES`）。驗證：war keywords 宣告 `[polymarket, kalshi]` 多選出 67 個 kalshi market；118 tests green；既有 index 行為不變 | 解鎖已 ingest 的 26 萬 cross-venue market | — |
+| ✅ ~~**CORR-2.6 / T4**~~ | **selector cap 可覆寫** — **DONE 2026-06-11**：`PMI_SELECTOR_MAX_MARKETS` 全域 + per-index `max_markets:`；飽和時 log `selector.limit_saturated`。驗證：house-share 原 500 飽和（默默丟 527 個）→ cap 1500 選滿 1027 | 不再 silently 漏資料 | — |
+| ✅ ~~**CORR-0.4 / T2**~~ | **cost roll-up** — **確認已 DONE**（T1 重構時落地）：`audit_pipeline_runs.llm_calls/cost_usd` 每 tick 寫真值（驗：t1-smoke run llm_calls=224；ollama cost=$0 正確） | — | — |
 
 ## 2. 🟡 LLM 分層（§6 四層的後段；Tier 0/1 已落地）
 
 | # | 項目 | 摘要 |
 |---|---|---|
-| **CORR-5.3** 🔥 | Batch API integration（搬 Micah `batch_evaluator.py`）— nightly 半價 recompute |
-| **CORR-5.6** | Tier 2 agentic deep eval（帶 web search / 讀 resolution criteria，reasoning trace 入 audit） |
-| **CORR-5.2** | Tier 3 週期 re-eval trigger（價格漂移 > X% → 重算單一 market） |
-| **CORR-5.7** | Tier 1 → Tier 2 升級條件（信心 < X / factor 矛盾 / 資料稀疏） |
-| **CORR-5.8** | Factor disagreement detection（如 `directly_about_war=1` 但 `armed_conflict=0`） |
-| **CORR-5.9** | Multi-model voting / ensemble |
+| ✅ ~~**CORR-5.3**~~ 🔥 | Batch API — **DONE 2026-06-11**：`llm-batch-submit`/`llm-batch-poll` jobs + `core_llm_batches` 表（alembic 0008）+ cron（02:00 submit、半小時 poll）。同 prompt/parse/cache-key 路徑、0.5× 計價。**驗證**：submit 端真資料 dry-run 產出 1806/3500/1000 條 JSONL；all-ollama 部署乾淨 no-op。**poll/ingest 端 code-complete、未 e2e**（需真 OPENAI_API_KEY + 一輪真 batch） |
+| ✅ ~~**CORR-5.6**~~ | Tier 2 agentic — **已存在 + 本輪在 ollama 真跑驗證**（2026-06-11）：`agentic/llama3.2` 真的呼叫 `recent_trades` tool → 推理 → verdict，trace + tier 標記入 extras。web search tool 仍待加（目前 tool = 本地深度訊號） |
+| ✅ ~~**CORR-5.2**~~ | Tier 3 — **DONE 2026-06-11**：`reeval-drifted` job（漂移 ≥ `PMI_DRIFT_THRESHOLD_PCT` 點 → 只重算受影響 index）+ cron 每 15 min。**真資料首跑即命中**：house-share 的 market 漂 17.5 點 → 單獨重算該 index |
+| ✅ ~~**CORR-5.7**~~ | 升級條件 — **DONE 2026-06-11**：`PMI_TIER2_MODEL_ID` + 信心 floor；低信心 Tier 1 → Tier 2 重評，**兩筆都入 audit**（tier2 聚合優先、loader 偏好 tier2 row）。真 LLM 驗證：llama conf=0.2 → qwen 升級 |
+| ✅ ~~**CORR-5.8**~~ | Disagreement — **DONE 2026-06-11**：高信心二元 factor 互斥偵測 → `breakdown.disagreement`。真資料驗證：war index 標出 5 個 market（正是 `armed_conflict=1`/`directly_about_war=0` 模式） |
+| ✅ ~~**CORR-5.9**~~ | Ensemble — **DONE 2026-06-11**：`ensemble/<m1>+<m2>` provider（binary 多數決/ternary 眾數/score 平均，agreement 折扣信心，全成員票入 extras）。GPU 真跑驗證：llama3.2+qwen2.5:0.5b 合議 conf=0.875 |
 | **CORR-5.10** | Model promotion calibration / drift detection（換 LLM 後分數漂移是否在預期內） |
 | **CORR-5.11** | Prompt namespace 統一（`core_prompts` vs MLflow 命名） |
 | **CORR-0.1**（剩） | structured output（`response_format=json_schema`）+ self-consistency / retry-on-low-confidence（~~Anthropic provider~~ 已拿掉） |
-| **CORR-0.5**（剩） | account-wide circuit breaker + cost budget enforcement（與 CORR-5.4 重疊） |
-| **CORR-5.4** | Cost budget enforcement：每 tick 預算 $X 超過停 + alert |
+| ✅ ~~**CORR-0.5 / 5.4**~~ | Breaker + budget — **DONE 2026-06-11**：`_LLMGuard`（連續 N 失敗斷路、每 tick $X 上限，超過 → stub fallback + `breakdown.llm_guard`）。驗證：8 真失敗後斷路短路、$1.2≥$1 cap 後短路 |
 
 ## 3. 🟡 Polymarket / Kalshi 深度訊號（§5；scaffold 多已落地，剩真實 smoke / 演算法）
 

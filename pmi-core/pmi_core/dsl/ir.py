@@ -127,6 +127,15 @@ class IndexDef(BaseModel):
     title: str
     owner: str | None = None
 
+    # CORR-3.12: which `core_markets.venue` values this index draws from.
+    # Defaults to Polymarket-only so every pre-existing index is byte-identical
+    # — declare e.g. ["polymarket", "kalshi"] to score across venues.
+    venues: list[str] = Field(default=["polymarket"], min_length=1)
+    # CORR-2.6: per-index cap on selected markets. None → the global default
+    # (`settings.selector_max_markets`, 500). The selector logs when it
+    # saturates the cap so silent truncation is at least visible.
+    max_markets: int | None = Field(default=None, ge=1)
+
     selectors: list[SelectorSpec] = Field(min_length=1)
     factors: list[FactorSpec] = Field(min_length=1)
     weighting: WeightingSpec = Field(default_factory=WeightingSpec)

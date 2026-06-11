@@ -39,6 +39,36 @@ class Settings(BaseSettings):
     # ollama container's OLLAMA_NUM_PARALLEL or requests just queue server-side.
     llm_concurrency: int = Field(default=8)
 
+    # CORR-5.4: hard cost ceiling per pipeline tick (USD). 0 = unlimited. Once
+    # accumulated fresh-call cost crosses this, remaining LLM calls in the tick
+    # short-circuit to the deterministic stub (fallback_reason=budget_exceeded).
+    # Approximate under concurrency: calls already in flight still complete.
+    llm_budget_usd_per_tick: float = Field(default=0.0)
+    # CORR-0.5: account-wide circuit breaker. After this many CONSECUTIVE LLM
+    # failures within a tick, stop calling the LLM for the rest of the tick
+    # (remaining evals fall back to stub, fallback_reason=circuit_open).
+    # 0 = disabled. Successes reset the streak.
+    llm_circuit_breaker_failures: int = Field(default=8)
+
+    # CORR-5.3: build + log the Batch API request file without uploading —
+    # the only verifiable mode without an OpenAI key.
+    batch_dry_run: bool = Field(default=False)
+
+    # CORR-5.2 (Tier 3): re-score an index when a component market's price has
+    # drifted ≥ this many probability POINTS (0-100 scale) vs ~lookback ago.
+    # The factor cache is untouched (append-only invariant) — drift re-runs the
+    # pipeline tick so prices/weights/aggregation refresh ahead of the hourly cron.
+    drift_threshold_pct: float = Field(default=10.0)
+    drift_lookback_hours: int = Field(default=24)
+
+    # CORR-5.7: Tier 1 → Tier 2 escalation. When a Tier 1 eval returns
+    # confidence below this floor, re-run the factor on `tier2_model_id`
+    # (e.g. "agentic/llama3.2" or a bigger ollama tag) and persist BOTH rows —
+    # the Tier 2 row (its own cache key) is preferred at aggregation.
+    # tier2_model_id empty = escalation off.
+    tier2_model_id: str = Field(default="")
+    tier2_escalation_confidence: float = Field(default=0.55)
+
     # Ollama (local model worker). Independent of `llm_base_url` so an Ollama
     # endpoint can coexist with OpenAI-direct: promote a CoreFactorModel with an
     # `ollama/<model>` model_id (e.g. `ollama/llama3.1`) to route it here.
@@ -67,6 +97,16 @@ class Settings(BaseSettings):
     # writer. `pgvector` (default) keeps vectors in Postgres — zero new infra.
     # `milvus` is a forward-compat stub until scale justifies it (§3.1).
     vector_store: str = Field(default="pgvector")
+
+    # CORR-2.6: global default cap on markets a selector returns per index.
+    # Per-index override = `max_markets` in the index YAML. The selector logs
+    # `selector.limit_saturated` when an index hits the cap.
+    selector_max_markets: int = Field(default=500)
+
+    # CORR-3.12: venues the embed-markets job generates vectors for. Index defs
+    # additionally scope their own venue list (`venues:` in YAML); a venue must
+    # be in BOTH for semantic selection / Tier 0 to see it.
+    embed_venues: list[str] = Field(default=["polymarket"])
 
     # MLflow tracking + Prompt Registry. Pipeline gracefully degrades if unreachable
     # or if PMI_MLFLOW_ENABLED=false — audit_evaluations remain the source of truth.

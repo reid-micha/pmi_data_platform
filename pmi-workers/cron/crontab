@@ -10,8 +10,19 @@
 # Hourly: re-score every current PMI definition.
 0 * * * * run-job hourly &
 
+# Tier 3 (CORR-5.2): every 15 min, re-score only the indexes whose component
+# prices drifted >= PMI_DRIFT_THRESHOLD_PCT points vs ~lookback ago. Cheap
+# no-op when nothing drifted; keeps scores fresher than the hourly full pass.
+*/15 * * * * run-job reeval-drifted &
+
 # Daily 10:00 UTC: heavier maintenance (placeholder — currently same as hourly).
 0 10 * * * run-job daily &
+
+# --- OpenAI Batch API (CORR-5.3, half-price nightly recompute) --------------
+# Only meaningful when factors are bound to gpt-*/openai/* models AND
+# OPENAI_API_KEY is set; with an all-ollama registry both jobs no-op cleanly.
+0 2 * * * run-job llm-batch-submit &
+*/30 * * * * run-job llm-batch-poll &
 
 # ─── Polymarket deep-signal cycle jobs (CORR-4.1 ~ 4.4) ─────────────────────
 # These shell out to the pmi-ingest CLI. The pmi-workers image does NOT bundle
