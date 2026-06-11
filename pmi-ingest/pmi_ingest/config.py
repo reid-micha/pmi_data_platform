@@ -182,6 +182,10 @@ class IngestSettings(BaseSettings):
     kalshi_poll_interval_sec: int = Field(default=300)
     kalshi_page_size: int = Field(default=1000)
     kalshi_max_pages: int = Field(default=200)
+    # Throttle: sleep between paginated /events and /markets requests to stay
+    # under Kalshi's rate limit (429s even when authenticated). 0 = no delay
+    # (default, unchanged for existing deployments); set ~0.5 to smooth bursts.
+    kalshi_page_delay_sec: float = Field(default=0.0)
     # Auth is optional — leave blank to poll anonymously (lower rate limits).
     # `kalshi_private_key` accepts either an inline PEM (with `\n` allowed) or
     # a filesystem path to a PEM file.

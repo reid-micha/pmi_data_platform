@@ -218,6 +218,12 @@ services:
     profiles: ["ingest"]
     command: ["run", "--source", "predictit-rest"]
 
+  pmi-ingest-metaculus:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-metaculus
+    profiles: ["ingest"]
+    command: ["run", "--source", "metaculus-rest"]
+
   # Coinbase Playwright scraper (legacy Micah port). One-shot CLI wrapped in a
   # daily loop, same shape as pmi-ingest-history. Needs COINBASE_ENABLED=true
   # + Playwright Chromium (already in the pmi-ingest image).

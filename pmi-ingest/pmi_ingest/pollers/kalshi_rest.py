@@ -26,6 +26,7 @@ event tickers absent from /events; we fall back to the first
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import time
 from datetime import UTC, datetime
@@ -189,8 +190,8 @@ async def _get_json(
     headers: dict[str, str] | None,
 ) -> dict[str, Any]:
     async for attempt in AsyncRetrying(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=0.5, min=0.5, max=8),
+        stop=stop_after_attempt(6),
+        wait=wait_exponential(multiplier=1, min=1, max=30),
         retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
         reraise=True,
     ):
@@ -232,6 +233,8 @@ async def _fetch_event_meta(
         pages += 1
         if not cursor:
             break
+        if ingest_settings.kalshi_page_delay_sec:
+            await asyncio.sleep(ingest_settings.kalshi_page_delay_sec)
     log.info("kalshi.event_meta_loaded", categories=len(categories), series=len(series))
     return categories, series
 
@@ -401,6 +404,8 @@ class KalshiRestPoller:
                         break
                     cursor = next_cursor
                     page += 1
+                    if ingest_settings.kalshi_page_delay_sec:
+                        await asyncio.sleep(ingest_settings.kalshi_page_delay_sec)
         except Exception as exc:
             success = False
             error_class = type(exc).__name__
