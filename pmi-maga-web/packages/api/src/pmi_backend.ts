@@ -16,11 +16,13 @@
 import type {
   ComponentContract,
   MagaIndexData,
+  MagaLastUpdatedResponse,
   MagaQuestion,
   MagaSearchCatalogResponse,
   MagaState,
   MagaStateDetail,
   MagaStateHoldingsData,
+  PromptRecord,
   TrendPoint,
 } from '@micah/types';
 import type { MagaChamberType, MagaGroup, MagaViewType } from './maga';
@@ -89,7 +91,12 @@ export async function fetchMagaStatesFromPmi(view: MagaViewType): Promise<MagaSt
 }
 
 export async function fetchMagaIndexFromPmi(view: MagaViewType): Promise<MagaIndexData> {
-  const env = await fetchByState();
+  // Trend series powers the homepage 14-day graph; a trends failure should
+  // not blank the whole index card, hence the catch-to-empty.
+  const [env, trendData] = await Promise.all([
+    fetchByState(),
+    fetchMagaNationalTrendsFromPmi().catch(() => [] as TrendPoint[]),
+  ]);
   const states = Object.values(env.data.states)
     .filter((r) => matchesView(r, view))
     .map(rowToMagaState);
@@ -98,7 +105,7 @@ export async function fetchMagaIndexFromPmi(view: MagaViewType): Promise<MagaInd
     activeContractsCount: env.data.n_markets,
     holdingsCount: env.data.n_markets,
     sourceNames: ['polymarket'],
-    trendData: [], // /maga/by-state carries no history series
+    trendData,
     states,
   };
 }
@@ -322,4 +329,68 @@ export async function fetchMagaStateTrendsFromPmi(
   if (!res.ok) throw new Error(`pmi-api /maga/by-state/${stateId}/trends → ${res.status}`);
   const env = (await res.json()) as PmiTrendsEnvelope;
   return env.data.points.map((p) => ({ date: p.date, value: p.value }));
+}
+
+interface PmiNationalTrendsEnvelope {
+  summary: string;
+  data: { days: number; points: Array<{ date: string; value: number }> };
+}
+
+/** Daily national heat from pmi-api /maga/trends (homepage 14-day graph). */
+export async function fetchMagaNationalTrendsFromPmi(days = 14): Promise<TrendPoint[]> {
+  const base = pmiApiBase();
+  if (!base) throw new Error('fetchMagaNationalTrendsFromPmi() called without VITE_PMI_API_URL');
+  const res = await fetch(`${base}/maga/trends?days=${days}`);
+  if (!res.ok) throw new Error(`pmi-api /maga/trends → ${res.status}`);
+  const env = (await res.json()) as PmiNationalTrendsEnvelope;
+  return env.data.points.map((p) => ({ date: p.date, value: p.value }));
+}
+
+interface PmiLastUpdatedEnvelope {
+  summary: string;
+  data: { generated_at: string | null };
+}
+
+/** Newest race-market snapshot from pmi-api /maga/last-updated. */
+export async function fetchMagaLastUpdatedFromPmi(): Promise<MagaLastUpdatedResponse> {
+  const base = pmiApiBase();
+  if (!base) throw new Error('fetchMagaLastUpdatedFromPmi() called without VITE_PMI_API_URL');
+  const res = await fetch(`${base}/maga/last-updated`);
+  if (!res.ok) throw new Error(`pmi-api /maga/last-updated → ${res.status}`);
+  const env = (await res.json()) as PmiLastUpdatedEnvelope;
+  // No snapshots yet → fall back to "now" so consumers never see a null date.
+  return { generatedAt: env.data.generated_at ?? new Date().toISOString() };
+}
+
+/** App settings from pmi-api /settings (same shape as the legacy endpoint). */
+export async function fetchSettingsFromPmi(): Promise<{ future_phrase: string }> {
+  const base = pmiApiBase();
+  if (!base) throw new Error('fetchSettingsFromPmi() called without VITE_PMI_API_URL');
+  const res = await fetch(`${base}/settings`);
+  if (!res.ok) throw new Error(`pmi-api /settings → ${res.status}`);
+  return res.json() as Promise<{ future_phrase: string }>;
+}
+
+/** Prompt registry (latest version per name) from pmi-api /admin/prompts. */
+export async function fetchPromptsFromPmi(): Promise<Record<string, PromptRecord>> {
+  const base = pmiApiBase();
+  if (!base) throw new Error('fetchPromptsFromPmi() called without VITE_PMI_API_URL');
+  const res = await fetch(`${base}/admin/prompts`);
+  if (!res.ok) throw new Error(`pmi-api /admin/prompts → ${res.status}`);
+  return res.json() as Promise<Record<string, PromptRecord>>;
+}
+
+/** Save prompt edits: pmi-api appends new core_prompts versions (append-only). */
+export async function savePromptsToPmi(
+  prompts: Record<string, PromptRecord>,
+): Promise<{ status: string }> {
+  const base = pmiApiBase();
+  if (!base) throw new Error('savePromptsToPmi() called without VITE_PMI_API_URL');
+  const res = await fetch(`${base}/admin/prompts`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(prompts),
+  });
+  if (!res.ok) throw new Error(`pmi-api PUT /admin/prompts → ${res.status}`);
+  return res.json() as Promise<{ status: string }>;
 }

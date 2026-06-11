@@ -10,9 +10,11 @@ because the pmi-core pipeline manages its own `session_scope()` internally
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from typing import TypeVar
+from typing import Any, TypeVar
 
-JobFn = Callable[[], Awaitable[None]]
+# Jobs may take keyword args (the queue worker calls `fn(**job.args)`) and may
+# return a JSON-safe dict that the worker persists to `core_jobs.result`.
+JobFn = Callable[..., Awaitable[Any]]
 
 _registry: dict[str, JobFn] = {}
 

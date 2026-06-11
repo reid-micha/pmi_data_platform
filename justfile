@@ -40,8 +40,8 @@ up:
     docker compose --profile pmi run --rm pmi-core seed
     echo "→ build pmi-web (Docker layer cache → no-op unless package.json changed)"
     docker compose --profile pmi --profile pmi-web build pmi-web
-    echo "→ services (api · workers · ingest · web)"
-    docker compose --profile pmi --profile pmi-web up -d pmi-api pmi-workers pmi-ingest pmi-web
+    echo "→ services (api · workers · worker · ingest · web)"
+    docker compose --profile pmi --profile pmi-web up -d pmi-api pmi-workers pmi-worker pmi-ingest pmi-web
     port() { docker compose --profile pmi --profile pmi-web port "$1" "$2" 2>/dev/null | sed 's/.*://'; }
     web=$(port pmi-web 3000); api=$(port pmi-api 8000); mlf=$(port mlflow 5000)
     echo ""
@@ -347,22 +347,53 @@ workers-score INDEX_ID='polymarket-war-index':
 workers-list:
     docker compose --profile pmi run --rm pmi-workers pmi-workers list
 
-# Start supercronic in the background (production cron entry point).
+# Start supercronic (enqueue beats) + the queue worker (executes) together.
 [group('pmi-workers')]
 workers-up:
-    docker compose --profile pmi up -d pmi-workers
-    @echo "✓ pmi-workers on supercronic. Schedule: pmi-workers/cron/crontab"
-    @echo "  Tail logs: just workers-logs"
+    docker compose --profile pmi up -d pmi-workers pmi-worker
+    @echo "✓ pmi-workers (supercronic, enqueues) + pmi-worker (queue loop, executes)."
+    @echo "  Schedule: pmi-workers/cron/crontab — tail logs: just workers-logs"
 
-# Stop the supercronic container.
+# Stop the supercronic + worker containers.
 [group('pmi-workers')]
 workers-down:
-    docker compose --profile pmi stop pmi-workers && docker compose --profile pmi rm -f pmi-workers
+    docker compose --profile pmi stop pmi-workers pmi-worker && docker compose --profile pmi rm -f pmi-workers pmi-worker
 
-# Tail pmi-workers logs.
+# Tail pmi-workers + pmi-worker logs.
 [group('pmi-workers')]
 workers-logs:
-    docker compose --profile pmi logs -f --tail 50 pmi-workers
+    docker compose --profile pmi logs -f --tail 50 pmi-workers pmi-worker
+
+# Enqueue a job onto the Postgres queue (CORR-4.6): just enqueue score '{"index_id": "polymarket-war-index"}'
+[group('pmi-workers')]
+enqueue NAME ARGS='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "{{ARGS}}" ]; then
+        docker compose --profile pmi run --rm pmi-workers pmi-workers enqueue {{NAME}} --args '{{ARGS}}'
+    else
+        docker compose --profile pmi run --rm pmi-workers pmi-workers enqueue {{NAME}}
+    fi
+
+# Show recent queue jobs + workflow runs.
+[group('pmi-workers')]
+queue-ps:
+    docker compose exec -T postgres psql -U ${PMI_DB_USER:-warindex} -d ${PMI_DB_NAME:-pmi} -c \
+        "SELECT id, name, status, attempts, priority, dedupe_key, enqueued_at, finished_at, left(error, 60) AS error FROM core_jobs ORDER BY id DESC LIMIT 20" -c \
+        "SELECT id, workflow, status, steps_done, steps_total, created_at, finished_at FROM core_workflow_runs ORDER BY id DESC LIMIT 10"
+
+# Start a durable backtest workflow (CORR-8.1): just backtest polymarket-war-index 90
+[group('pmi-workers')]
+backtest INDEX_ID='polymarket-war-index' DAYS='90':
+    docker compose --profile pmi run --rm pmi-workers pmi-workers backtest {{INDEX_ID}} --days {{DAYS}}
+
+# Run pmi-workers queue/workflow tests against the dev postgres (needs `just db-up`).
+[group('pmi-workers')]
+workers-test *ARGS='tests/ -v':
+    docker compose --profile pmi run --rm --entrypoint sh \
+        -v "{{root_dir}}/pmi-workers/tests:/app/tests:ro" \
+        pmi-workers \
+        -c "pip install --quiet --no-cache pytest pytest-asyncio && cd /app && python -m pytest {{ARGS}}"
 
 # ============================================================================
 # pmi-web (Next.js 15 dashboard over pmi-api)

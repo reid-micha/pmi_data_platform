@@ -34,6 +34,10 @@ export default async function SenatePage() {
     .slice()
     .sort((a, b) => Math.abs(a.prob_r - 50) - Math.abs(b.prob_r - 50));
 
+  // Distinct venues across every race's underlying markets (CORR-1.3 step 2).
+  const exchanges = [...new Set(board.races.flatMap((r) => r.exchanges))];
+  if (exchanges.length === 0) exchanges.push("polymarket");
+
   // Per-state P(GOP win), 0–100, on the same heat scale the map expects
   // (100 = deep Republican). States with no 2026 race are absent here and get
   // dimmed by the map's `dimMissing` (holdover seats, not on this cycle's ballot).
@@ -63,8 +67,8 @@ export default async function SenatePage() {
           <div className="senate-hero__stats">
             <StatCard value={board.total_seats} label="Total Seats" />
             <StatCard value={board.n_contested} label="Contested Races" live />
-            <StatCard value="1" label="Prediction Market Exchanges">
-              <ExchangeStack ids={["polymarket"]} size={22} />
+            <StatCard value={exchanges.length} label="Prediction Market Exchanges">
+              <ExchangeStack ids={exchanges.slice(0, 4)} extras={Math.max(0, exchanges.length - 4)} size={22} />
             </StatCard>
             <StatCard value={board.races.length} label="Race PMIs" info />
           </div>
@@ -134,8 +138,8 @@ export default async function SenatePage() {
           </h2>
           <p className="t-body" style={{ marginTop: "var(--s-2)", maxWidth: 820 }}>
             Each race is a single-factor PMI. Probabilities derive from active Polymarket
-            contracts, weighted by volume and recency. Per-race state attribution lands with
-            the condition-grouping work (CORR-1.3).
+            contracts, weighted by volume and recency. Matchups show candidate names once
+            both nominees are set on the underlying markets.
           </p>
           <SenateRaceTable races={races} />
         </div>

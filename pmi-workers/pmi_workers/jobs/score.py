@@ -54,9 +54,9 @@ async def score_index(index_id: str) -> dict:
 
 
 @register("score")
-async def run_default() -> None:
-    """Score the env-default index (set `PMI_WORKERS_DEFAULT_INDEX`)."""
-    await score_index(DEFAULT_INDEX_ID)
+async def run_default(index_id: str | None = None) -> dict:
+    """Score `index_id` (queue jobs pass it via args), else the env default."""
+    return await score_index(index_id or DEFAULT_INDEX_ID)
 
 
 @register("score:polymarket-war-index")

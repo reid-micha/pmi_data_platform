@@ -10,9 +10,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from pmi_api.config import api_settings
+from pmi_api.routes.admin import router as admin_router
 from pmi_api.routes.health import router as health_router
 from pmi_api.routes.indexes import router as indexes_router
+from pmi_api.routes.jobs import router as jobs_router
 from pmi_api.routes.maga import router as maga_router
+from pmi_api.routes.settings import router as settings_router
 from pmi_core.config import settings
 
 
@@ -39,19 +42,28 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="pmi-api",
         version="0.1.0",
-        description="Read-only REST gateway over pmi-core (P0).",
+        description=(
+            "REST gateway over pmi-core. Reads are served from Postgres; the "
+            "§3.2 on-demand POSTs (score refresh / backtest) enqueue onto the "
+            "Postgres job queue and return 202 + a poll handle."
+        ),
     )
     if api_settings.cors_origins_list:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=api_settings.cors_origins_list,
             allow_credentials=True,
-            allow_methods=["GET"],
+            # POST: the on-demand enqueue endpoints (score/refresh, backtest).
+            # PUT: the admin prompt editor (/admin/prompts).
+            allow_methods=["GET", "POST", "PUT"],
             allow_headers=["*"],
         )
     app.include_router(health_router)
     app.include_router(indexes_router)
+    app.include_router(jobs_router)
     app.include_router(maga_router)
+    app.include_router(settings_router)
+    app.include_router(admin_router)
     return app
 
 

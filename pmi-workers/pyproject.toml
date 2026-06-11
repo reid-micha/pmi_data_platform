@@ -1,7 +1,7 @@
 [project]
 name = "pmi-workers"
 version = "0.1.0"
-description = "Scheduled + queued worker pool over pmi-core. P0 ships a supercronic-driven `run-job` runner; P1 adds Arq fan-out."
+description = "Scheduled + queued worker pool over pmi-core: supercronic enqueues, the Postgres-queue worker loop executes (CORR-4.6), durable workflows ride the same queue (CORR-8.1)."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "Proprietary" }
@@ -16,10 +16,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Arq lands in P1 (see README "Why not P0?"). Listed here so `uv pip install
-# .[arq]` opts in without dragging Redis into the P0 container image.
-arq = ["arq>=0.26.0", "redis>=5.0.0"]
-
+# (2026-06-11) The former `.[arq]` extra is gone: the Arq role is filled by
+# the Postgres queue in pmi_core.queue — no Redis. See README.
 dev = [
     "pytest>=8.2.0",
     "pytest-asyncio>=0.23.7",

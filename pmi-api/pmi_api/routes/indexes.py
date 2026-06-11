@@ -1,10 +1,13 @@
-"""/indexes — list, get, score (current + history), explain."""
+"""/indexes — list, get, score (current + history + on-demand), explain, backtest."""
 
 from __future__ import annotations
 
-from datetime import datetime
+import asyncio
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,11 +19,15 @@ from pmi_api.schemas import (
     HistoryPayload,
     HistoryPoint,
     IndexSummary,
+    JobEnvelope,
+    JobPayload,
     ScoreEnvelope,
     ScorePayload,
     SenateBoardEnvelope,
     SenateBoardPayload,
     SenateRace,
+    WorkflowRunEnvelope,
+    WorkflowRunPayload,
 )
 from pmi_core.dsl.ir import IndexDef
 from pmi_core.engine.aggregator import _direction_value, _relevancy
@@ -29,14 +36,17 @@ from pmi_core.engine.seat_distribution import (
     classify_band,
     compute_seat_distribution,
 )
-from pmi_core.engine.seat_mapping import extract_contested_seats
+from pmi_core.engine.seat_mapping import extract_contested_seats, parse_seat_race
+from pmi_core import queue
 from pmi_core.models import (
     AuditEvaluation,
     CoreIndexDefinition,
+    CoreJob,
     CoreMarket,
     TsIndexScore,
     TsPriceSnapshot,
 )
+from pmi_core.workflow import create_run
 
 router = APIRouter(
     prefix="/indexes",
@@ -104,29 +114,7 @@ async def get_index(
     return await _current_def(session, index_id)
 
 
-@router.get("/{index_id}/score", response_model=ScoreEnvelope)
-async def get_score(
-    index_id: str,
-    as_of: datetime | None = Query(default=None),
-    session: AsyncSession = Depends(get_session),
-) -> ScoreEnvelope:
-    index_def = await _current_def(session, index_id)
-    stmt = select(TsIndexScore).where(TsIndexScore.index_definition_id == index_def.id)
-    if as_of is not None:
-        stmt = stmt.where(TsIndexScore.as_of <= as_of)
-    stmt = stmt.order_by(desc(TsIndexScore.as_of)).limit(1)
-
-    score = (await session.execute(stmt)).scalar_one_or_none()
-    if score is None:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            detail={
-                "error": {
-                    "code": "NO_SCORE_YET",
-                    "hint": "Run `just pmi-run polymarket-war-index` (or wait for next tick).",
-                }
-            },
-        )
+def _score_envelope(index_def: CoreIndexDefinition, score: TsIndexScore) -> ScoreEnvelope:
     score_val = float(score.score) if score.score is not None else None
     score_str = f"{score_val:.2f}" if score_val is not None else "n/a"
     return ScoreEnvelope(
@@ -144,6 +132,169 @@ async def get_score(
             computed_at=score.computed_at,
             breakdown=score.breakdown,
         ),
+    )
+
+
+async def _latest_score(
+    session: AsyncSession, index_definition_id: int, as_of: datetime | None = None
+) -> TsIndexScore | None:
+    stmt = select(TsIndexScore).where(
+        TsIndexScore.index_definition_id == index_definition_id
+    )
+    if as_of is not None:
+        stmt = stmt.where(TsIndexScore.as_of <= as_of)
+    return (
+        await session.execute(stmt.order_by(desc(TsIndexScore.as_of)).limit(1))
+    ).scalar_one_or_none()
+
+
+async def _enqueue_score_job(session: AsyncSession, index_id: str) -> CoreJob:
+    """Enqueue one on-demand pipeline tick. Dedupe means a storm of stale
+    requests funds a single computation; commit so the worker sees it
+    (NOTIFY is transactional and fires at this commit)."""
+    job = await queue.enqueue(
+        session,
+        "score",
+        {"index_id": index_id},
+        dedupe_key=f"score:{index_id}",
+        priority=queue.PRIORITY_INTERACTIVE,
+    )
+    await queue.notify(session)
+    await session.commit()
+    return job
+
+
+def _job_202(job: CoreJob, hint: str) -> JSONResponse:
+    envelope = JobEnvelope(
+        summary=f"{hint} job {job.id} is {job.status}; poll GET /jobs/{job.id}",
+        data=JobPayload.model_validate(job),
+    )
+    return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=jsonable_encoder(envelope))
+
+
+@router.get("/{index_id}/score", response_model=ScoreEnvelope)
+async def get_score(
+    index_id: str,
+    as_of: datetime | None = Query(default=None),
+    max_age_s: int | None = Query(
+        default=None,
+        ge=1,
+        description=(
+            "§3.2 on-demand path: if the latest stored score is older than "
+            "this many seconds, enqueue a recompute. Returns 202 + job_id "
+            "(or, with wait_s, blocks until the fresh score lands)."
+        ),
+    ),
+    wait_s: float | None = Query(
+        default=None,
+        ge=0.5,
+        le=120,
+        description="With max_age_s: wait synchronously up to this long for the recompute.",
+    ),
+    session: AsyncSession = Depends(get_session),
+) -> ScoreEnvelope:
+    index_def = await _current_def(session, index_id)
+    score = await _latest_score(session, index_def.id, as_of)
+
+    # Cache semantics (§3.2, Postgres-backed): the latest ts_index_scores row
+    # IS the cache. Fresh enough (or no freshness asked, or historical query)
+    # → serve it.
+    if max_age_s is None or as_of is not None:
+        if score is None:
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "NO_SCORE_YET",
+                        "hint": "POST /indexes/{id}/score/refresh (or wait for next tick).",
+                    }
+                },
+            )
+        return _score_envelope(index_def, score)
+
+    now = datetime.now(UTC)
+    if score is not None and score.as_of >= now - timedelta(seconds=max_age_s):
+        return _score_envelope(index_def, score)
+
+    # Stale (or absent) → enqueue a tick.
+    job = await _enqueue_score_job(session, index_id)
+
+    if wait_s is None:
+        return _job_202(job, f"score for '{index_id}' is stale; recompute")
+
+    # Synchronous mode: poll until the job lands (or fails / times out).
+    deadline = asyncio.get_event_loop().time() + wait_s
+    while asyncio.get_event_loop().time() < deadline:
+        await asyncio.sleep(0.5)
+        job = (
+            await session.execute(
+                select(CoreJob)
+                .where(CoreJob.id == job.id)
+                .execution_options(populate_existing=True)
+            )
+        ).scalar_one()
+        if job.status == "succeeded":
+            fresh = await _latest_score(session, index_def.id)
+            if fresh is not None:
+                return _score_envelope(index_def, fresh)
+        if job.status == "failed":
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "error": {
+                        "code": "RECOMPUTE_FAILED",
+                        "hint": f"GET /jobs/{job.id} for the error detail",
+                    }
+                },
+            )
+    return _job_202(job, f"recompute for '{index_id}' still pending after {wait_s}s;")
+
+
+@router.post("/{index_id}/score/refresh", response_model=JobEnvelope, status_code=202)
+async def refresh_score(
+    index_id: str,
+    session: AsyncSession = Depends(get_session),
+) -> JSONResponse:
+    """Force-enqueue a pipeline tick for this index (deduped). 202 + job_id."""
+    index_def = await _current_def(session, index_id)
+    job = await _enqueue_score_job(session, index_def.index_id)
+    return _job_202(job, f"recompute for '{index_def.index_id}'")
+
+
+@router.post("/{index_id}/backtest", response_model=WorkflowRunEnvelope, status_code=202)
+async def start_backtest(
+    index_id: str,
+    days: int = Query(default=90, ge=1, le=730),
+    step_hours: int = Query(default=24, ge=1, le=168),
+    session: AsyncSession = Depends(get_session),
+) -> JSONResponse:
+    """Start a durable backtest workflow (CORR-8.1). 202 + workflow_run_id;
+    poll GET /workflows/{id}, download GET /workflows/{id}/csv when done."""
+    index_def = await _current_def(session, index_id)
+    run = await create_run(
+        session,
+        "backtest",
+        {"index_id": index_def.index_id, "days": days, "step_hours": step_hours},
+    )
+    job = await queue.enqueue(
+        session,
+        "workflow",
+        {"workflow_run_id": run.id},
+        dedupe_key=f"workflow:{run.id}",
+    )
+    run.job_id = job.id
+    await queue.notify(session)
+    await session.commit()
+
+    envelope = WorkflowRunEnvelope(
+        summary=(
+            f"backtest of '{index_def.index_id}' over {days}d started; "
+            f"poll GET /workflows/{run.id}"
+        ),
+        data=WorkflowRunPayload.model_validate(run),
+    )
+    return JSONResponse(
+        status_code=status.HTTP_202_ACCEPTED, content=jsonable_encoder(envelope)
     )
 
 
@@ -304,6 +455,19 @@ _SEAT_DEFAULTS = {
     "holdover_d": 0,
 }
 
+# Polymarket sets `groupItemTitle` to the candidate ("Jon Husted (R)") once a
+# race has named nominees, and to a generic party/outcome label before that.
+# Only the former is a matchup signal.
+_GENERIC_GROUP_TITLES = {"republican", "democrat", "democratic", "yes", "no", "other"}
+
+
+def _candidate_label(raw: dict | None) -> str | None:
+    """Candidate name from a market's raw Gamma payload, or None if generic."""
+    label = str((raw or {}).get("groupItemTitle") or "").strip()
+    if not label or label.lower() in _GENERIC_GROUP_TITLES:
+        return None
+    return label
+
 
 @router.get("/{index_id}/senate-board", response_model=SenateBoardEnvelope)
 async def senate_board(
@@ -318,11 +482,12 @@ async def senate_board(
     (plus the holdover seats not on the ballot), and returns the full board
     contract consumed by the design's senate view.
 
-    STEP 1 scope: the distribution fields are real; per-race attribution
-    (state / matchup / incumbent / delta) is deferred to CORR-1.3, so
-    ``prob_by_state`` is empty for now. This endpoint is generic over any
-    index whose components are per-seat races — it's the senate suite that
-    will use it first.
+    Per-race attribution (CORR-1.3 step 2): ``state`` comes from the title
+    parse, ``matchup`` from Polymarket's ``groupItemTitle`` (candidate names
+    like "Jon Husted (R)"; generic "Republican"/"Democrat" labels yield no
+    matchup), ``contracts``/``exchanges`` from the seat's underlying per-party
+    markets, and ``delta_14d`` from the price snapshot ≥14 days before the
+    score. ``incumbent_party`` stays null — no ingested source carries it yet.
     """
     index_def = await _current_def(session, index_id)
 
@@ -350,11 +515,15 @@ async def senate_board(
         market_ids = list(evals)
 
     title_by_id: dict[int, str] = {}
+    venue_by_id: dict[int, str] = {}
+    raw_by_id: dict[int, dict] = {}
     if market_ids:
         markets = (
             await session.execute(select(CoreMarket).where(CoreMarket.id.in_(market_ids)))
         ).scalars().all()
         title_by_id = {m.id: m.title for m in markets}
+        venue_by_id = {m.id: m.venue for m in markets}
+        raw_by_id = {m.id: m.raw for m in markets if isinstance(m.raw, dict)}
 
     # Latest price + volume at-or-before score.as_of, one row per market.
     price_by_market: dict[int, float] = {}
@@ -413,17 +582,107 @@ async def senate_board(
     )
     counts = band_counts(contested_probs, holdover_r=holdover_r, holdover_d=holdover_d)
 
-    races = [
-        SenateRace(
-            market_id=s.market_id,
-            title=title_by_id.get(s.market_id, "(unknown)"),
-            prob_r=round(s.prob_r * 100.0, 2),
-            band=classify_band(s.prob_r),
-            volume_24h=volume_by_market.get(s.market_id),
-            state=s.state_code,
-        )
+    # Enrich one-sided seats with the complementary per-party market. The
+    # seat formula's relevancy factor typically zeroes the D-side market out
+    # of the score lineage (republican_on_yes = 0), so the components alone
+    # never carry the Democratic candidate's name — but Polymarket names both
+    # sides via groupItemTitle. One regex scan over unresolved markets fills
+    # the missing half of each matchup.
+    missing_sides = {
+        (s.state, "R" if s.r_market_id is None else "D")
         for s in seats
-    ]
+        if s.r_market_id is None or s.d_market_id is None
+    }
+    complement_by_side: dict[tuple[str, str], CoreMarket] = {}
+    if missing_sides:
+        comp_rows = (
+            await session.execute(
+                select(CoreMarket).where(
+                    CoreMarket.title.op("~*")(
+                        r"will the (republicans|democrats) win the .+ senate race in 2026"
+                    ),
+                    CoreMarket.resolved_at.is_(None),
+                    CoreMarket.id.notin_(market_ids) if market_ids else True,
+                )
+            )
+        ).scalars().all()
+        for m in comp_rows:
+            parsed = parse_seat_race(m.title)
+            if parsed is None:
+                continue
+            party, state = parsed
+            key = (state, party)
+            if key in missing_sides and key not in complement_by_side:
+                complement_by_side[key] = m
+
+    # CORR-1.3 step-2 per-race attribution. delta_14d compares each seat's
+    # P(R) against the snapshot at-or-before 14 days prior; seats whose
+    # history doesn't reach back that far stay null (rendered as "—").
+    prior_price_by_market: dict[int, float] = {}
+    rep_ids = [s.market_id for s in seats]
+    if rep_ids:
+        prior_cutoff = score.as_of - timedelta(days=14)
+        prior_stmt = (
+            select(TsPriceSnapshot.market_id, TsPriceSnapshot.last_price)
+            .where(
+                TsPriceSnapshot.market_id.in_(rep_ids),
+                TsPriceSnapshot.snapshot_at <= prior_cutoff,
+            )
+            .order_by(TsPriceSnapshot.market_id, TsPriceSnapshot.snapshot_at.desc())
+            .distinct(TsPriceSnapshot.market_id)
+        )
+        for mid, price in (await session.execute(prior_stmt)).all():
+            if price is not None:
+                prior_price_by_market[mid] = float(price)
+
+    races = []
+    for s in seats:
+        comp_r = complement_by_side.get((s.state, "R"))
+        comp_d = complement_by_side.get((s.state, "D"))
+        side_markets: list[tuple[int, dict | None, str | None]] = []
+        if s.r_market_id is not None:
+            side_markets.append((s.r_market_id, raw_by_id.get(s.r_market_id), venue_by_id.get(s.r_market_id)))
+        elif comp_r is not None:
+            side_markets.append((comp_r.id, comp_r.raw if isinstance(comp_r.raw, dict) else None, comp_r.venue))
+        else:
+            side_markets.append((0, None, None))
+        if s.d_market_id is not None:
+            side_markets.append((s.d_market_id, raw_by_id.get(s.d_market_id), venue_by_id.get(s.d_market_id)))
+        elif comp_d is not None:
+            side_markets.append((comp_d.id, comp_d.raw if isinstance(comp_d.raw, dict) else None, comp_d.venue))
+        else:
+            side_markets.append((0, None, None))
+
+        (_, r_raw, _), (_, d_raw, _) = side_markets
+        r_label = _candidate_label(r_raw)
+        d_label = _candidate_label(d_raw)
+        matchup = (
+            f"{r_label or 'Republican'} vs {d_label or 'Democrat'}"
+            if (r_label or d_label)
+            else None
+        )
+        source_ids = [mid for mid, _, _ in side_markets if mid]
+        source_venues = sorted({v for _, _, v in side_markets if v})
+        delta_14d = None
+        prior_price = prior_price_by_market.get(s.market_id)
+        if prior_price is not None:
+            prior_prob_r = prior_price if s.source_party == "R" else 1.0 - prior_price
+            prior_prob_r = max(0.0, min(1.0, prior_prob_r))
+            delta_14d = round((s.prob_r - prior_prob_r) * 100.0, 2)
+        races.append(
+            SenateRace(
+                market_id=s.market_id,
+                title=title_by_id.get(s.market_id, "(unknown)"),
+                prob_r=round(s.prob_r * 100.0, 2),
+                band=classify_band(s.prob_r),
+                volume_24h=volume_by_market.get(s.market_id),
+                state=s.state_code,
+                matchup=matchup,
+                delta_14d=delta_14d,
+                contracts=len(source_ids),
+                exchanges=source_venues,
+            )
+        )
     prob_by_state = {
         s.state_code: round(s.prob_r * 100.0, 2)
         for s in seats

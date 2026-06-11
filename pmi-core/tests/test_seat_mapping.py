@@ -108,6 +108,23 @@ def test_both_markets_collapse_to_one_seat_preferring_r():
     assert s.prob_r == pytest.approx(0.78)
     assert s.source_party == "R"
     assert s.market_id == 10
+    # Both underlying markets surface for attribution (CORR-1.3 step 2).
+    assert s.r_market_id == 10
+    assert s.d_market_id == 11
+
+
+def test_single_sided_seats_carry_only_their_market():
+    seats = extract_contested_seats(
+        [
+            (1, "Will the Republicans win the Ohio Senate race in 2026?", 0.62),
+            (2, "Will the Democrats win the Illinois Senate race in 2026?", 0.80),
+        ]
+    )
+    by_state = {s.state: s for s in seats}
+    assert by_state["Ohio"].r_market_id == 1
+    assert by_state["Ohio"].d_market_id is None
+    assert by_state["Illinois"].r_market_id is None
+    assert by_state["Illinois"].d_market_id == 2
 
 
 def test_noise_filtered_out_of_contested_set():

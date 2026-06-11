@@ -157,20 +157,22 @@ const MAGAMap = ({ stateData, activeTab }: MAGAMapProps) => {
 
             {tooltip && (
                 <div
-                    className="absolute z-10 shadow-lg transition-all duration-300 ease-in-out transform animate-popup py-3 px-4 bg-bg-dark-primary rounded-lg border border-black/10 flex flex-col gap-2 items-center justify-center max-w-35 w-full text-center cursor-pointer pointer-events-none"
+                    className="absolute z-10 pointer-events-none"
                     style={{
                         left: tooltip.x,
                         top: tooltip.y,
                         transform: 'translate(-50%, calc(-100% - 12px))',
                     }}
                 >
-                    <h2
-                        className="font-semibold text-gray-900 w-16 h-10 rounded-lg flex items-center justify-center text-lg"
-                        style={{ backgroundColor: getPmiColor(tooltip.pmiScore), color: (tooltip.pmiScore <= 20 || tooltip.pmiScore > 80) ? "#fff" : "#333" }}
-                    >
-                        {tooltip.pmiScore.toFixed(1)}
-                    </h2>
-                    <h4 className="text-sm text-text-primary font-semibold">{tooltip.name} MAGA Index</h4>
+                    <div className="animate-tooltip-pop shadow-lg py-3 px-4 bg-bg-dark-primary rounded-lg border border-black/10 flex flex-col gap-2 items-center justify-center max-w-35 w-full text-center">
+                        <h2
+                            className="font-semibold text-gray-900 w-16 h-10 rounded-lg flex items-center justify-center text-lg"
+                            style={{ backgroundColor: getPmiColor(tooltip.pmiScore), color: (tooltip.pmiScore <= 20 || tooltip.pmiScore > 80) ? "#fff" : "#333" }}
+                        >
+                            {tooltip.pmiScore.toFixed(1)}
+                        </h2>
+                        <h4 className="text-sm text-text-primary font-semibold">{tooltip.name} MAGA Index</h4>
+                    </div>
                 </div>
             )}
         </div>

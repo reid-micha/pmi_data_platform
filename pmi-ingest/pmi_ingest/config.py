@@ -148,6 +148,15 @@ class IngestSettings(BaseSettings):
     # disjoint chunk so we can subscribe to the entire universe.
     polymarket_ws_max_tokens: int = Field(default=2000)
 
+    # ─── WS-triggered re-eval (CORR-4.6) ────────────────────────────────────
+    # When a trade lands on a market that is a component of some current
+    # index's latest score, enqueue a `reeval-market` job onto the Postgres
+    # queue (core_jobs) so the pmi-worker re-scores affected indexes ahead of
+    # the hourly cron. Debounce is in-memory per market; further storm control
+    # (job dedupe + per-index freshness floor) lives queue/worker-side.
+    ws_reeval_enabled: bool = Field(default=True)
+    ws_reeval_debounce_sec: float = Field(default=60.0)
+
     # ─── Polygon chain indexer (CORR-4.2) ──────────────────────────────────
     # Leave blank to disable — `pmi-ingest chain` will exit cleanly without
     # an RPC URL configured. Recommended provider: Alchemy / Quicknode /

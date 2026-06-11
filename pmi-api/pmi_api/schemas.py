@@ -60,6 +60,55 @@ class HistoryEnvelope(BaseModel):
     data: HistoryPayload
 
 
+# --------------------------------------------------------------------------
+# Job queue + durable workflows (CORR-4.6 / CORR-8.1, Postgres-backed).
+# The §3.2 on-demand path returns 202 + a JobEnvelope when the cached score
+# (latest ts_index_scores row) is staler than the caller's max_age_s.
+# --------------------------------------------------------------------------
+
+
+class JobPayload(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    # Field name is `job_id` in responses; ORM attr is `id`.
+    job_id: int = Field(validation_alias=AliasChoices("id", "job_id"))
+    name: str
+    status: str  # queued | running | succeeded | failed
+    attempts: int
+    max_attempts: int
+    enqueued_at: datetime
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    error: str | None = None
+    result: dict | None = None
+
+
+class JobEnvelope(BaseModel):
+    summary: str
+    data: JobPayload
+
+
+class WorkflowRunPayload(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    workflow_run_id: int = Field(validation_alias=AliasChoices("id", "workflow_run_id"))
+    workflow: str
+    status: str  # queued | running | succeeded | failed | cancelled
+    args: dict
+    steps_done: int
+    steps_total: int | None = None
+    created_at: datetime
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    error: str | None = None
+    result: dict | None = None
+
+
+class WorkflowRunEnvelope(BaseModel):
+    summary: str
+    data: WorkflowRunPayload
+
+
 class SourceHealthRow(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     source: str
@@ -121,9 +170,13 @@ class SenateRace(BaseModel):
     prob_r: float
     band: str
     volume_24h: float | None = None
-    # CORR-1.3 attribution — null until condition_id grouping lands.
+    # CORR-1.3 attribution. state = title parse; matchup = candidate names from
+    # groupItemTitle (null while the race only has generic party labels);
+    # delta_14d = P(R) change vs the snapshot ≥14d prior (null without history);
+    # contracts / exchanges = the seat's underlying per-party markets.
     state: str | None = None
     matchup: str | None = None
+    # Still null — no ingested source carries incumbency yet.
     incumbent_party: str | None = None
     delta_14d: float | None = None
     contracts: int | None = None
@@ -262,6 +315,53 @@ class MagaTrendsPayload(BaseModel):
 class MagaTrendsEnvelope(BaseModel):
     summary: str
     data: MagaTrendsPayload
+
+
+class MagaNationalTrendsPayload(BaseModel):
+    days: int
+    points: list[MagaTrendPoint]
+
+
+class MagaNationalTrendsEnvelope(BaseModel):
+    summary: str
+    data: MagaNationalTrendsPayload
+
+
+class MagaLastUpdatedPayload(BaseModel):
+    generated_at: datetime | None   # None when no race-market snapshot exists
+
+
+class MagaLastUpdatedEnvelope(BaseModel):
+    summary: str
+    data: MagaLastUpdatedPayload
+
+
+class AppSettingsResponse(BaseModel):
+    """Client-facing app settings (legacy war-index /api/settings shape)."""
+
+    future_phrase: str
+
+
+class PromptRecord(BaseModel):
+    """One prompt as the admin editor sees it (legacy /api/admin/prompts shape).
+
+    ``content`` maps to ``core_prompts.template``; ``model`` / ``temperature``
+    surface the active production factor model bound to that prompt version
+    (display-only — promotion happens via `pmi-core models`). ``top_p`` /
+    ``reasoning_effort`` have no platform equivalent yet and stay None.
+    """
+
+    content: str
+    model: str | None = None
+    temperature: float | None = None
+    top_p: float | None = None
+    reasoning_effort: str | None = None
+
+
+class PromptsSaveResponse(BaseModel):
+    status: str
+    # name → new version number, only for prompts whose content actually changed
+    new_versions: dict[str, int]
 
 
 # resolve forward ref

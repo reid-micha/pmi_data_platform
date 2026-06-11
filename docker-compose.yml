@@ -176,6 +176,17 @@ services:
     command:
       - "while true; do python -m pmi_ingest.cli polymarket-history || true; sleep 86400; done"
 
+  # Polymarket CLOB WS trade feed (CORR-4.1) → ts_trades. Long-lived consumer
+  # with auto-reconnect; also the trigger for WS-driven single-market re-eval
+  # (CORR-4.6): trades on index-component markets enqueue `reeval-market` onto
+  # the Postgres queue for the pmi-worker. Disable the trigger with
+  # WS_REEVAL_ENABLED=false (ingest settings carry no PMI_ prefix).
+  pmi-ingest-ws:
+    <<: *pmi-ingest-base
+    container_name: pmi-ingest-ws
+    profiles: ["ingest"]
+    command: ["ws"]
+
   # Kalshi REST markets poller → core_markets + ts_price_snapshots.
   pmi-ingest-kalshi-rest:
     <<: *pmi-ingest-base
@@ -283,6 +294,36 @@ services:
       - ./pmi-workers/pmi_workers:/app/pmi_workers:ro
       - ./pmi-workers/cron:/app/cron:ro
 
+  # Long-lived Postgres-queue worker (CORR-4.6, cron → worker split). Claims
+  # `core_jobs` rows that supercronic (cron beats), pmi-api (on-demand score /
+  # backtest), and the WS consumer (reeval-market) enqueue. Same image as
+  # pmi-workers, different command. Scale with
+  # `docker compose up -d --scale pmi-worker=N` — claims are FOR UPDATE SKIP
+  # LOCKED so parallel workers never double-execute (drop container_name first).
+  pmi-worker:
+    build:
+      context: ./pmi-workers
+    image: pmi-workers:dev
+    container_name: pmi-worker
+    profiles: ["pmi", "workers"]
+    restart: unless-stopped
+    # The image CMD is supercronic; this service runs the queue loop instead.
+    command: ["pmi-workers", "worker"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    environment:
+      PMI_DB_HOST: postgres
+      PMI_MLFLOW_TRACKING_URI: http://mlflow:5000
+      PMI_OLLAMA_BASE_URL: http://ollama:11434/v1
+    volumes:
+      - ./pmi-core/pmi_core:/app/pmi_core:ro
+      - ./pmi-workers/pmi_workers:/app/pmi_workers:ro
+
   # Next.js 15 dashboard over pmi-api. Profile `pmi-web` so it stays out of the
   # default stack; bring up with `just web-up` for SSR dev (auto-reload).
   pmi-web:
@@ -323,6 +364,12 @@ services:
     container_name: pmi-maga-web
     profiles: ["pmi-maga-web"]
     restart: unless-stopped
+    environment:
+      # Browser-reachable pmi-api base — activates the pmi platform bridge
+      # (packages/api/src/pmi_backend.ts) instead of the legacy war-index API.
+      # Must be reachable from the user's browser (port-forwarded), not the
+      # compose network.
+      VITE_PMI_API_URL: ${PMI_API_PUBLIC_URL:-http://localhost:8000}
     ports:
       - "${PMI_MAGA_WEB_PORT:-5173}:5173"
     volumes:

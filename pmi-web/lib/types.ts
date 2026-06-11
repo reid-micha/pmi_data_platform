@@ -82,8 +82,11 @@ export interface SourceHealthRow {
 
 /**
  * Senate board (SHIP-2.5) — mirrors SenateBoardEnvelope in pmi-api schemas.py.
- * Distribution fields are real (Poisson-binomial, CORR-1.6); per-race
- * attribution (state/matchup/incumbent_party/…) is null until CORR-1.3.
+ * Distribution fields are real (Poisson-binomial, CORR-1.6). Per-race
+ * attribution (CORR-1.3 step 2): state/contracts/exchanges always fill;
+ * matchup is null until Polymarket names a candidate on either side;
+ * delta_14d is null until snapshot history reaches 14 days back;
+ * incumbent_party stays null (no ingested source carries it yet).
  */
 export interface SenateRace {
   market_id: number;

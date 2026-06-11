@@ -52,8 +52,15 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from pmi_core import queue as pgq
 from pmi_core.db import session_scope
-from pmi_core.models import CoreMarket, TsTrade
+from pmi_core.models import (
+    AuditEvaluation,
+    CoreIndexDefinition,
+    CoreMarket,
+    TsIndexScore,
+    TsTrade,
+)
 from pmi_ingest.config import ingest_settings
 from pmi_ingest.health import record_poll
 
@@ -151,6 +158,47 @@ def _parse_trade_event(evt: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+async def _load_component_market_ids(session: AsyncSession) -> set[int]:
+    """Market ids that are components of some current index's latest score.
+
+    The WS-triggered re-eval (CORR-4.6) only fires for these — trades on the
+    other ~315k markets are persisted but never enqueue work. Refreshed on the
+    same cadence as the token list, so component churn (new score with new
+    components) is picked up within `token_refresh_sec`.
+    """
+    def_ids = (
+        await session.execute(
+            select(CoreIndexDefinition.id).where(
+                CoreIndexDefinition.is_current.is_(True)
+            )
+        )
+    ).scalars().all()
+
+    eval_ids: list[int] = []
+    for def_id in def_ids:
+        score = (
+            await session.execute(
+                select(TsIndexScore.component_evaluation_ids)
+                .where(TsIndexScore.index_definition_id == def_id)
+                .order_by(TsIndexScore.as_of.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        if score:
+            eval_ids.extend(score)
+
+    if not eval_ids:
+        return set()
+    market_ids = (
+        await session.execute(
+            select(AuditEvaluation.market_id)
+            .where(AuditEvaluation.id.in_(eval_ids))
+            .distinct()
+        )
+    ).scalars().all()
+    return set(market_ids)
+
+
 async def _persist_trade(
     session: AsyncSession,
     market_id: int,
@@ -191,6 +239,10 @@ class PolymarketWsConsumer:
         # In-memory state for the current run.
         self._tokens: dict[str, int] = {}
         self._trades_since_heartbeat = 0
+        # CORR-4.6 WS-triggered re-eval: markets worth enqueuing for (current
+        # index components) + per-market debounce clock (monotonic seconds).
+        self._component_market_ids: set[int] = set()
+        self._reeval_last_enqueue: dict[int, float] = {}
 
     async def _emit_heartbeat(
         self, *, started: datetime, success: bool, error_message: str | None
@@ -212,7 +264,46 @@ class PolymarketWsConsumer:
     async def _refresh_tokens(self) -> None:
         async with session_scope() as session:
             self._tokens = await _load_active_tokens(session)
-        log.info("polymarket.ws.tokens_loaded", count=len(self._tokens))
+            if ingest_settings.ws_reeval_enabled:
+                self._component_market_ids = await _load_component_market_ids(session)
+        log.info(
+            "polymarket.ws.tokens_loaded",
+            count=len(self._tokens),
+            index_component_markets=len(self._component_market_ids),
+        )
+
+    async def _maybe_enqueue_reeval(self, session: AsyncSession, market_id: int) -> None:
+        """Trade on an index-component market → enqueue `reeval-market`.
+
+        Layer 1 of storm control: in-memory per-market debounce. Layers 2/3
+        (job dedupe, per-index freshness floor) live queue/worker-side, so
+        losing this in-memory clock on reconnect is harmless.
+        """
+        if not ingest_settings.ws_reeval_enabled:
+            return
+        if market_id not in self._component_market_ids:
+            return
+        now = asyncio.get_event_loop().time()
+        last = self._reeval_last_enqueue.get(market_id)
+        if last is not None and now - last < ingest_settings.ws_reeval_debounce_sec:
+            return
+        self._reeval_last_enqueue[market_id] = now
+        try:
+            await pgq.enqueue(
+                session,
+                "reeval-market",
+                {"market_id": market_id},
+                dedupe_key=f"reeval-market:{market_id}",
+                priority=pgq.PRIORITY_INTERACTIVE,
+            )
+            await pgq.notify(session)  # transactional: fires at scope commit
+            log.info("polymarket.ws.reeval_enqueued", market_id=market_id)
+        except Exception as exc:  # noqa: BLE001 - enqueue failure must not kill the feed
+            log.warning(
+                "polymarket.ws.reeval_enqueue_failed",
+                market_id=market_id,
+                error=str(exc)[:200],
+            )
 
     async def _subscribe_in_chunks(self, ws: Any, token_ids: list[str]) -> None:
         """Send subscribes in batches so a 60k-token universe doesn't trip
@@ -295,6 +386,7 @@ class PolymarketWsConsumer:
                             )
                             if inserted:
                                 self._trades_since_heartbeat += 1
+                                await self._maybe_enqueue_reeval(session, market_id)
                         except Exception as exc:
                             log.warning(
                                 "polymarket.ws.persist_failed",

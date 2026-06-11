@@ -13,6 +13,8 @@ from pmi_workers.jobs import (  # noqa: F401  registration side-effects
     hourly,
     llm_batch,
     reeval_drifted,
+    reeval_market,
     score,
     score_all,
+    workflow,
 )

@@ -121,6 +121,26 @@ class Settings(BaseSettings):
     mlflow_factor_child_runs: bool = Field(default=True)
     mlflow_experiment_prefix: str = Field(default="pmi.")  # experiments named e.g. "pmi.polymarket-war-index"
 
+    # ── Postgres job queue (CORR-4.6, Redis-free) ───────────────────────────
+    # `pmi-workers worker` claim loop. Concurrency is jobs-in-flight per worker
+    # process; run_pipeline is internally concurrent already, so keep this low.
+    worker_concurrency: int = Field(default=2)
+    # Fallback poll cadence when LISTEN/NOTIFY is unavailable (it normally
+    # wakes the worker instantly on enqueue).
+    worker_poll_interval_sec: float = Field(default=2.0)
+    worker_heartbeat_sec: float = Field(default=15.0)
+    # A 'running' job whose heartbeat is older than this is presumed crashed
+    # (worker OOM / container kill) and re-queued — Temporal-style at-least-once.
+    worker_stale_after_sec: float = Field(default=300.0)
+    job_default_max_attempts: int = Field(default=3)
+    # Retry delay = base × 2^(attempts-1), capped at 10 min.
+    job_retry_backoff_base_sec: float = Field(default=10.0)
+
+    # WS-triggered re-eval (CORR-4.6 on-demand path): skip re-scoring an index
+    # whose latest score is fresher than this — trade storms then cost one
+    # pipeline tick per index per interval, not one per trade.
+    ws_reeval_min_interval_sec: int = Field(default=300)
+
     log_level: str = Field(default="INFO")
 
     model_config = SettingsConfigDict(

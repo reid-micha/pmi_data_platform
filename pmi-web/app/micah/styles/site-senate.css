@@ -212,7 +212,7 @@
 .senate-table__head,
 .senate-table__row {
   display: grid;
-  grid-template-columns: 80px 1.4fr 1.6fr 120px 80px 110px;
+  grid-template-columns: 80px 1.4fr 1.6fr 120px 70px 80px 110px;
   align-items: center;
   gap: var(--s-3);
   padding: var(--s-3) var(--s-5);
@@ -305,7 +305,7 @@
   .senate-viz__rail { width: 180px; }
   .senate-table__head,
   .senate-table__row {
-    grid-template-columns: 60px 1.4fr 1.6fr 100px 70px 90px;
+    grid-template-columns: 60px 1.4fr 1.6fr 100px 60px 70px 90px;
   }
 }
 @media (max-width: 900px) {

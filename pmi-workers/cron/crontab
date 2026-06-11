@@ -1,28 +1,32 @@
 # pmi-workers supercronic crontab.
 #
 # Each line: <min> <hour> <dom> <month> <dow> <command>
-# Trailing `&` keeps supercronic from blocking the schedule on a long-running
-# job — same pattern as micah-job-executor/cron/crontab.
 #
-# Jobs are resolved via the `run-job` console script (see pyproject.toml
-# [project.scripts]) which dispatches through `pmi_workers.registry`.
+# CORR-4.6 (cron → worker): schedule lines ENQUEUE onto the Postgres job queue
+# (`core_jobs`); the long-lived `pmi-worker` compose service claims + executes
+# (retry / heartbeat / dedupe live there). `pmi-workers enqueue` dedupes by
+# job name+args, so a beat landing while the previous tick is still
+# queued/running is a no-op instead of stacking — which also retires the old
+# trailing-`&` pattern (enqueue is a sub-second INSERT).
+#
+# One-shot manual in-process execution still works: `run-job <name>`.
 
 # Hourly: re-score every current PMI definition.
-0 * * * * run-job hourly &
+0 * * * * pmi-workers enqueue hourly
 
 # Tier 3 (CORR-5.2): every 15 min, re-score only the indexes whose component
 # prices drifted >= PMI_DRIFT_THRESHOLD_PCT points vs ~lookback ago. Cheap
 # no-op when nothing drifted; keeps scores fresher than the hourly full pass.
-*/15 * * * * run-job reeval-drifted &
+*/15 * * * * pmi-workers enqueue reeval-drifted
 
 # Daily 10:00 UTC: heavier maintenance (placeholder — currently same as hourly).
-0 10 * * * run-job daily &
+0 10 * * * pmi-workers enqueue daily
 
 # --- OpenAI Batch API (CORR-5.3, half-price nightly recompute) --------------
 # Only meaningful when factors are bound to gpt-*/openai/* models AND
 # OPENAI_API_KEY is set; with an all-ollama registry both jobs no-op cleanly.
-0 2 * * * run-job llm-batch-submit &
-*/30 * * * * run-job llm-batch-poll &
+0 2 * * * pmi-workers enqueue llm-batch-submit
+*/30 * * * * pmi-workers enqueue llm-batch-poll
 
 # ─── Polymarket deep-signal cycle jobs (CORR-4.1 ~ 4.4) ─────────────────────
 # These shell out to the pmi-ingest CLI. The pmi-workers image does NOT bundle

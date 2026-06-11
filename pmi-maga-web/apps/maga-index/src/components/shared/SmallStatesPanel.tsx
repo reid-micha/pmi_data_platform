@@ -52,19 +52,21 @@ export default function SmallStatesPanel({ stateData, activeTab }: SmallStatesPa
                         })}
                         {tooltip && (
                             <div
-                                className="absolute z-20 shadow-lg animate-popup py-3 px-4 bg-bg-dark-primary rounded-lg border border-black/10 flex flex-col gap-2 items-center justify-center w-36 text-center pointer-events-none"
+                                className="absolute z-20 pointer-events-none"
                                 style={{ left: tooltip.x, top: tooltip.y, transform: 'translate(-50%, calc(-100% - 10px))' }}
                             >
-                                <h2
-                                    className="font-semibold w-16 h-10 rounded-lg flex items-center justify-center text-lg"
-                                    style={{
-                                        backgroundColor: getPmiColor(tooltip.score),
-                                        color: tooltip.score <= 20 || tooltip.score > 80 ? '#fff' : '#000'
-                                    }}
-                                >
-                                    {tooltip.score.toFixed(1)}
-                                </h2>
-                                <h4 className="text-sm text-text-primary font-semibold">{tooltip.name} MAGA Index</h4>
+                                <div className="animate-tooltip-pop shadow-lg py-3 px-4 bg-bg-dark-primary rounded-lg border border-black/10 flex flex-col gap-2 items-center justify-center w-36 text-center">
+                                    <h2
+                                        className="font-semibold w-16 h-10 rounded-lg flex items-center justify-center text-lg"
+                                        style={{
+                                            backgroundColor: getPmiColor(tooltip.score),
+                                            color: tooltip.score <= 20 || tooltip.score > 80 ? '#fff' : '#000'
+                                        }}
+                                    >
+                                        {tooltip.score.toFixed(1)}
+                                    </h2>
+                                    <h4 className="text-sm text-text-primary font-semibold">{tooltip.name} MAGA Index</h4>
+                                </div>
                             </div>
                         )}
                     </div>

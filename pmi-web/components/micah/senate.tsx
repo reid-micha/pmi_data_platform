@@ -1,8 +1,10 @@
 /**
  * Senate board components ported from `pmi-new-frontend/views-senate.jsx`.
- * Server-rendered against the real /senate-board payload. Per-race state &
- * matchup are null until CORR-1.3, so the table renders the market title and
- * row navigation is disabled until a market→seat mapping exists.
+ * Server-rendered against the real /senate-board payload. Per-race attribution
+ * is live (CORR-1.3 step 2): state, contracts and exchanges always fill;
+ * matchup shows candidate names once Polymarket labels both nominees (falls
+ * back to the market title until then); delta_14d renders as "—" until the
+ * snapshot history reaches 14 days back.
  */
 import { heatColor, isDarkHeat, BAND_ORDER, BAND_META, type Band } from "@/lib/heat";
 import { ExchangeStack, Tag } from "./ui";
@@ -85,6 +87,7 @@ export function SenateRaceTable({ races }: { races: SenateRace[] }) {
         <span>Market</span>
         <span>Rating</span>
         <span style={{ textAlign: "right" }}>P(GOP)</span>
+        <span style={{ textAlign: "right" }}>14d Δ</span>
         <span style={{ textAlign: "right" }}>24h Vol</span>
         <span>Exchanges</span>
       </div>
@@ -112,6 +115,15 @@ export function SenateRaceTable({ races }: { races: SenateRace[] }) {
             <span className="senate-table__prob">
               {r.prob_r.toFixed(0)}
               <span style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 500 }}>%</span>
+            </span>
+            <span
+              className={`senate-table__delta senate-table__delta--${
+                r.delta_14d == null || r.delta_14d === 0 ? "flat" : r.delta_14d > 0 ? "up" : "down"
+              }`}
+            >
+              {r.delta_14d == null
+                ? "—"
+                : `${r.delta_14d > 0 ? "+" : ""}${r.delta_14d.toFixed(1)}`}
             </span>
             <span className="senate-table__delta senate-table__delta--flat">
               {r.volume_24h == null ? "—" : `$${(r.volume_24h / 1000).toFixed(0)}k`}

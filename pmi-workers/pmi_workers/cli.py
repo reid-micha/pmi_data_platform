@@ -79,14 +79,120 @@ def score(index_id: str) -> None:
 
 
 @cli.command()
-def arq() -> None:
-    """Start the Arq listener (P1, install with `.[arq]`)."""
-    click.echo(
-        "Arq worker not implemented yet — landing in P1 alongside Redis. "
-        "See README.md 'Why not P0?'.",
-        err=True,
+@click.option(
+    "--queue",
+    "queues",
+    multiple=True,
+    help="Only claim from these queues. Repeatable. Default: all queues.",
+)
+def worker(queues: tuple[str, ...]) -> None:
+    """Start the Postgres-queue worker loop (CORR-4.6, Redis-free Arq role).
+
+    Claims `core_jobs` rows (FOR UPDATE SKIP LOCKED) and executes the
+    registered job they name. Safe to run several of these side by side.
+    """
+    from pmi_core.observability import init_sentry
+    from pmi_workers.worker import run_worker
+
+    init_sentry("pmi-workers")
+    asyncio.run(run_worker(list(queues) or None))
+
+
+@cli.command()
+@click.argument("name")
+@click.option("--args", "args_json", default=None, help="Job kwargs as a JSON object.")
+@click.option("--queue", "queue_name", default="default", show_default=True)
+@click.option("--priority", default=100, show_default=True, help="Lower = sooner.")
+@click.option(
+    "--dedupe/--no-dedupe",
+    default=True,
+    show_default=True,
+    help="Collapse with an identical already-pending job (key = name + args).",
+)
+def enqueue(
+    name: str, args_json: str | None, queue_name: str, priority: int, dedupe: bool
+) -> None:
+    """Enqueue NAME onto the Postgres queue (the cron → worker entry point).
+
+    Supercronic lines call this instead of executing in-process, so schedule
+    beats never stack on a slow tick and all execution funnels through the
+    worker (single place for retry / heartbeat / audit).
+    """
+    from pmi_core import queue as pgq
+
+    args = json.loads(args_json) if args_json else {}
+    if not isinstance(args, dict):
+        click.echo("error: --args must be a JSON object", err=True)
+        sys.exit(2)
+    dedupe_key = None
+    if dedupe:
+        canon = json.dumps(args, sort_keys=True) if args else ""
+        dedupe_key = f"{name}:{canon}" if canon else name
+
+    job = asyncio.run(
+        pgq.enqueue_and_notify(
+            name, args, queue=queue_name, priority=priority, dedupe_key=dedupe_key
+        )
     )
-    sys.exit(1)
+    click.echo(json.dumps({"job_id": job.id, "name": job.name, "status": job.status}))
+
+
+@cli.command()
+@click.argument("index_id")
+@click.option("--days", default=90, show_default=True)
+@click.option("--step-hours", default=24, show_default=True)
+@click.option(
+    "--wait/--no-wait",
+    default=False,
+    show_default=True,
+    help="Run inline to completion instead of leaving it to the worker.",
+)
+def backtest(index_id: str, days: int, step_hours: int, wait: bool) -> None:
+    """Start a durable backtest workflow for INDEX_ID (CORR-8.1 / SHIP-3.4).
+
+    With --wait, executes in-process and prints the replay points as CSV;
+    without, enqueues for the worker and prints the workflow_run_id to poll
+    via GET /workflows/{id}.
+    """
+    from pmi_core import queue as pgq
+    from pmi_core.db import session_scope
+    from pmi_core.workflow import create_run, execute_run
+
+    async def _start() -> None:
+        async with session_scope() as session:
+            run = await create_run(
+                session,
+                "backtest",
+                {"index_id": index_id, "days": days, "step_hours": step_hours},
+            )
+            job_id = None
+            if not wait:
+                # Hand execution to the worker. With --wait we run inline
+                # instead — enqueuing too would race a worker for the same run.
+                job = await pgq.enqueue(
+                    session,
+                    "workflow",
+                    {"workflow_run_id": run.id},
+                    dedupe_key=f"workflow:{run.id}",
+                )
+                run.job_id = job.id
+                job_id = job.id
+                await pgq.notify(session)
+            run_id = run.id
+
+        if not wait:
+            click.echo(json.dumps({"workflow_run_id": run_id, "job_id": job_id}))
+            return
+
+        result = await execute_run(run_id)
+        click.echo("as_of,score,component_count,markets_priced")
+        for p in result.get("points", []):
+            click.echo(
+                f"{p['as_of']},{p['score'] if p['score'] is not None else ''},"
+                f"{p['component_count']},{p['markets_priced']}"
+            )
+
+    asyncio.run(_start())
 
 
 if __name__ == "__main__":

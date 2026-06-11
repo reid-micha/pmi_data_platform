@@ -8,10 +8,12 @@ from pmi_core.models.base import Base
 from pmi_core.models.core_api_key import CoreApiKey
 from pmi_core.models.core_factor_model import CoreFactorModel
 from pmi_core.models.core_index_definition import CoreIndexDefinition
+from pmi_core.models.core_job import CoreJob
 from pmi_core.models.core_llm_batch import CoreLlmBatch
 from pmi_core.models.core_market import CoreMarket
 from pmi_core.models.core_prompt import CorePrompt
 from pmi_core.models.core_trader import CoreTrader
+from pmi_core.models.core_workflow import CoreWorkflowRun, CoreWorkflowStep
 from pmi_core.models.ts_index_score import TsIndexScore
 from pmi_core.models.ts_orderbook_snapshot import TsOrderbookSnapshot
 from pmi_core.models.ts_price_snapshot import TsPriceSnapshot
@@ -28,10 +30,13 @@ __all__ = [
     "CoreApiKey",
     "CoreFactorModel",
     "CoreIndexDefinition",
+    "CoreJob",
     "CoreLlmBatch",
     "CoreMarket",
     "CorePrompt",
     "CoreTrader",
+    "CoreWorkflowRun",
+    "CoreWorkflowStep",
     "TsIndexScore",
     "TsOrderbookSnapshot",
     "TsPriceSnapshot",

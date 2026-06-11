@@ -73,6 +73,11 @@ class ContestedSeat:
     prob_r: float         # P(Republican wins the seat), in [0, 1]
     market_id: int        # representative market (the one whose price set prob_r)
     source_party: str     # "R" (used R market directly) or "D" (used 1 - D price)
+    # Both underlying per-party markets (either may be None when only one side
+    # trades). Lets the senate-board attribute matchup / contract count /
+    # exchanges per seat without re-parsing titles (CORR-1.3 step 2).
+    r_market_id: int | None = None
+    d_market_id: int | None = None
 
 
 # Public alias so sibling engines (e.g. state_lean) can scan titles for any
@@ -143,8 +148,18 @@ def extract_contested_seats(
         b = by_state[state]
         if b.r_price is not None and b.r_market is not None:
             p_r = max(0.0, min(1.0, b.r_price))
-            seats.append(ContestedSeat(state, state_code(state), p_r, b.r_market, "R"))
+            seats.append(
+                ContestedSeat(
+                    state, state_code(state), p_r, b.r_market, "R",
+                    r_market_id=b.r_market, d_market_id=b.d_market,
+                )
+            )
         elif b.d_price is not None and b.d_market is not None:
             p_r = max(0.0, min(1.0, 1.0 - b.d_price))
-            seats.append(ContestedSeat(state, state_code(state), p_r, b.d_market, "D"))
+            seats.append(
+                ContestedSeat(
+                    state, state_code(state), p_r, b.d_market, "D",
+                    r_market_id=b.r_market, d_market_id=b.d_market,
+                )
+            )
     return seats

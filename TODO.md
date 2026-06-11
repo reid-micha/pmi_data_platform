@@ -6,8 +6,9 @@
 > HTML 版見 [`docs/todo-bilingual.html`](docs/todo-bilingual.html)。新增/完成項目時：**改這裡 + 同步 HTML**。
 >
 > **前情**：平台跑在單台 AWS EC2（Tesla T4）——真實 6-venue ingest（~32 萬 market）、GPU 本地 LLM、
-> vector DB（Tier 0 + SemanticSelector live）、T1 並發 factor eval、hourly + drift-triggered 真實 scoring。
-> 本檔列的是**之後**的事。
+> vector DB（Tier 0 + SemanticSelector live）、T1 並發 factor eval、hourly + drift-triggered 真實 scoring、
+> **Postgres job queue + durable workflow**（cron→worker、on-demand score、WS-trigger re-eval、backtest——
+> 2026-06-11 以無 Redis / 無 Temporal 的 Postgres 版落地）。本檔列的是**之後**的事。
 
 ---
 
@@ -33,6 +34,20 @@
 - **CORR-5.9** `ensemble/<m1>+<m2>` 投票 provider（GPU 雙模型真跑）
 - **CORR-0.5 / 5.4** `_LLMGuard` budget cap + circuit breaker（行為測試通過）
 - **CORR-5.3** Batch API submit/poll jobs + `core_llm_batches`（submit 端真資料 dry-run 驗證；**poll/ingest 未 e2e**，列下方 §2）
+- **CORR-4.6（改 Postgres 版，無 Redis）** job queue 落地：`core_jobs`（SKIP LOCKED claim +
+  LISTEN/NOTIFY + dedupe + retry/backoff + stale 回收）、`pmi-workers worker` 長駐 loop（compose `pmi-worker`）、
+  cron → enqueue（crontab 全改 `pmi-workers enqueue`）、§3.2 on-demand（`GET /score?max_age_s=&wait_s=`
+  202+job_id / 同步等、`POST /score/refresh`、`GET /jobs/{id}`）、WS-trigger（trade on component market →
+  `reeval-market` → per-index score fan-out，三層 storm control：debounce/dedupe/freshness floor）。
+  驗證：queue 行為測試 6/6、API 測試 46/46、e2e NOTIFY 喚醒 13ms、500-market 真 tick 9s、
+  reeval-market 真資料命中 semantic-war-demo（fresh → 正確 skip）、WS consumer 載入 811 component markets
+- **CORR-8.1（改 Postgres 版，無 Temporal）** durable workflow：`core_workflow_runs/steps` step checkpoint +
+  queue retry replay（已完成 step 直接吃 cache）；旗艦 = **backtest workflow**（每 replay 點一個 durable step，
+  cached evals + 歷史價格，$0、不寫 ts_index_scores）。驗證：workflow 測試 4/4（含 crash→resume 不重跑）、
+  e2e 7-day backtest 7/7 steps + CSV。真 Temporal 等到需要 signals/timers/multi-worker fan-out 再回頭
+- **CORR-6.5** score 寫入排程化：hourly cron→queue + 15-min drift + WS-trigger + on-demand 四路都進同一 queue（dedupe 防疊）
+- **SHIP-3.4** Backtest CLI/API：`pmi-workers backtest <index> --days 90 --wait` 直接吐 CSV；
+  API `POST /indexes/{id}/backtest` → `GET /workflows/{id}/csv`（早期天數受價格快照回填深度限制，誠實留空）
 
 ---
 
@@ -67,14 +82,15 @@
 
 ## 4. 🟡 Worker / Storage 演進
 
+> ~~CORR-4.6~~ ~~CORR-6.5~~ ~~CORR-8.1~~ 已於 2026-06-11 以 **Postgres 版**落地
+> （無 Redis / 無 Temporal——`core_jobs` queue + `core_workflow_runs/steps` durable workflow，
+> 見上方 ✅ 清單）。Tier 2 agentic 排進 workflow 的部分可後續再掛（escalation 已 inline 於 pipeline）。
+
 | # | 項目 | 摘要 |
 |---|---|---|
-| **CORR-4.6** | Arq + Redis：cron → worker + on-demand score（WS 觸發 single-market re-eval） |
-| **CORR-6.5** | Score 寫入排程化（依賴 CORR-4.6；drift cron 已涵蓋部分場景） |
-| **CORR-4.5** | TimescaleDB hypertables（`ts_price_snapshots` / `ts_index_scores` / `audit_source_*`） |
-| **CORR-8.1** | Temporal（durable backtest / Tier 2 agentic；P2+） |
+| **CORR-4.5** | TimescaleDB hypertables（`ts_price_snapshots` / `ts_index_scores` / `audit_source_*`；`core_jobs` 完結列的定期清理也可順手掛這裡） |
 | **CORR-8.2** | ClickHouse / Tinybird（等 Timescale 撐不住；P2+） |
-| **CORR-8.3** | Polymarket Subgraph（歷史回放補完；P2+） |
+| **CORR-8.3** | Polymarket Subgraph（歷史回放補完；P2+，也會把 backtest 早期空點補實） |
 
 ## 5. 🟡 Correctness 細項
 
@@ -106,7 +122,7 @@
 
 | # | 項目 | 摘要 |
 |---|---|---|
-| **SHIP-3.4** | Backtest CLI（一鍵 replay 90 天出 CSV）— 客戶 demo 必問 |
+| ~~SHIP-3.4~~ | ✅ 2026-06-11 隨 CORR-8.1 落地（`pmi-workers backtest --wait` / `GET /workflows/{id}/csv`） |
 | **SHIP-3.2** | `pmi-core diff <index_id> <v1> <v2>`（§4 diff view 承諾） |
 | **SHIP-3.5** | 更多 baseline index（fed-rate / crypto-cycle；cross-venue 已通，可直接做多 venue 版） |
 | **SHIP-2.1** | pmi-web `/groups/[slug]` 頁（Election 2026 suite 4 張卡） |

@@ -163,21 +163,18 @@ def aggregate_state_detail(
     return out
 
 
-def state_lean_series(
+def _daily_market_rows(
     titles: dict[int, str],
     snapshots: list[tuple[int, datetime, float, float | None]],
-    target_code: str,
     days: int,
     as_of: datetime,
-) -> list[tuple[date, float]]:
-    """Daily per-state heat over the last ``days`` days (for the trend chart).
+) -> list[tuple[date, list[tuple[int, str, float, float | None]]]]:
+    """Per day boundary, each market's latest snapshot at-or-before it.
 
-    ``titles`` is {market_id: title} for the state's race markets; ``snapshots``
-    is every (market_id, snapshot_at, last_price, volume_24h) in the window. For
-    each day boundary we take each market's latest snapshot at-or-before it,
-    re-run ``aggregate_state_lean``, and emit (date, heat). Days where the state
-    has no data yet are skipped, so the series naturally starts when markets
-    first appear.
+    Shared replay step for the trend series: ``titles`` is {market_id: title};
+    ``snapshots`` is every (market_id, snapshot_at, last_price, volume_24h) in
+    the window. Markets with no snapshot yet at a boundary are absent from that
+    day's rows.
     """
     by_market: dict[int, list[tuple[datetime, float, float | None]]] = defaultdict(list)
     for mid, at, price, vol in snapshots:
@@ -187,7 +184,7 @@ def state_lean_series(
     for lst in by_market.values():
         lst.sort(key=lambda t: t[0])
 
-    out: list[tuple[date, float]] = []
+    out: list[tuple[date, list[tuple[int, str, float, float | None]]]] = []
     for i in range(days, -1, -1):
         boundary = as_of - timedelta(days=i)
         rows: list[tuple[int, str, float, float | None]] = []
@@ -203,7 +200,54 @@ def state_lean_series(
                     break
             if latest is not None:
                 rows.append((mid, title, latest[0], latest[1]))
+        out.append((boundary.date(), rows))
+    return out
+
+
+def state_lean_series(
+    titles: dict[int, str],
+    snapshots: list[tuple[int, datetime, float, float | None]],
+    target_code: str,
+    days: int,
+    as_of: datetime,
+) -> list[tuple[date, float]]:
+    """Daily per-state heat over the last ``days`` days (for the trend chart).
+
+    For each day boundary we take each market's latest snapshot at-or-before it,
+    re-run ``aggregate_state_lean``, and emit (date, heat). Days where the state
+    has no data yet are skipped, so the series naturally starts when markets
+    first appear.
+    """
+    out: list[tuple[date, float]] = []
+    for boundary, rows in _daily_market_rows(titles, snapshots, days, as_of):
         st = aggregate_state_lean(rows).get(target_code)
         if st is not None:
-            out.append((boundary.date(), st.heat))
+            out.append((boundary, st.heat))
+    return out
+
+
+def national_lean_series(
+    titles: dict[int, str],
+    snapshots: list[tuple[int, datetime, float, float | None]],
+    days: int,
+    as_of: datetime,
+) -> list[tuple[date, float]]:
+    """Daily national heat over the last ``days`` days (homepage trend chart).
+
+    Same replay as ``state_lean_series`` but collapsed across every state:
+    volume-weighted mean of per-state heats (simple mean when no state carries
+    volume) — the same national aggregation the /maga/by-state route uses for
+    its point-in-time number. Days with no data at all are skipped.
+    """
+    out: list[tuple[date, float]] = []
+    for boundary, rows in _daily_market_rows(titles, snapshots, days, as_of):
+        leans = aggregate_state_lean(rows)
+        if not leans:
+            continue
+        total_vol = sum(l.volume_24h for l in leans.values())
+        if total_vol > 0:
+            national = sum(l.heat * l.volume_24h for l in leans.values()) / total_vol
+        else:
+            national = sum(l.heat for l in leans.values()) / len(leans)
+        out.append((boundary, round(national, 2)))
     return out

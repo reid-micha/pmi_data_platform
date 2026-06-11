@@ -92,8 +92,10 @@ a{color:var(--accent)}
     本批：<strong>CORR-3.12</strong> cross-venue（war+kalshi 多選 67）· <strong>CORR-2.6/T4</strong> selector cap（house 原丟 527 → 1027 全選）·
     <strong>CORR-0.4/T2</strong> cost roll-up · <strong>CORR-5.2</strong> Tier 3 drift job（首跑命中 17.5 點）·
     <strong>CORR-5.6</strong> Tier 2 agentic 真跑 · <strong>CORR-5.7</strong> 低信心升級 · <strong>CORR-5.8</strong> disagreement（真資料 5 個）·
-    <strong>CORR-5.9</strong> ensemble（GPU 雙模型）· <strong>CORR-0.5/5.4</strong> budget+breaker · <strong>CORR-5.3</strong> Batch API（submit 端驗證；poll/ingest 未 e2e → §2）。
-    <span class="en" style="display:block;margin-top:2px">Multi-venue ingest, GPU LLM, vector DB, concurrent eval, and the full LLM-tier suite landed &amp; verified on live data; details in git log and the struck rows below were moved here.</span>
+    <strong>CORR-5.9</strong> ensemble（GPU 雙模型）· <strong>CORR-0.5/5.4</strong> budget+breaker · <strong>CORR-5.3</strong> Batch API（submit 端驗證；poll/ingest 未 e2e → §2）·
+    <strong>CORR-4.6/6.5（Postgres 版，無 Redis）</strong> job queue（core_jobs SKIP LOCKED + LISTEN/NOTIFY + dedupe + retry）+ pmi-worker 長駐 loop + cron→enqueue + §3.2 on-demand（max_age_s/wait_s、/score/refresh、/jobs/{id}）+ WS-trigger reeval-market ·
+    <strong>CORR-8.1/SHIP-3.4（Postgres 版，無 Temporal）</strong> durable workflow（core_workflow_runs/steps step-checkpoint replay）+ backtest（API /backtest → /workflows/{id}/csv；CLI --wait 吐 CSV）。
+    <span class="en" style="display:block;margin-top:2px">Multi-venue ingest, GPU LLM, vector DB, concurrent eval, the full LLM-tier suite, AND the worker/queue layer (Postgres-backed job queue + durable workflows + on-demand scoring + WS-triggered re-eval + backtest — no Redis, no Temporal) landed &amp; verified on live data; details in git log.</span>
   </p>
   <h2>1. 🔴 高槓桿 <span class="en">High-leverage — pick the next task here</span></h2>
   <table>
@@ -127,10 +129,10 @@ a{color:var(--accent)}
   <h2>4. 🟡 Worker / Storage 演進 <span class="en">Worker / storage evolution</span></h2>
   <table>
     <tr><th style="width:150px">#</th><th>項目 item</th></tr>
-    <tr><td><span class="id id-blue">CORR-4.6</span></td><td>Arq + Redis：cron → worker + on-demand score（WS 觸發 single-market re-eval）<span class="en">Arq + Redis replacing cron; on-demand scoring</span></td></tr>
-    <tr><td><span class="id id-blue">CORR-6.5</span></td><td>Score 寫入排程化（依賴 CORR-4.6）</td></tr>
-    <tr><td><span class="id id-blue">CORR-4.5</span></td><td>TimescaleDB hypertables（ts_price_snapshots / ts_index_scores / audit_source_*）</td></tr>
-    <tr><td><span class="id id-blue">CORR-8.1</span></td><td>Temporal（durable backtest / Tier 2 agentic；P2+）</td></tr>
+    <tr><td><span class="id id-blue" style="text-decoration:line-through">CORR-4.6</span></td><td><s>Arq + Redis：cron → worker + on-demand score</s> ✅ 2026-06-11 以 <strong>Postgres queue</strong> 落地（無 Redis）— 見上方完成段<span class="en">Done as a Postgres queue (no Redis)</span></td></tr>
+    <tr><td><span class="id id-blue" style="text-decoration:line-through">CORR-6.5</span></td><td><s>Score 寫入排程化</s> ✅ hourly cron→queue + 15-min drift + WS-trigger + on-demand 四路同 queue（dedupe 防疊）</td></tr>
+    <tr><td><span class="id id-blue">CORR-4.5</span></td><td>TimescaleDB hypertables（ts_price_snapshots / ts_index_scores / audit_source_*；core_jobs 完結列清理可順手掛）</td></tr>
+    <tr><td><span class="id id-blue" style="text-decoration:line-through">CORR-8.1</span></td><td><s>Temporal（durable backtest）</s> ✅ 2026-06-11 以 <strong>Postgres durable workflow</strong> 落地（step checkpoint + replay；無 Temporal）。真 Temporal 等 signals/timers/multi-worker fan-out 需求再回頭<span class="en">Done as Postgres step-checkpointed workflows (no Temporal)</span></td></tr>
     <tr><td><span class="id id-blue">CORR-8.2</span></td><td>ClickHouse / Tinybird（等 Timescale 撐不住；P2+）</td></tr>
     <tr><td><span class="id id-blue">CORR-8.3</span></td><td>Polymarket Subgraph（歷史回放補完；P2+）</td></tr>
   </table>
@@ -164,7 +166,7 @@ a{color:var(--accent)}
   <h2>7. 🟢 DX / UI</h2>
   <table>
     <tr><th style="width:150px">#</th><th>項目 item</th></tr>
-    <tr><td><span class="id id-green">SHIP-3.4</span></td><td>Backtest CLI（一鍵 replay 90 天出 CSV）— 客戶 demo 必問<span class="en">One-shot 90-day replay to CSV</span></td></tr>
+    <tr><td><span class="id id-green" style="text-decoration:line-through">SHIP-3.4</span></td><td><s>Backtest CLI（一鍵 replay 90 天出 CSV）</s> ✅ 2026-06-11 隨 CORR-8.1 落地：<code>pmi-workers backtest --wait</code> / <code>GET /workflows/{id}/csv</code><span class="en">Done with the durable-workflow batch</span></td></tr>
     <tr><td><span class="id id-green">SHIP-3.2</span></td><td>pmi-core diff &lt;index_id&gt; &lt;v1&gt; &lt;v2&gt;（§4 diff view 承諾）</td></tr>
     <tr><td><span class="id id-green">SHIP-3.5</span></td><td>更多 baseline index（fed-rate / crypto-cycle）</td></tr>
     <tr><td><span class="id id-green">SHIP-2.1</span></td><td>pmi-web /groups/[slug] 頁（Election 2026 suite 4 張卡）</td></tr>

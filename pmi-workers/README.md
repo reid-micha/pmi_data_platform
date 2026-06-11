@@ -1,19 +1,17 @@
 # pmi-workers — scheduled + queued worker pool
 
-**Status (2026-05-27)**: 🟡 P0 scaffolded. Supercronic-driven `run-job <name>`
-runner ships; Arq fan-out is gated behind `.[arq]` and lands in P1.
+**Status (2026-06-11)**: 🟢 cron + Postgres queue + durable workflows live.
+Supercronic now *enqueues* (`pmi-workers enqueue <name>`); the long-running
+`pmi-workers worker` loop (compose service `pmi-worker`) claims + executes
+with retry / heartbeat / crash recovery.
 
-P0 deliverable: replace the `just pmi-score` cron habit with a real
-scheduler that ticks `pmi-core`'s pipeline on a crontab without anyone at
-the keyboard. Mirrors the
-[`micah-job-executor`](../../micah-job-executor/) contract (`run-job`
-console script + supercronic crontab) so legacy schedule entries port
-across verbatim.
-
-P1 layers Arq on top for fire-and-forget tasks (webhook fan-out,
-WS-triggered single-market re-eval). P2+ adds a Temporal layer for
-durable / long-running work (backtest, Tier 2 agentic eval). See
-[`../../pmi-platform-proposal/03-calculation-execution-plan.md`](../pmi-platform-proposal/).
+2026-06-11 decision: the §7 Arq/Temporal roles are filled **on Postgres** —
+no Redis, no Temporal. `core_jobs` is the queue (FOR UPDATE SKIP LOCKED +
+LISTEN/NOTIFY, see `pmi_core/queue.py`); `core_workflow_runs/steps` are the
+durable-workflow event log (step checkpoint + replay, see
+`pmi_core/workflow.py`). Covers CORR-4.6 (fire-and-forget, WS-triggered
+re-eval, §3.2 on-demand score) and CORR-8.1 (durable backtest). Revisit real
+Temporal only when signals/timers/multi-worker-fan-out of one run are needed.
 
 ---
 
@@ -21,18 +19,21 @@ durable / long-running work (backtest, Tier 2 agentic eval). See
 
 ```
 pmi-workers/
-├── pyproject.toml                deps: pmi-core, click, structlog; arq is .[arq]
+├── pyproject.toml                deps: pmi-core, click, structlog, sqlalchemy, asyncpg
 ├── Dockerfile                    supercronic + uv + bind-mounted pmi-core
-├── cron/crontab                  supercronic schedule
+├── cron/crontab                  supercronic schedule (lines enqueue, worker executes)
 ├── pmi_workers/
 │   ├── __init__.py               re-exports jobs package for @register side-effects
 │   ├── registry.py               name → async fn lookup (ported from micah-job-executor)
-│   ├── runner.py                 `run-job <name>` entry point
-│   ├── cli.py                    `pmi-workers list / run / score / arq`
+│   ├── runner.py                 `run-job <name>` entry point (one-shot, in-process)
+│   ├── worker.py                 Postgres-queue claim loop (`pmi-workers worker`)
+│   ├── cli.py                    `pmi-workers list / run / score / worker / enqueue / backtest`
 │   └── jobs/
 │       ├── __init__.py           imports every job module for registration
-│       ├── score.py              single-index pipeline tick
+│       ├── score.py              single-index pipeline tick (queue passes index_id)
 │       ├── score_all.py          loops every is_current=true index
+│       ├── reeval_market.py      WS-triggered single-market → per-index score fan-out
+│       ├── workflow.py           executes a durable workflow run (e.g. backtest)
 │       ├── hourly.py             cron alias → score-all
 │       └── daily.py              cron alias → score-all (placeholder for embeddings/peer/rebuilds)
 └── .env.example                  PMI_WORKERS_DEFAULT_INDEX only; rest inherited from pmi-core
@@ -81,11 +82,11 @@ wrap the same commands. See [`../../justfile`](../../justfile).
 
 ## How this maps to the long-term design
 
-| Phase | Trigger                                | Responsible                                              |
-|-------|----------------------------------------|----------------------------------------------------------|
-| P0    | supercronic crontab                    | `cron/crontab` → `run-job` → `pmi_workers.registry`      |
-| P1    | + Arq fire-and-forget (WS / webhook)   | `pmi-workers arq` listener (stub today, needs Redis)     |
-| P2    | + Temporal for backtests + Tier 2 eval | New `pmi_workers/workflows/` package                     |
+| Phase | Trigger                                | Responsible                                                        |
+|-------|----------------------------------------|--------------------------------------------------------------------|
+| P0    | supercronic crontab                    | `cron/crontab` → `pmi-workers enqueue` → `core_jobs`               |
+| ✅ now | Postgres queue (WS / on-demand / cron) | `pmi-workers worker` claim loop → `pmi_workers.registry`           |
+| ✅ now | Durable workflows (backtest)           | `workflow` job → `pmi_core.workflow.execute_run` (step checkpoint) |
 
 The job-class pattern from
 [`micah-job-executor/app/jobs/update/pmi_score.py`](../../micah-job-executor/app/jobs/update/pmi_score.py)
@@ -95,15 +96,21 @@ prod operator wants per-tick Slack pings.
 
 ---
 
-## Why not Arq today?
+## Why not Arq / Temporal? (2026-06-11 decision)
 
-Arq needs Redis. Redis isn't in the P0 docker-compose. Adding it just to
-schedule one cron is over-engineering. Once any of the following lands,
-flip `.[arq]` on and implement `pmi-workers arq`:
+Arq needs Redis; Temporal needs four services. On a single-EC2 deployment
+where Postgres is already the only stateful infra, both roles are filled by
+Postgres tables instead:
 
-- WS consumer in `pmi-ingest` (P1 Ingestion M5) — needs queue for single-market re-eval
-- First alert subscriber requests delivery — needs webhook fan-out worker
-- Crontab grows more than ~3 schedules — switch from supercronic to Arq scheduler
+- **Queue** (`core_jobs`): SKIP LOCKED claims scale across N worker
+  containers; LISTEN/NOTIFY gives ms-level wakeup; `dedupe_key` collapses
+  storms; heartbeat + stale-sweep recover from crashes. This is plenty for
+  the platform's job volume (tens of jobs/hour, not thousands/second).
+- **Durable workflows** (`core_workflow_runs/steps`): step results are
+  checkpointed; queue retry replays the workflow function and completed
+  steps return their persisted result — a 90-day backtest that dies at day
+  60 resumes at 61. Revisit Temporal when signals / timers / child
+  workflows / fan-out-one-run-across-workers are actually needed.
 
 ---
 

@@ -13,6 +13,7 @@ import { apiGet } from './client';
 import {
   isPmiBacked,
   fetchMagaIndexFromPmi,
+  fetchMagaLastUpdatedFromPmi,
   fetchMagaStatesFromPmi,
   fetchMagaStateFromPmi,
   fetchMagaStateHoldingsFromPmi,
@@ -31,6 +32,7 @@ function magaViewToSearchCatalogScope(view: MagaViewType): 'all' | 'states' | 'g
 }
 
 export async function fetchMagaLastUpdated(): Promise<MagaLastUpdatedResponse> {
+  if (isPmiBacked()) return fetchMagaLastUpdatedFromPmi();
   return apiGet<MagaLastUpdatedResponse>('/api/maga/index/last-updated');
 }
 

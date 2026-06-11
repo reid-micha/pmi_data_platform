@@ -200,3 +200,44 @@ async def test_state_trends_days_param_validation(client: AsyncClient) -> None:
     # days is Query(ge=1, le=90).
     assert (await client.get("/maga/by-state/OH/trends", params={"days": 0})).status_code == 422
     assert (await client.get("/maga/by-state/OH/trends", params={"days": 91})).status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_national_trends_returns_daily_series(
+    client: AsyncClient, seeded_data: dict[str, Any]
+) -> None:
+    as_of = seeded_data["latest_score_as_of"].isoformat()
+    resp = await client.get("/maga/trends", params={"as_of": as_of})
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+
+    assert data["days"] == 14
+    # Both seeded races are 50/50 → national heat 50.0; the single snapshot day
+    # yields a single point (earlier boundaries have no data and are skipped).
+    assert data["points"] == [
+        {"date": seeded_data["latest_score_as_of"].date().isoformat(), "value": 50.0}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_national_trends_days_param_validation(client: AsyncClient) -> None:
+    assert (await client.get("/maga/trends", params={"days": 0})).status_code == 422
+    assert (await client.get("/maga/trends", params={"days": 91})).status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_last_updated_returns_newest_race_snapshot(
+    client: AsyncClient, seeded_data: dict[str, Any]
+) -> None:
+    from datetime import datetime, timedelta
+
+    resp = await client.get("/maga/last-updated")
+    assert resp.status_code == 200
+    body = resp.json()
+
+    generated_at = datetime.fromisoformat(body["data"]["generated_at"])
+    # Race-market snapshots are seeded at score_as_of - 5min. The war-index
+    # market has snapshots too, but it's not a race market and must not count.
+    expected = seeded_data["latest_score_as_of"] - timedelta(minutes=5)
+    assert generated_at == expected
+    assert "last updated" in body["summary"]

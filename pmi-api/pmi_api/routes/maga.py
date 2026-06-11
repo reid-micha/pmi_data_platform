@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pmi_api.deps import get_session
@@ -21,6 +21,10 @@ from pmi_api.schemas import (
     MagaGroupRow,
     MagaGroupsEnvelope,
     MagaGroupsPayload,
+    MagaLastUpdatedEnvelope,
+    MagaLastUpdatedPayload,
+    MagaNationalTrendsEnvelope,
+    MagaNationalTrendsPayload,
     MagaRaceContractRow,
     MagaStateDetailEnvelope,
     MagaStateDetailPayload,
@@ -33,6 +37,7 @@ from pmi_core.engine.seat_mapping import state_code as state_code_of
 from pmi_core.engine.state_detail import (
     StateGroup,
     aggregate_state_detail,
+    national_lean_series,
     state_lean_series,
 )
 from pmi_core.engine.state_lean import aggregate_state_lean, parse_state_race
@@ -323,4 +328,99 @@ async def maga_state_trends(
     return MagaTrendsEnvelope(
         summary=f"{code}: {len(points)} daily heat points over {days}d.",
         data=MagaTrendsPayload(state_code=code, days=days, points=points),
+    )
+
+
+async def _race_titles(session: AsyncSession) -> dict[int, str]:
+    """{market_id: title} for every recognised partisan race market."""
+    candidates = (
+        await session.execute(
+            select(CoreMarket.id, CoreMarket.title).where(
+                and_(
+                    CoreMarket.title.ilike("%race in 2026%"),
+                    or_(
+                        CoreMarket.title.ilike("%republicans win%"),
+                        CoreMarket.title.ilike("%democrats win%"),
+                    ),
+                )
+            )
+        )
+    ).all()
+    return {mid: title for mid, title in candidates if parse_state_race(title)}
+
+
+@router.get("/trends", response_model=MagaNationalTrendsEnvelope)
+async def maga_national_trends(
+    days: int = Query(default=14, ge=1, le=90),
+    as_of: datetime | None = Query(default=None),
+    session: AsyncSession = Depends(get_session),
+) -> MagaNationalTrendsEnvelope:
+    """Daily national MAGA heat (0–100) over the last ``days`` days.
+
+    Backs the homepage 14-day graph. Same replay as the per-state trends but
+    collapsed across all states with the /maga/by-state national aggregation
+    (volume-weighted mean of state heats).
+    """
+    cutoff = as_of or datetime.now(timezone.utc)
+    window_start = cutoff - timedelta(days=days + 1)
+
+    titles = await _race_titles(session)
+    points: list[MagaTrendPoint] = []
+    if titles:
+        snaps = (
+            await session.execute(
+                select(
+                    TsPriceSnapshot.market_id,
+                    TsPriceSnapshot.snapshot_at,
+                    TsPriceSnapshot.last_price,
+                    TsPriceSnapshot.volume_24h,
+                ).where(
+                    TsPriceSnapshot.market_id.in_(list(titles)),
+                    TsPriceSnapshot.snapshot_at <= cutoff,
+                    TsPriceSnapshot.snapshot_at >= window_start,
+                )
+            )
+        ).all()
+        series = national_lean_series(
+            titles,
+            [
+                (mid, at, float(p), float(v) if v is not None else None)
+                for mid, at, p, v in snaps
+                if p is not None
+            ],
+            days,
+            cutoff,
+        )
+        points = [MagaTrendPoint(date=d.isoformat(), value=h) for d, h in series]
+
+    return MagaNationalTrendsEnvelope(
+        summary=f"National MAGA heat: {len(points)} daily points over {days}d.",
+        data=MagaNationalTrendsPayload(days=days, points=points),
+    )
+
+
+@router.get("/last-updated", response_model=MagaLastUpdatedEnvelope)
+async def maga_last_updated(
+    session: AsyncSession = Depends(get_session),
+) -> MagaLastUpdatedEnvelope:
+    """When MAGA data was last refreshed: the newest race-market price snapshot.
+
+    ``generated_at`` is None when no race market has any snapshot yet (the
+    client should fall back to "n/a" rather than erroring).
+    """
+    titles = await _race_titles(session)
+    generated_at: datetime | None = None
+    if titles:
+        generated_at = await session.scalar(
+            select(func.max(TsPriceSnapshot.snapshot_at)).where(
+                TsPriceSnapshot.market_id.in_(list(titles))
+            )
+        )
+    return MagaLastUpdatedEnvelope(
+        summary=(
+            f"MAGA data last updated {generated_at.isoformat()}."
+            if generated_at
+            else "No MAGA race-market snapshots yet."
+        ),
+        data=MagaLastUpdatedPayload(generated_at=generated_at),
     )

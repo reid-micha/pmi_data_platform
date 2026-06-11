@@ -12,6 +12,8 @@ class ApiSettings(BaseSettings):
     require_auth: bool = Field(default=True)
     cors_origins: str = Field(default="")  # comma-separated; "" = no CORS
     port: int = Field(default=8000)
+    # Client copy served by GET /settings (legacy war-index /api/settings).
+    future_phrase: str = Field(default="within the next 12 months")
 
     model_config = SettingsConfigDict(
         env_prefix="PMI_API_",
