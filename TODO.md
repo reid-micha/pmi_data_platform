@@ -1,10 +1,10 @@
 # TODO — 平台現役主清單（2026-06-11 整併）
 
-> **這是唯一的 active TODO 入口**。2026-06-11 把四本主題式 TODO（[`TODO-跑出來.md`](TODO-跑出來.md) /
-> [`TODO-跑得對.md`](TODO-跑得對.md) / [`TODO-真實e2e.md`](TODO-真實e2e.md) /
-> [`TODO-next-version.md`](TODO-next-version.md)）裡**還開著的項目**整併到這裡，按優先序重排。
-> 四本原檔保留為**細節 + 歷史紀錄**（每項的完整設計、實作計畫、驗收條件還在原檔，本檔只給一行摘要 + 指回去）。
-> 新增/完成項目時：**先改這裡**，原檔同步補註記。
+> **這是唯一的 active TODO 入口**。2026-06-11 把四本主題式 TODO 裡**還開著的項目**整併到這裡，按優先序重排。
+> 其中三本（跑出來 / 跑得對 / 真實e2e）**已刪除**——每項的完整設計、實作計畫、驗收條件在 **git history**
+> （最後存在於 commit `aa45741`，`git show aa45741:TODO-跑得對.md` 可調閱）；
+> [`TODO-next-version.md`](TODO-next-version.md)（typed multigraph 設計稿，未動工）保留。
+> HTML 版見 [`docs/todo-bilingual.html`](docs/todo-bilingual.html)。新增/完成項目時：**改這裡 + 同步 HTML**。
 >
 > **前情**：平台已跑在單台 AWS EC2（Tesla T4）上——真實 6-venue ingest（~32 萬 market）、GPU 本地 LLM
 > （ollama llama3.2）、vector DB（pgvector + Tier 0 + SemanticSelector）、T1 並發 factor eval、
@@ -26,10 +26,10 @@
 
 | # | 項目 | 為什麼 / 條件 | 細節 |
 |---|---|---|---|
-| **SHIP-2.3** | **pmi-mcp：Tier A read tools ×5**（`pmi.list_indexes / get_index / get_score / get_history / get_group`） | 「AI native」招牌；`pmi-mcp/` 仍 stub。外部 agent 一句話拿任何 index 分數 | [跑出來 §2](TODO-跑出來.md) |
-| **CORR-3.12** | **cross-venue 進 pipeline**：`embed_markets.py` + `engine/selector.py` 拿掉 `venue='polymarket'` 硬篩，改 per-index 可宣告 venues | 已 ingest 的 kalshi 8 萬 / manifold 18 萬 / forecastex 等全 dormant；§11 MVP 多源 parity 的必經之路。動 scoring 語意——要配 golden regression | [跑得對 §3](TODO-跑得對.md)（2026-06-11 新增） |
-| **CORR-2.6 / T4** | **selector `.limit(500)` 可覆寫**（config / per-index cap） | 真實資料下 war/house/senate/semantic 多個 index 已撞 cap，**正 silently 漏資料** | [跑得對 §2](TODO-跑得對.md) |
-| **CORR-0.4 / T2** | **cost roll-up 到 `audit_pipeline_runs`**（目前 pipeline-level cost 靠 SUM 子 row） | 計費 / 成本可見性；半天 | [跑得對 §0](TODO-跑得對.md) |
+| **SHIP-2.3** | **pmi-mcp：Tier A read tools ×5**（`pmi.list_indexes / get_index / get_score / get_history / get_group`） | 「AI native」招牌；`pmi-mcp/` 仍 stub。外部 agent 一句話拿任何 index 分數 | 細節:git history（跑出來 §2）|
+| **CORR-3.12** | **cross-venue 進 pipeline**：`embed_markets.py` + `engine/selector.py` 拿掉 `venue='polymarket'` 硬篩，改 per-index 可宣告 venues | 已 ingest 的 kalshi 8 萬 / manifold 18 萬 / forecastex 等全 dormant；§11 MVP 多源 parity 的必經之路。動 scoring 語意——要配 golden regression | 細節:git history（跑得對 §3,2026-06-11 新增）|
+| **CORR-2.6 / T4** | **selector `.limit(500)` 可覆寫**（config / per-index cap） | 真實資料下 war/house/senate/semantic 多個 index 已撞 cap，**正 silently 漏資料** | 細節:git history（跑得對 §2）|
+| **CORR-0.4 / T2** | **cost roll-up 到 `audit_pipeline_runs`**（目前 pipeline-level cost 靠 SUM 子 row） | 計費 / 成本可見性；半天 | 細節:git history（跑得對 §0）|
 
 ## 2. 🟡 LLM 分層（§6 四層的後段；Tier 0/1 已落地）
 

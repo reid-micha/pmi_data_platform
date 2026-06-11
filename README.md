@@ -5,10 +5,9 @@
 設計文件留在 workspace root 的 [`../pmi-platform-proposal/`](../pmi-platform-proposal/)；
 vision / north-star 在 [`../CLAUDE.md`](../CLAUDE.md) / [`../AGENTS.md`](../AGENTS.md)。
 
-跨領域 TODO 分四本維護：[`./TODO-跑出來.md`](./TODO-跑出來.md)（ship-it / DX）、
-[`./TODO-跑得對.md`](./TODO-跑得對.md)（correctness / 數值正確性）、
-[`./TODO-真實e2e.md`](./TODO-真實e2e.md)（筆電真實 e2e）與
-[`./TODO-next-version.md`](./TODO-next-version.md)（typed multigraph 架構方向）。
+跨領域 TODO 主清單：[`./TODO.md`](./TODO.md)（2026-06-11 整併；HTML 版 [`docs/todo-bilingual.html`](docs/todo-bilingual.html)）。
+下一版架構方向：[`./TODO-next-version.md`](./TODO-next-version.md)（typed multigraph）。
+原三本主題式 TODO（跑出來 / 跑得對 / 真實e2e）已刪——細節在 git history（`git show aa45741:<檔名>`）。
 
 開發 how-to：新增 / 改一個 PMI index 從 YAML 到 serving 的完整流程
 看 [`./HOWTO-新增index.md`](./HOWTO-新增index.md)。
@@ -30,7 +29,7 @@ vision / north-star 在 [`../CLAUDE.md`](../CLAUDE.md) / [`../AGENTS.md`](../AGE
 | [`pmi-ingest/`](./pmi-ingest/) | Polymarket REST poller + `audit_source_health` 寫入 | **P0** — runnable |
 | [`pmi-api/`](./pmi-api/) | Read-only FastAPI gateway (`/indexes`, `/score`, `/explain`) | **P0** — runnable |
 | [`mlflow/`](./mlflow/) | MLflow tracking server (Postgres backend) + Prompt Registry UI | **P0** — runnable |
-| [`pmi-demo/`](./pmi-demo/) | 合成 markets fixture，被 pmi-core / pmi-api bind-mount 進 `/app/fixtures`；同時是 `pmi-core dry-run` 的預設輸入 | **P0** — runnable（container 已退離，見 [`SHIP-4.1`](./TODO-跑出來.md)） |
+| [`pmi-demo/`](./pmi-demo/) | 合成 markets fixture，被 pmi-core / pmi-api bind-mount 進 `/app/fixtures`；同時是 `pmi-core dry-run` 的預設輸入 | **P0** — runnable（container 已退離，SHIP-4.1，紀錄在 git history） |
 | [`pmi-workers/`](./pmi-workers/) | Supercronic-driven job runner（取代 micah-job-executor pattern）；Arq queue 預留 P1+ | **P0** — runnable（cron-only），Arq P1 落地 |
 | [`pmi-web/`](./pmi-web/) | Next.js 15 + recharts dashboard，讀 pmi-api | **P0** — runnable（基礎 index / score / history 頁面），index builder + chat P1 落地 |
 | [`pmi-mcp/`](./pmi-mcp/) | MCP server (Tier A 讀 / Tier B 分析 / Tier C 寫) | Stub — **P3** 落地 |

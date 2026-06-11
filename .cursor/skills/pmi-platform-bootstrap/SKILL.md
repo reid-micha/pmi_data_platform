@@ -20,8 +20,8 @@ description: >-
 > Live status, package roles, and quickstart commands are maintained in
 > [`pmi_data_platform/README.md`](../../../README.md).
 > Day-to-day TODO lists:
-> [`TODO-跑出來.md`](../../../TODO-跑出來.md) (ship-it / DX),
-> [`TODO-跑得對.md`](../../../TODO-跑得對.md) (correctness).
+> [`TODO.md`](../../../TODO.md) (consolidated active list, 2026-06-11; the themed
+> TODO files were deleted — history via `git show aa45741:<file>`).
 >
 > Design authority (the "why") = `./CLAUDE.md` + `./AGENTS.md` §1–§14.
 > This skill = the **what & where** for navigating the live code.
@@ -84,8 +84,8 @@ pmi_data_platform/
 | Factor model registry lookup | `pmi-core/pmi_core/engine/factor_resolver.py` |
 | MLflow mirror behaviour | `pmi-core/pmi_core/mlflow_client.py` |
 | Quickstart / docker-compose orchestration | `pmi_data_platform/README.md` + workspace-root `justfile` |
-| What's shippable / blocking | `pmi_data_platform/TODO-跑出來.md` |
-| Numerical correctness backlog | `pmi_data_platform/TODO-跑得對.md` |
+| What's shippable / blocking | `pmi_data_platform/TODO.md` |
+| Numerical correctness backlog | `pmi_data_platform/TODO.md`（§2~§6）|
 
 ## North-star invariants (from `pmi_data_platform/README.md`)
 
@@ -138,7 +138,7 @@ docker) is intentionally host-side.
 
 | Phase | Scope | Status |
 |---|---|---|
-| **P0** | Polymarket REST ingest → Postgres; declarative PMI YAML + IR + engine; FastAPI; MLflow mirror | **landed**, e2e runnable; remaining correctness items in `TODO-跑得對.md` |
+| **P0** | Polymarket REST ingest → Postgres; declarative PMI YAML + IR + engine; FastAPI; MLflow mirror | **landed**, e2e runnable; remaining correctness items in `TODO.md` |
 | **P1** | Index builder UI + backtest; Arq queue; real LLM tier 1 factor evaluator; source_health alerts | in progress |
 | **P2** | WS ingest, orderbook depth weighting, trader cohort, polarity-aware aggregator | not started |
 | **P3** | MCP server + in-app chat + daily briefing agent | `pmi-mcp/` stub only |

@@ -65,7 +65,7 @@ footer code{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:11px;color
     <h1>PMI Platform — 文件入口</h1>
     <p class="sub">Polymarket PMI Platform 的說明文件總覽。點任一張卡片開啟對應的 HTML。
       <span class="en">Documentation index for the Polymarket PMI Platform — click a card to open.</span></p>
-    <div class="meta">Snapshot 快照 · 2026-06-07 &nbsp;|&nbsp; 來源 source: <code style="color:var(--cyan-fg)">pmi_data_platform/</code> · 設計權威 design authority: <code style="color:var(--cyan-fg)">CLAUDE.md §15.10</code></div>
+    <div class="meta">Snapshot 快照 · 2026-06-11 &nbsp;|&nbsp; 來源 source: <code style="color:var(--cyan-fg)">pmi_data_platform/</code> · 設計權威 design authority: <code style="color:var(--cyan-fg)">CLAUDE.md</code> · TODO 主入口: <code style="color:var(--cyan-fg)">TODO.md</code></div>
   </div>
 </header>
 
@@ -73,25 +73,25 @@ footer code{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:11px;color
 
   <!-- ============ STATUS SNAPSHOT ============ -->
   <div class="snap">
-    <h3>📍 現況快照 <span class="en">Current state at a glance · 2026-06-07</span></h3>
+    <h3>📍 現況快照 <span class="en">Current state at a glance · 2026-06-11</span></h3>
     <p style="font-size:13px;color:var(--muted);margin-top:6px">
-      地端 docker e2e 已跑通真資料 → 全 factor 真 LLM → 對外 serve。下面是最關鍵的事實，細節進各文件。
-      <span class="en" style="display:block;margin-top:2px">Local docker e2e proven end-to-end (real data → real LLM → served). Headline facts below; detail in the docs.</span>
+      跑在單台 AWS EC2（Tesla T4 GPU）：真實 6-venue ingest → GPU 本地 LLM → 並發 factor eval → hourly scoring → 對外 serve，全 $0 LLM 成本。
+      <span class="en" style="display:block;margin-top:2px">Running on one AWS EC2 (Tesla T4): real 6-venue ingest → local GPU LLM → concurrent factor eval → hourly scoring → served. $0 LLM cost.</span>
     </p>
     <div class="facts">
       <div class="fact"><div class="k">Packages</div><div class="v">7</div><div class="d">runnable + pmi-mcp stub (P3)</div></div>
-      <div class="fact"><div class="k">Storage</div><div class="v">16 tables</div><div class="d">Postgres 16 + pgvector · Alembic 0007</div></div>
-      <div class="fact"><div class="k">Real LLM</div><div class="v">gpt-4o-mini</div><div class="d">Tier 1 live · cost-tracked</div></div>
-      <div class="fact"><div class="k">Index defs</div><div class="v">5 YAML</div><div class="d">war + senate/house ×{seats,share}</div></div>
-      <div class="fact"><div class="k">Tests</div><div class="v">118 + 27</div><div class="d">pmi-core · pmi-api</div></div>
-      <div class="fact"><div class="k">Ingest</div><div class="v">42k mkts</div><div class="d">keyset pagination · REST + CLOB depth</div></div>
-      <div class="fact"><div class="k">Auth</div><div class="v">on</div><div class="d">API key · X-API-Key · keys CLI</div></div>
-      <div class="fact"><div class="k">Deploy</div><div class="v">EC2 ready</div><div class="d">runbook done · box not yet spun up</div></div>
+      <div class="fact"><div class="k">Markets</div><div class="v">~320k</div><div class="d">6 venues · manifold 18萬 · kalshi 8萬 · polymarket 4.8萬</div></div>
+      <div class="fact"><div class="k">LLM</div><div class="v">ollama/llama3.2</div><div class="d">Tesla T4 GPU · T1 concurrent · $0</div></div>
+      <div class="fact"><div class="k">Vector DB</div><div class="v">38.9k vecs</div><div class="d">pgvector · nomic · Tier 0 + semantic live</div></div>
+      <div class="fact"><div class="k">Index defs</div><div class="v">6 YAML</div><div class="d">war + semantic-demo + senate/house ×{seats,share}</div></div>
+      <div class="fact"><div class="k">Scoring</div><div class="v">hourly</div><div class="d">supercronic · 6/6 succeed · ~0.56s/call</div></div>
+      <div class="fact"><div class="k">History</div><div class="v">2.86M pts</div><div class="d">polymarket-history price backfill</div></div>
+      <div class="fact"><div class="k">Deploy</div><div class="v">EC2 dev</div><div class="d">dev compose = 部署形態（SHIP-1.8 拿掉）</div></div>
     </div>
     <div class="pill-row">
-      <span class="pill p-green">✅ 真 LLM · auth · liquidity weighting · Poisson-binomial seats · keyset ingest · CLOB depth · Tier 0 embeddings</span>
-      <span class="pill p-orange">🟡 WS trades · chain indexer · UMA (待 prod RPC) · senate choropleth</span>
-      <span class="pill p-gray">❌ MCP server · Arq/Temporal · Timescale hypertables · OTel/Grafana · Tier 2/3 LLM</span>
+      <span class="pill p-green">✅ 6-venue 真實 ingest · GPU LLM · Tier 0 + semantic selector · T1 並發 · liquidity weighting · kalshi 限流修復</span>
+      <span class="pill p-orange">🟡 cross-venue 進 pipeline (CORR-3.12) · WS/chain 真實 smoke · senate choropleth</span>
+      <span class="pill p-gray">❌ MCP server · Arq/Temporal · Timescale hypertables · Tier 2/3 LLM</span>
     </div>
   </div>
 
@@ -107,10 +107,15 @@ footer code{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:11px;color
       <p>五層 data-flow（Sources → Ingest → Storage → Compute → Serving），每個節點標 ✅/🟡/❌ 並對位 SHIP-*/CORR-* ID，含前端取資料 + index 計算兩張資料流圖。</p>
       <span class="who">給工程師 / 資料科學家 · 對照實際 code · snapshot 2026-06-07</span>
     </a>
+    <a class="doc b-orange" href="todo-bilingual.html">
+      <h3><span class="ico">✅</span> 現役 TODO <span class="en">Active TODO</span></h3>
+      <p>整併後的唯一 active 清單（對應 <code style="font-size:11px">TODO.md</code>）：高槓桿 → LLM 分層 → 深度訊號 → worker/storage → correctness → audit → DX/UI → multigraph。含已拿掉項紀錄。</p>
+      <span class="who">給所有人 · 2026-06-11 整併 · 主入口</span>
+    </a>
     <a class="doc b-orange" href="roadmap-bilingual.html">
-      <h3><span class="ico">🗺️</span> 雙語路線圖 <span class="en">Bilingual roadmap</span></h3>
-      <p>四軌 SHIP / CORR / E2E / NEXT 的逐項狀態（done / partial / todo）與估算，含最近完成清單與 P0–P3 時間軸。整合四本 TODO。</p>
-      <span class="who">給所有人 · 整合 4 本 TODO + CLAUDE §15.10</span>
+      <h3><span class="ico">🗺️</span> 雙語路線圖 <span class="en">Bilingual roadmap (2026-06-07 snapshot)</span></h3>
+      <p>四軌 SHIP / CORR / E2E / NEXT 的逐項狀態與估算，含 P0–P3 時間軸。<strong>歷史快照</strong>——現況以「現役 TODO」為準。</p>
+      <span class="who">歷史 snapshot · superseded by 現役 TODO</span>
     </a>
     <a class="doc b-green" href="business-overview.html">
       <h3><span class="ico">📈</span> 商業概覽 <span class="en">Business overview</span></h3>
@@ -140,7 +145,8 @@ footer code{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:11px;color
 
   <footer>
     來源資料夾 <code>pmi_data_platform/</code> · 設計權威 <code>CLAUDE.md</code>（§0–§15）。<br>
-    實作 TODO（更細的逐項紀錄）：<code>TODO-跑出來.md</code>（ship-it）/ <code>TODO-跑得對.md</code>（correctness）/ <code>TODO-真實e2e.md</code>（real e2e）/ <code>TODO-next-version.md</code>（typed multigraph）。<br>
+    實作 TODO 主入口：<code>TODO.md</code>（2026-06-11 整併；HTML 版見上方「現役 TODO」卡片）· 下一版設計：<code>TODO-next-version.md</code>（typed multigraph）。<br>
+    原三本主題式 TODO（跑出來 / 跑得對 / 真實e2e）已刪——細節在 git history（最後存在於 commit <code>aa45741</code>）。<br>
     開發 how-to：<code>HOWTO-新增index.md</code> · 套件總表：<code>README.md</code>。
   </footer>
 

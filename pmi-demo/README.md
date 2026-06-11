@@ -15,4 +15,4 @@ The fixtures are still load-bearing and stay here:
 The "throwaway end-to-end demo" use case is now covered by **`just dry-run`**
 (no docker, no postgres, no LLM) — see
 [`pmi-core/pmi_core/engine/dry_run.py`](../pmi-core/pmi_core/engine/dry_run.py)
-and the SHIP-3.1 entry in [`../TODO-跑出來.md`](../TODO-跑出來.md).
+and the SHIP-3.1 entry (done; recorded in git history — the themed TODO files were consolidated into `../TODO.md` on 2026-06-11).

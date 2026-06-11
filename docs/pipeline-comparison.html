@@ -323,10 +323,10 @@ footer a{color:var(--accent);text-decoration:none}
       <span class="badge b-red">code 尚未動工 not started</span>
     </p>
     <p style="margin-top:10px;font-size:13.5px">
-      全部 <code>NEXT-*</code> 工作項均為 <strong style="color:var(--red-fg)">❌ 設計定稿、code 尚未動工</strong>（2026-05-31 v1）。落地時，許多步驟會回頭吃掉 / 取代 <code>TODO-跑得對.md</code> 的 <code>CORR-1.x</code> 相關條目（特別是 seat_mapping / partition_sum 的寫死邏輯）。
+      全部 <code>NEXT-*</code> 工作項均為 <strong style="color:var(--red-fg)">❌ 設計定稿、code 尚未動工</strong>（2026-05-31 v1）。落地時，許多步驟會回頭吃掉 / 取代 <code>CORR-1.x</code> 相關條目（原載 TODO-跑得對.md，2026-06-11 已整併至 <code>TODO.md</code>）（特別是 seat_mapping / partition_sum 的寫死邏輯）。
     </p>
     <p class="en-block">
-      All NEXT-* items are design-finalized but have zero code written (2026-05-31 v1). When implemented, several steps will absorb or supersede CORR-1.x entries in TODO-跑得對.md (especially the hard-coded seat_mapping / partition_sum logic).
+      All NEXT-* items are design-finalized but have zero code written (2026-05-31 v1). When implemented, several steps will absorb or supersede CORR-1.x entries (now tracked in TODO.md; the original themed file was consolidated &amp; deleted 2026-06-11) (especially the hard-coded seat_mapping / partition_sum logic).
     </p>
     <p style="margin-top:10px;font-size:13.5px">
       <strong>建議進場順序 Recommended entry point：</strong>先做 <code>NEXT-3.x</code> formula registry（phase 0）—— 把現有的 <code>weighted_average_x_100</code> / <code>seat_projection_sum</code> 搬進 registry 機制，讓 Loop A/B 的 graph machinery 有一個乾淨的 formula interface 可落。

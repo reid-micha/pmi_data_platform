@@ -281,6 +281,6 @@ EXPECTED_SCORES = {
 - 既有 index 範例：
   - [`polymarket-war-index.yaml`](pmi-core/pmi_core/index_defs/polymarket-war-index.yaml) — 7-factor war，weighted_average
   - [`us-senate-2026-republican-seats.yaml`](pmi-core/pmi_core/index_defs/us-senate-2026-republican-seats.yaml) — partition_sum 範例
-- 真實 e2e 紀錄（首次 OpenAI 真 LLM 跑通 2026-05-30）：[`TODO-真實e2e.md`](TODO-真實e2e.md)
+- 真實 e2e 紀錄（首次 OpenAI 真 LLM 跑通 2026-05-30）：git history（`git show aa45741:TODO-真實e2e.md`；2026-06-11 整併入 [`TODO.md`](TODO.md) 後刪除）
 - Pipeline 入口：[`pmi-core/pmi_core/engine/pipeline.py`](pmi-core/pmi_core/engine/pipeline.py)
 - Factor resolver（registry vs YAML fallback 路徑）：[`pmi-core/pmi_core/engine/factor_resolver.py`](pmi-core/pmi_core/engine/factor_resolver.py)

@@ -1,7 +1,7 @@
 # TODO: Next Version — Typed Multigraph Scoring
 
 > **目的**：把 PMI scoring 從「扁平 contract list + 寫死 aggregator」升級成 **typed multigraph**：contract↔contract 之間建 typed 邊,collapse / 互斥家族 / 翻轉 / 邏輯一致性全部從**圖結構推出來**,而不是寫死在 selector / regex / `ROLE_FLIPS`。這是把 senate PoC 的一次性 hack 提煉成 platform-wide engine 能力。
-> **不負責**：把分數 ship 出來看得到、auth、observability、cloud deploy（→ [`TODO-跑出來.md`](TODO-跑出來.md)）；以及單純的 correctness bug / schema 補洞（→ [`TODO-跑得對.md`](TODO-跑得對.md)）。本檔是**架構方向**,落地時很多步會回頭吃掉 / 取代 `TODO-跑得對.md` 的 CORR-1.x。
+> **不負責**：把分數 ship 出來看得到、auth、observability、cloud deploy（→ 主清單 [`TODO.md`](TODO.md)）；以及單純的 correctness bug / schema 補洞（→ 同 `TODO.md` §5）。本檔是**架構方向**,落地時很多步會回頭吃掉 / 取代 CORR-1.x（原載 TODO-跑得對.md,已整併刪除,git 留史）。
 >
 > **整合來源**：2026-05-31 chat 對話（contract 歸類 → graph 解法 → typed multigraph → formula registry → pipeline 對比）。
 > **架構對比圖**：[`docs/pipeline-comparison.html`](docs/pipeline-comparison.html)（瀏覽器開）— 左「現況單迴圈」vs 右「新雙迴圈」,顏色標出新增/改動/不變 + 三個量的位置。
@@ -55,7 +55,7 @@
 
 ## 3. Engine — Formula Registry（取代寫死 aggregator）
 
-> 這節吃掉 / 取代 [`TODO-跑得對.md`](TODO-跑得對.md) 的 **CORR-1.1**（formula expression evaluator）、**CORR-1.2**（baseline/total_seats）,並落地 senate PoC 暗示的 **CORR-1.6**（partition_sum）、**CORR-1.7**（E[seats]）。
+> 這節吃掉 / 取代 **CORR-1.1**（原 TODO-跑得對.md,現載 `TODO.md` §5）（formula expression evaluator）、**CORR-1.2**（baseline/total_seats）,並落地 senate PoC 暗示的 **CORR-1.6**（partition_sum）、**CORR-1.7**（E[seats]）。
 
 | # | Todo | 估算 | 對位 |
 |---|---|---|---|
@@ -110,7 +110,7 @@
 
 | 既有項 | 關係 |
 |---|---|
-| `TODO-跑得對.md` **CORR-1.1**（formula expression evaluator） | **被 NEXT-3.x 取代** — registry 是更乾淨的架構 |
+| **CORR-1.1**（formula expression evaluator,現載 `TODO.md` §5） | **被 NEXT-3.x 取代** — registry 是更乾淨的架構 |
 | **CORR-1.2**（baseline/total_seats） | 併進 `ExpectationParams`（NEXT-3.2） |
 | **CORR-1.3**（`condition_id` column） | NEXT-2.3 規則邊的前置;先做 CORR-1.3 |
 | **CORR-1.4**（bucket collapse,✅done） | 被 NEXT-2.2 `equivalent`-edge collapse **泛化**,但現況 collapser 直接複用當代表點選擇 |
@@ -120,5 +120,5 @@
 ---
 
 ## 7. 收尾（每階段做一點）
-- 文件：更新 [`../CLAUDE.md`](../CLAUDE.md) §15.10 對位表 + 本檔狀態 + 在 `TODO-跑得對.md` CORR-1.x 標註「被 NEXT-3.x 取代」。
+- 文件：更新 [`../CLAUDE.md`](../CLAUDE.md) §15.10 對位表 + 本檔狀態 + 在 `TODO.md` CORR-1.x 標註「被 NEXT-3.x 取代」。
 - ops：edge 維護先掛 supercronic `graph build` job;上 Arq（CORR-4.6）時改 fire-and-forget。
