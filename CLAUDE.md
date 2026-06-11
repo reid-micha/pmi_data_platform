@@ -1,11 +1,20 @@
 # Polymarket PMI Platform — Project Design
 
-> **Status (2026-06-07)** — 兩個並存系統：
+> **Status (2026-06-11)** — 兩個並存系統：
 >
 > | 系統 | 路徑 | 狀態 | 何時動 |
 > |---|---|---|---|
-> | **Polymarket PMI Platform**（本檔主題） | [`./`](./) | **CURRENT** — P0 scaffold 已落地、地端 docker e2e 跑通（7 packages runnable，pmi-mcp P3 stub） | 一切新功能、新 index def、schema 改動、forward-looking work |
+> | **Polymarket PMI Platform**（本檔主題） | [`./`](./) | **CURRENT** — 跑在**單台 AWS EC2（Tesla T4 GPU）**上：真實多源 ingest（6 venue ~32 萬 market）+ 本地 GPU LLM（ollama）+ vector DB（pgvector，38.9k polymarket embedding）+ hourly 真實 scoring，全 $0。7 packages runnable，pmi-mcp 仍 P3 stub | 一切新功能、新 index def、schema 改動、forward-looking work |
 > | **Project Micah** | [`../micah/`](../micah/) · [`../micah-db/`](../micah-db/) · [`../micah-job-executor/`](../micah-job-executor/) | **LEGACY** — 仍跑 prod ([thewarindex.org](https://thewarindex.org))，文件留作 **reference / mine for patterns** | 僅限 production 維運 / hotfix；**不再加新功能** |
+>
+> **2026-06-11 EC2 session 對帳**（環境從「reid 筆電 + mock」改成「AWS EC2 + 真實資料」）：
+> - **環境**：dev box 是 AWS EC2（Tesla T4、30GB RAM），真實 Polymarket API 在此可達（不受 reid 家 HiNet DNS 劫持影響）。`POLYMARKET_USE_MOCK=false`。
+> - **多源 ingest 上線**（`docker compose --profile ingest`）：polymarket rest/clob/history、kalshi rest/clob、manifold、forecastex、predictit、gemini、coinbase——~32 萬 market across 6 venue。metaculus API2 回 403（外部封鎖，容器已停）。
+> - **GPU 本地 LLM**：ollama 自動偵測 T4 跑 llama3.2 + nomic-embed-text（`docker-compose.gpu.yml` override + `just ollama-up`/`scripts/e2e-ollama.sh` 自動偵測）。10 個 factor model 綁 `ollama/llama3.2`。
+> - **vector DB 啟動**：38.9k polymarket market 進 pgvector（GPU nomic）；`semantic-war-demo.yaml`（首個 `type: semantic` anchor index）讓 SemanticSelector + Tier 0 真的作用。
+> - **真實 scoring**：6 index 全 succeeded、hourly cron 續算、$0（GPU）。senate-seats 在真資料下從 null → 47.x（Class II 補齊）。
+> - **T1 factor eval 並發化 ✅ 已做+驗證（2026-06-11）**：pipeline 4 階段（批次 cache → `asyncio.gather` 並發 LLM → 序列寫入）+ ollama `OLLAMA_NUM_PARALLEL` + MLflow per-eval gate（`PMI_MLFLOW_FACTOR_CHILD_RUNS`）。單 T4 量到 ~2x（GPU compute-bound；network-bound 的 OpenAI 會接近 concurrency 倍數）。
+> - **仍未做**（別誤判為 done）：**cross-venue 進 pipeline**（`embed_markets.py` / `selector.py` 仍硬篩 `venue='polymarket'`，kalshi/manifold 等暫 dormant）；MCP server（SHIP-2.3 stub）；**production 雲端部署**（SHIP-1.8，本機 EC2 dev compose ≠ deploy/ 的 prod Caddy/GHCR/Secrets Manager stack）。
 >
 > **方向**：未來持續往本目錄（`pmi_data_platform/`，即本檔所在處）收斂。Micah 三 repo 是「為什麼這樣設計」的 reference，不是延伸基底。
 >
@@ -1063,6 +1072,8 @@ Factor / weight 寫死於 [`constants.py`](../micah-db/micah_db/models/constants
 
 ### 15.10 Polymarket PMI Platform 已落地（2026-06-07 snapshot）
 
+> **較新進度看本檔頂部的「2026-06-11 EC2 session 對帳」**——下表多個 ❌/🟡 已被那輪推進（真實多源 ingest 上線、GPU 本地 LLM、vector DB 啟動、Tier 0 經 `semantic-war-demo` 實際作用）。下表維持 2026-06-07 原貌作對位 reference。
+>
 > 完整 TODO 跟細項 ship 紀錄請看 [`TODO-跑出來.md`](TODO-跑出來.md) / [`TODO-跑得對.md`](TODO-跑得對.md)。這裡只列**架構層面的已落地**事實，作為對 §3 ~ §10 設計目標的對位表。
 
 | 設計 § | 設計目標 | 落地狀態 | 證據 / 入口 |
@@ -1082,7 +1093,7 @@ Factor / weight 寫死於 [`constants.py`](../micah-db/micah_db/models/constants
 
 **P0 e2e 已可 demo**（2026-05-28）：`docker compose --profile pmi up` → migrate → seed 13 markets + 5 index defs → `pmi-workers run-job score-all`（5 indexes 全 success、96 audit_evaluations 全帶 MLflow run_id）→ pmi-api `/indexes/<id>/score` 200 → pmi-web SSR 5 張 card + dashboard 渲分數 + history。
 
-**已知環境問題（不影響 cloud 部署）**：Reid 本機 ISP（HiNet）DNS 劫持 `gamma-api.polymarket.com` 回攔截頁。平台側用 `POLYMARKET_USE_MOCK=true` mock fixture mode 解（SHIP-0.5）；如需在本機跑**真 Polymarket 資料**做探索 / PoC，用 `../micah/server/scripts/polymarket_local.py` 的 1.1.1.1 DNS monkeypatch（[../micah/server/scripts/](../micah/server/scripts/)）。
+**已知環境問題（僅限 reid 家用網路，EC2 上不存在）**：Reid **本機**ISP（HiNet）DNS 劫持 `gamma-api.polymarket.com` 回攔截頁，故在他家用機器要 `POLYMARKET_USE_MOCK=true` mock fixture mode（SHIP-0.5）或用 `../micah/server/scripts/polymarket_local.py` 的 1.1.1.1 DNS monkeypatch。**2026-06-11 起：dev 跑在 AWS EC2，真 Polymarket API 直接可達**（gamma + clob），故 `POLYMARKET_USE_MOCK=false`，mock 模式在 EC2 上不需要。compose 仍把 ingest 容器 DNS 設 `1.1.1.1`/`8.8.8.8` 當 robustness 保險。
 
 **Senate 2026 PoC（2026-05-29 探索）**：在 `../micah/server/scripts/` 下三個 standalone script 證明了：
 1. event-first scraping 比全表掃描快 ~109× — 暗示 ingest 也可加「query-scoped poller」mode（→ SHIP-3.7）

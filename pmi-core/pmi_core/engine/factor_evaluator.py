@@ -31,9 +31,17 @@ it's returned unchanged with `cache_hit=True`. Switching to a new
 CoreFactorModel with a different llm_model_id automatically invalidates the
 cache and runs fresh evaluations.
 
-MLflow mirroring: every NEW evaluation opens an MLflow child run under the
+MLflow mirroring: each NEW evaluation opens an MLflow child run under the
 caller's parent run and logs params + metrics, including the registry binding
 (`factor_model_id`, `mlflow_registered_model_name`) when source='registry'.
+This per-eval child run is gated by `settings.mlflow_factor_child_runs`
+(default on) — turn it off for high-throughput scoring (T1); the
+`audit_evaluations` row stays authoritative with `mlflow_run_id` NULL.
+
+Concurrency (T1): the pipeline splits a factor eval into the pure-async LLM
+call (`run_factor_llm`, no session, safe to `asyncio.gather`) and the
+sequential DB+MLflow write (`persist_evaluation`). `evaluate_factor` below is
+the one-at-a-time wrapper kept for the CLI / tests.
 
 Failure mode: if the real LLM call raises (auth, parse, network exhaustion),
 we fall back to the deterministic stub and tag the evaluation row's
@@ -54,6 +62,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pmi_core import mlflow_client
+from pmi_core.config import settings
 from pmi_core.dsl.ir import FactorSpec
 from pmi_core.engine.factor_resolver import (
     DEFAULT_STUB_MODEL_ID,  # re-export so legacy imports keep working
@@ -99,6 +108,11 @@ async def _run_real_llm(
 
     `market` + `resolved.tools_config` are forwarded for Tier 2 (agentic)
     providers — single-shot providers accept and ignore them.
+
+    PURE async HTTP — no DB session, no MLflow. This is the only part of a
+    factor eval that is safe to run concurrently (`asyncio.gather`); the
+    pipeline fans these out under a semaphore (T1), then persists results
+    sequentially via `persist_evaluation`.
     """
     provider = get_provider(resolved.llm_model_id)
     rendered = render_prompt(resolved.prompt.template, market)
@@ -111,6 +125,198 @@ async def _run_real_llm(
     )
 
 
+# Public alias — the pipeline's concurrent stage imports this to run the LLM
+# call without touching the session.
+run_factor_llm = _run_real_llm
+
+
+async def persist_evaluation(
+    session: AsyncSession,
+    market: CoreMarket,
+    factor: FactorSpec,
+    index_definition_id: int,
+    resolved: ResolvedFactorModel,
+    *,
+    llm_response: LLMResponse | None,
+    llm_error: str | None = None,
+    latency_ms: int = 0,
+    experiment_id: str | None = None,
+    parent_run_id: str | None = None,
+) -> tuple[AuditEvaluation, bool]:
+    """Build the eval payload, mirror to MLflow, and INSERT it (sequential).
+
+    Branches exactly like the legacy single-shot path:
+      * stub model         → deterministic `_stub_score`
+      * `llm_response`      → real eval payload
+      * `llm_error` set     → fallback-to-stub, recording the reason
+
+    DB + MLflow only — must be called serially on a single session (callers
+    do the concurrent LLM fan-out BEFORE this). Returns `(row, cache_hit)`;
+    `cache_hit=True` only when ON CONFLICT found a row another tick wrote.
+    """
+    prompt = resolved.prompt
+    model_id = resolved.llm_model_id
+
+    if _is_stub(model_id):
+        value_numeric, value_label, confidence = _stub_score(market, factor)
+        rationale = "deterministic stub at P0"
+        cost_usd = 0.0
+        prompt_tokens = 0
+        completion_tokens = 0
+        model_response_payload: dict = {
+            "stub": True,
+            "rationale": rationale,
+            "model_source": resolved.source,
+        }
+    elif llm_response is not None:
+        value_numeric = llm_response.value_numeric
+        value_label = llm_response.value_label
+        confidence = llm_response.confidence
+        rationale = llm_response.rationale
+        cost_usd = llm_response.cost_usd
+        prompt_tokens = llm_response.prompt_tokens
+        completion_tokens = llm_response.completion_tokens
+        model_response_payload = {
+            "stub": False,
+            "model_source": resolved.source,
+            "rationale": rationale,
+            "raw_text": llm_response.raw_text,
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "raw_response": llm_response.raw_response,
+        }
+        if llm_response.extras:
+            model_response_payload["extras"] = llm_response.extras
+    else:
+        # LLM raised upstream (caller passed llm_error) → deterministic fallback.
+        value_numeric, value_label, confidence = _stub_score(market, factor)
+        rationale = f"LLM call failed; using stub. Reason: {(llm_error or '')[:200]}"
+        cost_usd = 0.0
+        prompt_tokens = 0
+        completion_tokens = 0
+        model_response_payload = {
+            "stub": True,
+            "fallback_reason": llm_error,
+            "model_source": resolved.source,
+            "rationale": rationale,
+            "intended_model_id": model_id,
+        }
+
+    run_tags: dict[str, str | int] = {
+        "factor_id": factor.id,
+        "factor_type": factor.type,
+        "market_id": market.id,
+        "model_id": model_id,
+        "model_source": resolved.source,  # 'yaml' or 'registry'
+        "prompt_name": prompt.name,
+        "prompt_version": prompt.version,
+        "prompt_uri": prompt.mlflow_prompt_uri or "",
+        "real_llm": "true" if llm_response is not None else "false",
+    }
+    if llm_error:
+        run_tags["fallback_reason"] = llm_error[:120]
+    if resolved.factor_model_id is not None:
+        run_tags["factor_model_id"] = resolved.factor_model_id
+    if resolved.mlflow_registered_model_name:
+        run_tags["mlflow_registered_model"] = resolved.mlflow_registered_model_name
+    if resolved.mlflow_model_version:
+        run_tags["mlflow_model_version"] = resolved.mlflow_model_version
+
+    # MLflow child run is a non-authoritative mirror; gate it for throughput
+    # (T1). When off, the audit_evaluations row is identical except mlflow_run_id
+    # is NULL. The insert below runs regardless — it is the source of truth.
+    child_run_id: str | None = None
+    if settings.mlflow_factor_child_runs:
+        run_name = f"{factor.id}:{market.id}"
+        with mlflow_client.start_run(
+            experiment_id=experiment_id,
+            run_name=run_name,
+            parent_run_id=parent_run_id,
+            tags=run_tags,
+        ) as child_run_id:
+            mlflow_client.log_params(
+                child_run_id,
+                {
+                    "factor_id": factor.id,
+                    "factor_type": factor.type,
+                    "market_id": market.id,
+                    "market_title": (market.title or "")[:250],
+                    "prompt_sha256": prompt.sha256,
+                    "prompt_name": prompt.name,
+                    "prompt_version": prompt.version,
+                    "model_id": model_id,
+                    "model_source": resolved.source,
+                    "factor_model_id": resolved.factor_model_id or "",
+                    "temperature": resolved.temperature
+                    if resolved.temperature is not None
+                    else "",
+                },
+            )
+            mlflow_client.log_metrics(
+                child_run_id,
+                {
+                    "value_numeric": value_numeric,
+                    "confidence": confidence,
+                    "latency_ms": latency_ms,
+                    "cost_usd": cost_usd,
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                },
+            )
+            if value_label is not None:
+                mlflow_client.set_tags(child_run_id, {"value_label": value_label})
+
+    # CORR-3.11: atomic INSERT ... ON CONFLICT DO NOTHING (see legacy note).
+    insert_stmt = (
+        pg_insert(AuditEvaluation)
+        .values(
+            market_id=market.id,
+            index_definition_id=index_definition_id,
+            factor_id=factor.id,
+            prompt_id=prompt.id,
+            prompt_sha256=prompt.sha256,
+            model_id=model_id,
+            temperature=resolved.temperature,
+            value_numeric=value_numeric,
+            value_label=value_label,
+            confidence=confidence,
+            model_response=model_response_payload,
+            cost_usd=cost_usd,
+            latency_ms=latency_ms,
+            mlflow_run_id=child_run_id,
+            evaluated_at=datetime.now(UTC),
+        )
+        .on_conflict_do_nothing(constraint="uq_audit_evaluations__cache_key")
+        .returning(AuditEvaluation.id)
+    )
+    new_id = (await session.execute(insert_stmt)).scalar_one_or_none()
+
+    if new_id is None:
+        # A concurrent tick committed the same cache_key. Re-read + treat as hit.
+        existing = (
+            await session.execute(
+                select(AuditEvaluation).where(
+                    AuditEvaluation.market_id == market.id,
+                    AuditEvaluation.index_definition_id == index_definition_id,
+                    AuditEvaluation.factor_id == factor.id,
+                    AuditEvaluation.prompt_sha256 == prompt.sha256,
+                    AuditEvaluation.model_id == model_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if existing is not None:
+            return existing, True
+        raise RuntimeError(
+            "audit_evaluations ON CONFLICT fired but the conflicting row was "
+            f"not found on re-read (market={market.id}, factor={factor.id})"
+        )
+
+    row = await session.get(AuditEvaluation, new_id)
+    if row is None:  # pragma: no cover — inserted id must be fetchable
+        raise RuntimeError(f"inserted audit_evaluation id={new_id} not retrievable")
+    return row, False
+
+
 async def evaluate_factor(
     session: AsyncSession,
     market: CoreMarket,
@@ -121,6 +327,13 @@ async def evaluate_factor(
     experiment_id: str | None = None,
     parent_run_id: str | None = None,
 ) -> tuple[AuditEvaluation, bool]:
+    """Single-shot path (CLI `score`, tests): cache → LLM → persist, serial.
+
+    The pipeline's high-throughput path does NOT call this — it batch-loads the
+    cache, fans the LLM calls out concurrently (`run_factor_llm`), then persists
+    serially (`persist_evaluation`). This wrapper keeps that same logic for the
+    one-at-a-time callers.
+    """
     prompt = resolved.prompt
     model_id = resolved.llm_model_id
 
@@ -137,170 +350,30 @@ async def evaluate_factor(
 
     started = time.perf_counter()
     llm_response: LLMResponse | None = None
-    fallback_reason: str | None = None
-
-    if _is_stub(model_id):
-        value_numeric, value_label, confidence = _stub_score(market, factor)
-        rationale = "deterministic stub at P0"
-        cost_usd = 0.0
-        prompt_tokens = 0
-        completion_tokens = 0
-        model_response_payload: dict = {
-            "stub": True,
-            "rationale": rationale,
-            "model_source": resolved.source,
-        }
-    else:
+    llm_error: str | None = None
+    if not _is_stub(model_id):
         try:
-            llm_response = await _run_real_llm(market, factor, resolved)
-            value_numeric = llm_response.value_numeric
-            value_label = llm_response.value_label
-            confidence = llm_response.confidence
-            rationale = llm_response.rationale
-            cost_usd = llm_response.cost_usd
-            prompt_tokens = llm_response.prompt_tokens
-            completion_tokens = llm_response.completion_tokens
-            model_response_payload = {
-                "stub": False,
-                "model_source": resolved.source,
-                "rationale": rationale,
-                "raw_text": llm_response.raw_text,
-                "prompt_tokens": prompt_tokens,
-                "completion_tokens": completion_tokens,
-                # raw_response is large — kept under a nested key so JSON
-                # search/index queries can still hit the summary fields fast.
-                "raw_response": llm_response.raw_response,
-            }
-            # Tier 2 (agentic) providers populate `extras` with the reasoning /
-            # tool-call trace + tier marker. Persisting it here is the §9
-            # "every score is traceable" guarantee; single-shot providers leave
-            # extras empty so this is a no-op for Tier 1.
-            if llm_response.extras:
-                model_response_payload["extras"] = llm_response.extras
-        except Exception as exc:
-            fallback_reason = f"{type(exc).__name__}: {exc}"
+            llm_response = await run_factor_llm(market, factor, resolved)
+        except Exception as exc:  # noqa: BLE001 - fallback-to-stub by design
+            llm_error = f"{type(exc).__name__}: {exc}"
             log.warning(
                 "factor_evaluator.llm_failed_fallback_to_stub",
                 factor_id=factor.id,
                 model_id=model_id,
                 market_id=market.id,
-                error=fallback_reason[:200],
+                error=llm_error[:200],
             )
-            value_numeric, value_label, confidence = _stub_score(market, factor)
-            rationale = f"LLM call failed; using stub. Reason: {fallback_reason[:200]}"
-            cost_usd = 0.0
-            prompt_tokens = 0
-            completion_tokens = 0
-            model_response_payload = {
-                "stub": True,
-                "fallback_reason": fallback_reason,
-                "model_source": resolved.source,
-                "rationale": rationale,
-                "intended_model_id": model_id,
-            }
-
     latency_ms = int((time.perf_counter() - started) * 1000)
-
-    run_tags: dict[str, str | int] = {
-        "factor_id": factor.id,
-        "factor_type": factor.type,
-        "market_id": market.id,
-        "model_id": model_id,
-        "model_source": resolved.source,  # 'yaml' or 'registry'
-        "prompt_name": prompt.name,
-        "prompt_version": prompt.version,
-        "prompt_uri": prompt.mlflow_prompt_uri or "",
-        "real_llm": "true" if llm_response is not None else "false",
-    }
-    if fallback_reason:
-        run_tags["fallback_reason"] = fallback_reason[:120]
-    if resolved.factor_model_id is not None:
-        run_tags["factor_model_id"] = resolved.factor_model_id
-    if resolved.mlflow_registered_model_name:
-        run_tags["mlflow_registered_model"] = resolved.mlflow_registered_model_name
-    if resolved.mlflow_model_version:
-        run_tags["mlflow_model_version"] = resolved.mlflow_model_version
-
-    run_name = f"{factor.id}:{market.id}"
-    with mlflow_client.start_run(
+    return await persist_evaluation(
+        session,
+        market,
+        factor,
+        index_definition_id,
+        resolved,
+        llm_response=llm_response,
+        llm_error=llm_error,
+        latency_ms=latency_ms,
         experiment_id=experiment_id,
-        run_name=run_name,
         parent_run_id=parent_run_id,
-        tags=run_tags,
-    ) as child_run_id:
-        mlflow_client.log_params(
-            child_run_id,
-            {
-                "factor_id": factor.id,
-                "factor_type": factor.type,
-                "market_id": market.id,
-                "market_title": (market.title or "")[:250],
-                "prompt_sha256": prompt.sha256,
-                "prompt_name": prompt.name,
-                "prompt_version": prompt.version,
-                "model_id": model_id,
-                "model_source": resolved.source,
-                "factor_model_id": resolved.factor_model_id or "",
-                "temperature": resolved.temperature if resolved.temperature is not None else "",
-            },
-        )
-        mlflow_client.log_metrics(
-            child_run_id,
-            {
-                "value_numeric": value_numeric,
-                "confidence": confidence,
-                "latency_ms": latency_ms,
-                "cost_usd": cost_usd,
-                "prompt_tokens": prompt_tokens,
-                "completion_tokens": completion_tokens,
-            },
-        )
-        if value_label is not None:
-            mlflow_client.set_tags(child_run_id, {"value_label": value_label})
+    )
 
-        # CORR-3.11: atomic INSERT ... ON CONFLICT DO NOTHING instead of a bare
-        # session.add(). Without this, when the supercronic `hourly` tick and a
-        # manual `score` (or a 2nd worker) both miss the cache above and race to
-        # insert the same cache_key, the loser hits IntegrityError on
-        # `uq_audit_evaluations__cache_key` and rolls back the ENTIRE tick. With
-        # DO NOTHING the loser simply finds the winner's row and treats it as a
-        # cache hit — append-only invariant preserved, no tick lost.
-        insert_stmt = (
-            pg_insert(AuditEvaluation)
-            .values(
-                market_id=market.id,
-                index_definition_id=index_definition_id,
-                factor_id=factor.id,
-                prompt_id=prompt.id,
-                prompt_sha256=prompt.sha256,
-                model_id=model_id,
-                temperature=resolved.temperature,
-                value_numeric=value_numeric,
-                value_label=value_label,
-                confidence=confidence,
-                model_response=model_response_payload,
-                cost_usd=cost_usd,
-                latency_ms=latency_ms,
-                mlflow_run_id=child_run_id,
-                evaluated_at=datetime.now(UTC),
-            )
-            .on_conflict_do_nothing(constraint="uq_audit_evaluations__cache_key")
-            .returning(AuditEvaluation.id)
-        )
-        new_id = (await session.execute(insert_stmt)).scalar_one_or_none()
-
-    if new_id is None:
-        # A concurrent tick committed the same cache_key between our SELECT and
-        # INSERT. Re-read the winning row and surface it as a cache hit.
-        existing = (await session.execute(cache_q)).scalar_one_or_none()
-        if existing is not None:
-            return existing, True
-        raise RuntimeError(
-            "audit_evaluations ON CONFLICT fired but the conflicting row was "
-            f"not found on re-read (market={market.id}, factor={factor.id})"
-        )
-
-    row = await session.get(AuditEvaluation, new_id)
-    if row is None:  # pragma: no cover — inserted id must be fetchable
-        raise RuntimeError(f"inserted audit_evaluation id={new_id} not retrievable")
-    return row, False

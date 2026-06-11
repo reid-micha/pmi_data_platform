@@ -35,6 +35,8 @@
 > **唯一還沒做的是「真的開 AWS 機器」那步**（沒有 AWS 帳號/box 可在此環境執行）——以 runbook + scripts 形式交付，待 reid 在有帳號的環境照 [`deploy/README.md`](deploy/README.md) 跑。
 >
 > **R5 決策結論**：選 **單台 EC2 t3.large（2 vCPU / 8 GB）+ gp3 100 GB EBS + Elastic IP**，Postgres 跑 container（RDS 是未來遷移）、Caddy 在 host 自動 Let's Encrypt（取代 ALB+ACM）。理由：最省、最自由、與既有 docker-compose 拓樸 1:1、enterprise SLA/VPC 需求未到。Render / Fly.io / Modal 的比較留在附錄 D 當紀錄。
+>
+> **2026-06-11 EC2 對帳（重要釐清）**：平台目前**已實際跑在一台 AWS EC2（Tesla T4 GPU）**上——但走的是 **dev compose**（`docker-compose.yml` + `just up` + `--profile ingest` + GPU ollama），**不是** `deploy/docker-compose.prod.yml` 的 production stack。亦即 **SHIP-1.8 仍未做**：沒有 Caddy TLS / GHCR pinned image / Secrets Manager / systemd / CloudWatch；secrets 在本機 `.env`、服務由 `docker compose` 直接拉、無對外 domain。換句話說「上了 EC2」≠「production 部署完成」。要轉 prod 仍須照 [`deploy/README.md`](deploy/README.md) 跑 SHIP-1.8。此環境已驗證的新事實：真實 Polymarket API 在 EC2 可達、GPU ollama 可跑、6-venue ingest + vector + 真實 scoring 端到端通。
 
 | # | Todo | 估算 | 源 | 狀態 |
 |---|---|---|---|---|

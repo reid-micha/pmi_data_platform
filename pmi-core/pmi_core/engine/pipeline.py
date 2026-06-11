@@ -9,7 +9,9 @@ Sprint 1/2 deliverable. Writes one `ts_index_scores` row + N `audit_evaluations`
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -22,11 +24,16 @@ from pmi_core.config import settings
 from pmi_core.db import session_scope
 from pmi_core.dsl.ir import IndexDef, SemanticSelector, load_index_def
 from pmi_core.engine.aggregator import MarketEvaluations, aggregate
-from pmi_core.engine.factor_evaluator import evaluate_factor
+from pmi_core.engine.factor_evaluator import (
+    _is_stub,
+    persist_evaluation,
+    run_factor_llm,
+)
 from pmi_core.engine.factor_resolver import ResolvedFactorModel, resolve_factor_model
 from pmi_core.engine.selector import select_markets
 from pmi_core.llm import embed_query
 from pmi_core.models import (
+    AuditEvaluation,
     AuditPipelineRun,
     CoreIndexDefinition,
     CorePrompt,
@@ -280,6 +287,60 @@ async def _tier0_prefilter(markets: list, ir: IndexDef) -> tuple[list, dict]:
     return survivors, stats
 
 
+async def _batch_load_evaluations(
+    session: AsyncSession,
+    index_definition_id: int,
+    ir: IndexDef,
+    resolved_models: dict[str, ResolvedFactorModel],
+    market_ids: list[int],
+) -> dict[tuple[int, str], AuditEvaluation]:
+    """Stage 1 of T1: one IN-query per factor instead of one SELECT per
+    (market, factor). Returns `{(market_id, factor_id): AuditEvaluation}` for
+    rows already in `audit_evaluations` under this tick's cache keys.
+    """
+    existing: dict[tuple[int, str], AuditEvaluation] = {}
+    if not market_ids:
+        return existing
+    for factor in ir.factors:
+        resolved = resolved_models[factor.id]
+        rows = (
+            await session.execute(
+                select(AuditEvaluation).where(
+                    AuditEvaluation.index_definition_id == index_definition_id,
+                    AuditEvaluation.factor_id == factor.id,
+                    AuditEvaluation.prompt_sha256 == resolved.prompt.sha256,
+                    AuditEvaluation.model_id == resolved.llm_model_id,
+                    AuditEvaluation.market_id.in_(market_ids),
+                )
+            )
+        ).scalars().all()
+        for row in rows:
+            existing[(row.market_id, factor.id)] = row
+    return existing
+
+
+async def _llm_under_sem(
+    sem: asyncio.Semaphore,
+    market,
+    factor,
+    resolved: ResolvedFactorModel,
+) -> tuple[tuple[int, str], object | None, str | None, int]:
+    """Stage 3 of T1: one concurrent LLM call. Pure async HTTP, no session.
+
+    Returns `((market_id, factor_id), llm_response|None, error|None, latency_ms)`.
+    Exceptions are captured (not raised) so one bad call can't sink the gather —
+    the persist stage turns a captured error into a deterministic stub fallback.
+    """
+    async with sem:
+        t0 = time.perf_counter()
+        try:
+            resp = await run_factor_llm(market, factor, resolved)
+            return (market.id, factor.id), resp, None, int((time.perf_counter() - t0) * 1000)
+        except Exception as exc:  # noqa: BLE001 - fallback-to-stub by design
+            err = f"{type(exc).__name__}: {exc}"
+            return (market.id, factor.id), None, err, int((time.perf_counter() - t0) * 1000)
+
+
 async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
     """Single tick of the pipeline. Returns a dict summary for CLI display."""
     as_of = as_of or datetime.now(UTC)
@@ -365,35 +426,74 @@ async def run_pipeline(index_id: str, as_of: datetime | None = None) -> dict:
                     },
                 )
 
+                # ── T1: 4-stage concurrent factor eval ──────────────────────
+                # Stage 1 — batch-load the cache (one IN-query per factor).
+                evalmap = await _batch_load_evaluations(
+                    session, index_def_row.id, ir, resolved_models, market_ids
+                )
+                cache_hits += len(evalmap)
+
+                # Stage 2 — todo = cache misses; split stub (CPU) vs real (LLM).
+                todo = [
+                    (m, f)
+                    for m in markets
+                    for f in ir.factors
+                    if (m.id, f.id) not in evalmap
+                ]
+                real_todo = [
+                    (m, f)
+                    for (m, f) in todo
+                    if not _is_stub(resolved_models[f.id].llm_model_id)
+                ]
+
+                # Stage 3 — concurrent LLM (the ONLY concurrent point). Pure
+                # HTTP under a semaphore; no session is touched here.
+                llm_results: dict[tuple[int, str], tuple[object | None, str | None, int]] = {}
+                if real_todo:
+                    sem = asyncio.Semaphore(settings.llm_concurrency)
+                    gathered = await asyncio.gather(
+                        *[_llm_under_sem(sem, m, f, resolved_models[f.id]) for (m, f) in real_todo]
+                    )
+                    for key, resp, err, lat in gathered:
+                        llm_results[key] = (resp, err, lat)
+
+                # Stage 4 — persist serially on the single session (AsyncSession
+                # is not concurrency-safe). Stubs and LLM-failures fall back here.
+                for (m, f) in todo:
+                    resp, err, lat = llm_results.get((m.id, f.id), (None, None, 0))
+                    row, conflict_hit = await persist_evaluation(
+                        session,
+                        m,
+                        f,
+                        index_def_row.id,
+                        resolved_models[f.id],
+                        llm_response=resp,
+                        llm_error=err,
+                        latency_ms=lat,
+                        experiment_id=index_def_row.mlflow_experiment_id,
+                        parent_run_id=parent_run_id,
+                    )
+                    evalmap[(m.id, f.id)] = row
+                    if conflict_hit:
+                        # A concurrent tick wrote this cache_key first.
+                        cache_hits += 1
+                    else:
+                        evaluations_written += 1
+                        # `model_response.stub` is False only when a real LLM
+                        # call returned a parsed response; stub fallbacks on LLM
+                        # failure keep stub=True.
+                        payload = row.model_response or {}
+                        if payload.get("stub") is False:
+                            llm_calls += 1
+                        if row.cost_usd is not None:
+                            cost_usd_total += float(row.cost_usd)
+
+                # Assemble per-market evaluation bundles for the aggregator.
                 for market in markets:
-                    by_factor = {}
-                    for factor in ir.factors:
-                        evalrow, cache_hit = await evaluate_factor(
-                            session,
-                            market=market,
-                            factor=factor,
-                            index_definition_id=index_def_row.id,
-                            resolved=resolved_models[factor.id],
-                            experiment_id=index_def_row.mlflow_experiment_id,
-                            parent_run_id=parent_run_id,
-                        )
-                        by_factor[factor.id] = evalrow
-                        if cache_hit:
-                            cache_hits += 1
-                        else:
-                            evaluations_written += 1
-                            # `model_response.stub` is False only when a real
-                            # LLM call actually returned a parsed response;
-                            # stub fallbacks on LLM failure keep stub=True.
-                            payload = evalrow.model_response or {}
-                            if payload.get("stub") is False:
-                                llm_calls += 1
-                            if evalrow.cost_usd is not None:
-                                cost_usd_total += float(evalrow.cost_usd)
-                    # CORR-3.4: depth is the primary liquidity signal;
-                    # volume_24h is the cold-start fallback. ``None`` flows
-                    # through to the aggregator, which treats it as
-                    # "no signal → uniform weight" rather than a zero.
+                    by_factor = {f.id: evalmap[(market.id, f.id)] for f in ir.factors}
+                    # CORR-3.4: depth is the primary liquidity signal; volume_24h
+                    # is the cold-start fallback. ``None`` flows through to the
+                    # aggregator as "no signal → uniform weight", not a zero.
                     liquidity = depths.get(market.id)
                     if liquidity is None:
                         liquidity = volumes.get(market.id)

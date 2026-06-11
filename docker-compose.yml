@@ -350,6 +350,11 @@ services:
     profiles: ["ollama"]
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
+    environment:
+      # Serve this many requests in parallel (default 1 serializes everything,
+      # negating the pipeline's T1 client-side concurrency). Sized for a 16GB
+      # T4 running a 3B model; lower if you OOM on a larger model.
+      OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-4}
     volumes:
       - ollama-models:/root/.ollama
     healthcheck:

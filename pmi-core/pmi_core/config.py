@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     llm_base_url: str = Field(default="")
     llm_api_key: str = Field(default="")
 
+    # T1: max concurrent factor LLM calls per pipeline tick. The pipeline fans
+    # the (market, factor) LLM calls out under an asyncio.Semaphore of this size,
+    # then persists results serially (one AsyncSession is not concurrency-safe).
+    # Match this to the serving capacity: for local Ollama, also raise the
+    # ollama container's OLLAMA_NUM_PARALLEL or requests just queue server-side.
+    llm_concurrency: int = Field(default=8)
+
     # Ollama (local model worker). Independent of `llm_base_url` so an Ollama
     # endpoint can coexist with OpenAI-direct: promote a CoreFactorModel with an
     # `ollama/<model>` model_id (e.g. `ollama/llama3.1`) to route it here.
@@ -65,6 +72,13 @@ class Settings(BaseSettings):
     # or if PMI_MLFLOW_ENABLED=false — audit_evaluations remain the source of truth.
     mlflow_tracking_uri: str = Field(default="http://localhost:5500")
     mlflow_enabled: bool = Field(default=True)
+    # Per-factor-eval MLflow child runs are a non-authoritative mirror (the
+    # authoritative lineage is the append-only audit_evaluations row). Each child
+    # run is several synchronous HTTP calls, which serialize in the persist stage
+    # and dominate a big fresh score (T1). Set false to skip them for throughput
+    # — `audit_evaluations.mlflow_run_id` is then NULL but the row is unchanged.
+    # The parent pipeline run (audit_pipeline_runs) is unaffected either way.
+    mlflow_factor_child_runs: bool = Field(default=True)
     mlflow_experiment_prefix: str = Field(default="pmi.")  # experiments named e.g. "pmi.polymarket-war-index"
 
     log_level: str = Field(default="INFO")
